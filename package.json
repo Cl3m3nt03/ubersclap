@@ -1,0 +1,20 @@
+{
+  "name": "ubersclap",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.12.0",
+  "scripts": {
+    "mobile": "pnpm --filter @ubersclap/mobile start",
+    "android": "pnpm --filter @ubersclap/mobile android",
+    "ios": "pnpm --filter @ubersclap/mobile ios",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "typescript": "~5.9.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
