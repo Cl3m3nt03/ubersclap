@@ -3,8 +3,7 @@ import {
   Controller,
   Get,
   HttpCode,
-  Post,
-  UsePipes,
+  Post,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import {
@@ -26,8 +25,7 @@ export class AuthController {
 
   @Public()
   @Post('register')
-  @UsePipes(new ZodValidationPipe(registerSchema))
-  register(@Body() input: RegisterInput) {
+  register(@Body(new ZodValidationPipe(registerSchema)) input: RegisterInput) {
     return this.auth.register(input);
   }
 
@@ -42,8 +40,7 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('login')
   @HttpCode(200)
-  @UsePipes(new ZodValidationPipe(loginSchema))
-  login(@Body() input: LoginInput) {
+  login(@Body(new ZodValidationPipe(loginSchema)) input: LoginInput) {
     return this.auth.login(input);
   }
 
@@ -51,16 +48,14 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('refresh')
   @HttpCode(200)
-  @UsePipes(new ZodValidationPipe(refreshSchema))
-  refresh(@Body() input: { refreshToken: string }) {
+  refresh(@Body(new ZodValidationPipe(refreshSchema)) input: { refreshToken: string }) {
     return this.auth.refresh(input.refreshToken);
   }
 
   @Public()
   @Post('logout')
   @HttpCode(204)
-  @UsePipes(new ZodValidationPipe(refreshSchema))
-  async logout(@Body() input: { refreshToken: string }) {
+  async logout(@Body(new ZodValidationPipe(refreshSchema)) input: { refreshToken: string }) {
     // Volontairement public et silencieux : une deconnexion ne doit jamais
     // echouer, meme avec un jeton deja invalide. Sinon le client reste bloque
     // avec une session qu'il ne peut pas fermer.

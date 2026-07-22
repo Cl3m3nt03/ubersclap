@@ -81,45 +81,107 @@ export const addressSchema = z.object({
 
 export type Address = z.infer<typeof addressSchema>;
 
-export const createCourseSchema = z.object({
+/**
+ * Coordonnees du passager saisies directement dans le formulaire de course.
+ *
+ * Un chauffeur recoit un appel et note : « demain 15 h, monsieur Dupont,
+ * 06 12 34 56 78, Ritz vers CDG ». Il ne cree pas une fiche client d'abord.
+ *
+ * Le serveur rapproche par telephone : si un client existe deja avec ce numero
+ * chez ce chauffeur, la course lui est rattachee ; sinon le client est cree.
+ * Le repertoire se construit donc tout seul, sans double saisie.
+ */
+export const passengerSchema = z.object({
+  firstName: z.string().trim().min(1, 'Le prénom est obligatoire').max(100),
+  lastName: z.string().trim().min(1, 'Le nom est obligatoire').max(100),
+  phone: phoneSchema,
+  email: z.string().trim().email('Adresse email invalide').optional(),
+});
+
+export type PassengerInput = z.infer<typeof passengerSchema>;
+
+export const createCourseSchema = z
+  .object({
+    id: uuidSchema,
+    /** Client existant — utilise depuis la fiche client. */
+    clientId: uuidSchema.optional(),
+    /** Nouveau passager — utilise depuis le formulaire de course. */
+    passenger: passengerSchema.optional(),
+    type: z.enum(COURSE_TYPES).default('ONE_WAY'),
+
+    pickup: addressSchema,
+    destination: addressSchema,
+
+    /**
+     * Instant absolu + fuseau (ADR-008).
+     *
+     * Le fuseau est conserve en plus de l'instant parce que « la course est a
+     * 9 h heure locale » est l'intention de l'utilisateur, et elle doit
+     * survivre a un deplacement ou a un changement d'heure.
+     */
+    scheduledAt: instantSchema,
+    timezone: z.string().default('Europe/Paris'),
+
+    passengers: z.number().int().min(1).max(16).default(1),
+    luggage: z.number().int().min(0).max(20).default(0),
+    childSeat: z.boolean().default(false),
+
+    /** Prix TTC annonce au client. Le HT est deduit (voir money.ts). */
+    priceInclTaxCents: centsSchema.nonnegative(
+      'Le prix ne peut pas être négatif',
+    ),
+
+    notes: z.string().trim().optional(),
+  })
+  .refine((data) => Boolean(data.clientId) || Boolean(data.passenger), {
+    message: 'Renseignez un passager ou sélectionnez un client',
+    path: ['passenger'],
+  });
+
+export type CreateCourseInput = z.infer<typeof createCourseSchema>;
+
+export const courseSchema = z.object({
   id: uuidSchema,
+  driverId: uuidSchema,
+  /** Toujours resolu cote serveur, meme quand l'entree etait un passager. */
   clientId: uuidSchema,
-  type: z.enum(COURSE_TYPES).default('ONE_WAY'),
+  type: z.enum(COURSE_TYPES),
+  status: z.enum(COURSE_STATUSES),
 
   pickup: addressSchema,
   destination: addressSchema,
 
-  /**
-   * Instant absolu + fuseau (ADR-008).
-   *
-   * Le fuseau est conserve en plus de l'instant parce que « la course est a
-   * 9 h heure locale » est l'intention de l'utilisateur, et elle doit survivre
-   * a un deplacement ou a un changement d'heure.
-   */
   scheduledAt: instantSchema,
-  timezone: z.string().default('Europe/Paris'),
+  timezone: z.string(),
 
-  passengers: z.number().int().min(1).max(16).default(1),
-  luggage: z.number().int().min(0).max(20).default(0),
-  childSeat: z.boolean().default(false),
+  passengers: z.number().int(),
+  luggage: z.number().int(),
+  childSeat: z.boolean(),
 
-  /** Prix TTC annonce au client. Le HT est deduit (voir money.ts). */
-  priceInclTaxCents: centsSchema.nonnegative('Le prix ne peut pas être négatif'),
+  priceInclTaxCents: centsSchema,
+  finalPriceInclTaxCents: centsSchema.nullable(),
+  distanceMeters: z.number().int().nullable(),
+  durationMinutes: z.number().int().nullable(),
 
-  notes: z.string().trim().optional(),
-});
-
-export type CreateCourseInput = z.infer<typeof createCourseSchema>;
-
-export const courseSchema = createCourseSchema.extend({
-  driverId: uuidSchema,
-  status: z.enum(COURSE_STATUSES),
-  finalPriceInclTaxCents: centsSchema.nonnegative().nullable(),
-  distanceMeters: z.number().int().nonnegative().nullable(),
-  durationMinutes: z.number().int().nonnegative().nullable(),
+  notes: z.string().nullable(),
   createdAt: instantSchema,
   updatedAt: instantSchema,
 });
+
+export const updateCourseSchema = z.object({
+  type: z.enum(COURSE_TYPES).optional(),
+  pickup: addressSchema.optional(),
+  destination: addressSchema.optional(),
+  scheduledAt: instantSchema.optional(),
+  timezone: z.string().optional(),
+  passengers: z.number().int().min(1).max(16).optional(),
+  luggage: z.number().int().min(0).max(20).optional(),
+  childSeat: z.boolean().optional(),
+  priceInclTaxCents: centsSchema.nonnegative().optional(),
+  notes: z.string().trim().nullable().optional(),
+});
+
+export type UpdateCourseInput = z.infer<typeof updateCourseSchema>;
 
 export type Course = z.infer<typeof courseSchema>;
 
