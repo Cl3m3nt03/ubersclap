@@ -11,6 +11,16 @@
 module.exports = {
   content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
   presets: [require('nativewind/preset')],
+  /**
+   * 'class' et non 'media'.
+   *
+   * Avec 'media', NativeWind se cale sur la preference systeme et refuse tout
+   * pilotage depuis l'app : "Cannot manually set color scheme, as dark mode is
+   * type 'media'". Or ADR-003 prevoit un theme sombre choisi par le chauffeur,
+   * pas subi — il peut vouloir le mode sombre en pleine journee avant une
+   * tournee de nuit.
+   */
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
