@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: ubersclap-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ubersclap
+      POSTGRES_PASSWORD: ubersclap_dev
+      POSTGRES_DB: ubersclap
+    ports:
+      # 5433 cote hote : 5432 est souvent deja pris par un autre projet.
+      # Le port interne au conteneur reste 5432.
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # L'API attend que la base soit reellement prete, pas seulement que le
+      # conteneur soit demarre.
+      test: ["CMD-SHELL", "pg_isready -U ubersclap -d ubersclap"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: ubersclap-redis
+    restart: unless-stopped
+    ports:
+      # 6380 cote hote, meme raison que Postgres.
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
+  redis_data:
