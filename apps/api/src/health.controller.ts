@@ -2,10 +2,13 @@ import { Controller, Get, Inject } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { DATABASE } from './database/database.module';
 import type { Database } from './database/client';
+import { Public } from './auth/public.decorator';
 
 @Controller('health')
 export class HealthController {
   constructor(@Inject(DATABASE) private readonly db: Database) {}
+
+  @Public()
 
   /**
    * Verifie que l'API repond ET que la base repond.
