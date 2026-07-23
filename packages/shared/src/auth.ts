@@ -4,6 +4,7 @@
 
 import { z } from 'zod';
 import { uuidSchema, instantSchema } from './schemas';
+import { VAT_REGIMES, type VatRegime } from './money';
 
 /**
  * Mot de passe : longueur minimale, aucune regle de composition.
@@ -54,6 +55,60 @@ export const authUserSchema = z.object({
   role: z.enum(['DRIVER', 'MANAGER', 'ADMIN']),
   createdAt: instantSchema,
 });
+
+export const VAT_REGIME_LABEL: Record<VatRegime, string> = {
+  FRANCHISE: 'Franchise en base',
+  NORMAL: 'TVA 10 %',
+};
+
+/** Profil professionnel. Tous les champs alimentent le PDF de facture. */
+export const driverProfileSchema = z.object({
+  companyName: z.string().nullable(),
+  legalForm: z.string().nullable(),
+  siret: z.string().nullable(),
+  vatNumber: z.string().nullable(),
+  vtcRegistrationNumber: z.string().nullable(),
+  vatRegime: z.enum(VAT_REGIMES).nullable(),
+  address: z.string().nullable(),
+  logoUrl: z.string().nullable(),
+});
+
+export type DriverProfile = z.infer<typeof driverProfileSchema>;
+
+/**
+ * `GET /v1/me` — compte et profil pro en un seul appel (ADR-010).
+ *
+ * Deux requetes au demarrage pour afficher un seul ecran serait du gaspillage
+ * sur une connexion mobile.
+ */
+export const meSchema = authUserSchema.extend({
+  phone: z.string().nullable(),
+  profile: driverProfileSchema,
+});
+
+export type Me = z.infer<typeof meSchema>;
+
+/** `PATCH /v1/me`. Un champ vide efface la valeur, d'ou le `nullable`. */
+export const updateMeSchema = z.object({
+  firstName: z.string().trim().min(1).max(100).optional(),
+  lastName: z.string().trim().min(1).max(100).optional(),
+  phone: z.string().trim().max(20).nullable().optional(),
+
+  companyName: z.string().trim().max(200).nullable().optional(),
+  legalForm: z.string().trim().max(100).nullable().optional(),
+  siret: z
+    .string()
+    .trim()
+    .regex(/^\d{14}$/, 'Le SIRET compte 14 chiffres')
+    .nullable()
+    .optional(),
+  vatNumber: z.string().trim().max(20).nullable().optional(),
+  vtcRegistrationNumber: z.string().trim().max(50).nullable().optional(),
+  vatRegime: z.enum(VAT_REGIMES).nullable().optional(),
+  address: z.string().trim().nullable().optional(),
+});
+
+export type UpdateMeInput = z.infer<typeof updateMeSchema>;
 
 export const authResponseSchema = z.object({
   user: authUserSchema,

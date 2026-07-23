@@ -71,6 +71,42 @@ export const clientSchema = createClientSchema.extend({
 
 export type Client = z.infer<typeof clientSchema>;
 
+/**
+ * Client tel que l'API le renvoie.
+ *
+ * Distinct de `clientSchema` : a l'entree, un champ absent est `undefined` ;
+ * a la sortie, il vaut `null`. Confondre les deux fait passer le typage cote
+ * mobile a cote des `null` reels et produit des « undefined » affiches.
+ */
+export const clientRecordSchema = z.object({
+  id: uuidSchema,
+  driverId: uuidSchema,
+  firstName: z.string(),
+  lastName: z.string(),
+  phone: z.string(),
+  email: z.string().nullable(),
+  company: z.string().nullable(),
+  category: z.enum(CLIENT_CATEGORIES),
+  notes: z.string().nullable(),
+  createdAt: instantSchema,
+  updatedAt: instantSchema,
+});
+
+export type ClientRecord = z.infer<typeof clientRecordSchema>;
+
+/** Agregats calcules en base, jamais cote mobile. */
+export const clientStatsSchema = z.object({
+  courseCount: z.number().int(),
+  totalCents: centsSchema,
+  lastCourseAt: instantSchema.nullable(),
+});
+
+export const clientDetailSchema = clientRecordSchema.extend({
+  stats: clientStatsSchema,
+});
+
+export type ClientDetail = z.infer<typeof clientDetailSchema>;
+
 // ---------------------------------------------------------------- Course
 
 export const addressSchema = z.object({
@@ -184,6 +220,24 @@ export const updateCourseSchema = z.object({
 export type UpdateCourseInput = z.infer<typeof updateCourseSchema>;
 
 export type Course = z.infer<typeof courseSchema>;
+
+/**
+ * Course accompagnee de son client.
+ *
+ * La liste affiche le nom du passager sur chaque ligne. Sans cette jointure,
+ * l'agenda ferait un appel par course pour ecrire un nom — soit vingt requetes
+ * pour une journee chargee, sur un reseau mobile.
+ */
+export const courseWithClientSchema = courseSchema.extend({
+  client: z.object({
+    id: uuidSchema,
+    firstName: z.string(),
+    lastName: z.string(),
+    phone: z.string(),
+  }),
+});
+
+export type CourseWithClient = z.infer<typeof courseWithClientSchema>;
 
 export const transitionCourseSchema = z.object({
   to: z.enum(COURSE_STATUSES),

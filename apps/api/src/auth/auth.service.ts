@@ -15,8 +15,10 @@ import type {
   AuthResponse,
   AuthUser,
   LoginInput,
+  Me,
   RegisterInput,
   AccessTokenPayload,
+  UpdateMeInput,
 } from '@ubersclap/shared';
 
 import { DATABASE } from '../database/database.module';
@@ -193,6 +195,74 @@ export class AuthService {
       .update(refreshTokens)
       .set({ revokedAt: new Date() })
       .where(eq(refreshTokens.tokenHash, this.hashToken(rawToken)));
+  }
+
+  /**
+   * Compte + profil professionnel, en une requete (ADR-010).
+   *
+   * Le profil est cree en meme temps que le compte, donc il existe toujours.
+   * On renvoie neanmoins un profil vide plutot que de lever une erreur : une
+   * ligne manquante en base ne doit pas empecher un chauffeur d'ouvrir l'app.
+   */
+  async findMe(id: string): Promise<Me> {
+    const user = await this.findUserById(id);
+
+    const record = await this.db.query.users.findFirst({
+      where: eq(users.id, id),
+    });
+
+    const profile = await this.db.query.driverProfiles.findFirst({
+      where: eq(driverProfiles.userId, id),
+    });
+
+    return {
+      ...user,
+      phone: record?.phone ?? null,
+      profile: {
+        companyName: profile?.companyName ?? null,
+        legalForm: profile?.legalForm ?? null,
+        siret: profile?.siret ?? null,
+        vatNumber: profile?.vatNumber ?? null,
+        vtcRegistrationNumber: profile?.vtcRegistrationNumber ?? null,
+        vatRegime: profile?.vatRegime ?? null,
+        address: profile?.address ?? null,
+        logoUrl: profile?.logoUrl ?? null,
+      },
+    };
+  }
+
+  /**
+   * Met a jour le compte et le profil pro en une seule requete.
+   *
+   * Les deux tables bougent ensemble parce que l'ecran est unique : separer
+   * en deux appels rendrait possible un etat ou le nom est enregistre et pas
+   * le SIRET, sans que l'utilisateur sache lequel a echoue.
+   */
+  async updateMe(id: string, patch: UpdateMeInput): Promise<Me> {
+    const {
+      firstName,
+      lastName,
+      phone,
+      ...profilePatch
+    } = patch;
+
+    await this.db.transaction(async (tx) => {
+      if (firstName !== undefined || lastName !== undefined || phone !== undefined) {
+        await tx
+          .update(users)
+          .set({ firstName, lastName, phone, updatedAt: new Date() })
+          .where(eq(users.id, id));
+      }
+
+      if (Object.keys(profilePatch).length > 0) {
+        await tx
+          .update(driverProfiles)
+          .set({ ...profilePatch, updatedAt: new Date() })
+          .where(eq(driverProfiles.userId, id));
+      }
+    });
+
+    return this.findMe(id);
   }
 
   async findUserById(id: string): Promise<AuthUser> {

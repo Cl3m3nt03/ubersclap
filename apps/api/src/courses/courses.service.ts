@@ -17,6 +17,10 @@ import { DATABASE } from '../database/database.module';
 import type { Database } from '../database/client';
 import { courses, clients } from '../database/schema';
 import { ClientsService } from '../clients/clients.service';
+import {
+  serializeCourse,
+  serializeCourseWithClient,
+} from '../common/serialize';
 
 @Injectable()
 export class CoursesService {
@@ -27,7 +31,12 @@ export class CoursesService {
 
   async list(
     driverId: string,
-    filters: { from?: string; to?: string; status?: CourseStatus },
+    filters: {
+      from?: string;
+      to?: string;
+      status?: CourseStatus;
+      clientId?: string;
+    },
   ) {
     const rows = await this.db
       .select({ course: courses, client: clients })
@@ -40,23 +49,22 @@ export class CoursesService {
           filters.from ? gte(courses.scheduledAt, new Date(filters.from)) : undefined,
           filters.to ? lte(courses.scheduledAt, new Date(filters.to)) : undefined,
           filters.status ? eq(courses.status, filters.status) : undefined,
+          filters.clientId ? eq(courses.clientId, filters.clientId) : undefined,
         ),
       )
       .orderBy(asc(courses.scheduledAt))
       .limit(500);
 
-    return rows.map(({ course, client }) => ({
-      ...course,
-      client: {
-        id: client.id,
-        firstName: client.firstName,
-        lastName: client.lastName,
-        phone: client.phone,
-      },
-    }));
+    return rows.map(({ course, client }) =>
+      serializeCourseWithClient(course, client),
+    );
   }
 
   async findOne(driverId: string, id: string) {
+    return serializeCourse(await this.findRow(driverId, id));
+  }
+
+  private async findRow(driverId: string, id: string) {
     const record = await this.db.query.courses.findFirst({
       where: and(
         eq(courses.id, id),
@@ -116,11 +124,11 @@ export class CoursesService {
       })
       .returning();
 
-    return created;
+    return serializeCourse(created);
   }
 
   async update(driverId: string, id: string, patch: UpdateCourseInput) {
-    const existing = await this.findOne(driverId, id);
+    const existing = await this.findRow(driverId, id);
 
     // Une course terminee ou annulee ne se modifie plus : elle a servi de base
     // a un prix annonce au client, et bientot a une ligne de facture.
@@ -153,7 +161,7 @@ export class CoursesService {
       .where(and(eq(courses.id, id), eq(courses.driverId, driverId)))
       .returning();
 
-    return updated;
+    return serializeCourse(updated);
   }
 
   /**
@@ -170,7 +178,7 @@ export class CoursesService {
     to: CourseStatus,
     finalPriceInclTaxCents?: number,
   ) {
-    const existing = await this.findOne(driverId, id);
+    const existing = await this.findRow(driverId, id);
 
     if (!canTransition(existing.status, to)) {
       throw new BadRequestException({
@@ -194,11 +202,11 @@ export class CoursesService {
       .where(and(eq(courses.id, id), eq(courses.driverId, driverId)))
       .returning();
 
-    return updated;
+    return serializeCourse(updated);
   }
 
   async remove(driverId: string, id: string) {
-    await this.findOne(driverId, id);
+    await this.findRow(driverId, id);
 
     await this.db
       .update(courses)

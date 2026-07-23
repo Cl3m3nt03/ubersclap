@@ -41,8 +41,9 @@ export class CoursesController {
     @Query('from') from?: string,
     @Query('to') to?: string,
     @Query('status') status?: CourseStatus,
+    @Query('clientId') clientId?: string,
   ) {
-    return this.courses.list(driverId, { from, to, status });
+    return this.courses.list(driverId, { from, to, status, clientId });
   }
 
   @Get(':id')
