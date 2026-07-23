@@ -1,6 +1,13 @@
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, Text, ScrollView, Pressable, RefreshControl } from 'react-native';
 import { router } from 'expo-router';
-import { TrendingUp, Plus, FileText, Users, CarFront } from 'lucide-react-native';
+import {
+  TrendingUp,
+  TrendingDown,
+  Plus,
+  FileText,
+  Users,
+  CarFront,
+} from 'lucide-react-native';
 import {
   formatLongDate,
   formatDistance,
@@ -14,23 +21,37 @@ import { StatCard, Card } from '@/components/Card';
 import { MoneyText, NumericText } from '@/components/MoneyText';
 import { CourseRow } from '@/components/CourseRow';
 import { EmptyState } from '@/components/EmptyState';
-import { driver, todayCourses, todaySummary } from '@/lib/mock';
+import { ErrorState, LoadingState } from '@/components/QueryState';
+import { useAuth } from '@/lib/auth';
+import { useDaySummary } from '@/lib/queries/dashboard';
+import { toCourseRow } from '@/lib/course-row';
 
 export default function DashboardScreen() {
-  const upcoming = todayCourses.filter((c) => c.status === 'CONFIRMED');
+  const { user } = useAuth();
+  const { summary, today, isPending, isRefetching, error, refetch } =
+    useDaySummary();
+
+  const upcoming = today.filter(
+    (course) => course.status === 'CONFIRMED' || course.status === 'IN_PROGRESS',
+  );
 
   return (
     <View className="flex-1 bg-canvas">
       <PageHeader
-        greeting={`Bonjour, ${driver.firstName} 👋`}
+        greeting={user ? `Bonjour, ${user.firstName} 👋` : 'Bonjour 👋'}
         title="Tableau de bord"
-        onNotifications={() => {}}
-        unreadCount={2}
       />
 
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={() => void refetch()}
+            tintColor={light.indigo}
+          />
+        }
       >
         <Text className="mb-3 font-medium text-[14px] text-ink-faint">
           {formatLongDate(new Date())}
@@ -41,17 +62,10 @@ export default function DashboardScreen() {
         <StatCard
           tone="teal"
           label="Chiffre d'affaires — aujourd'hui"
-          footer={
-            <View className="flex-row items-center gap-1.5">
-              <TrendingUp size={14} color="rgba(255,255,255,0.9)" />
-              <Text className="font-bold text-[13px] text-white/90">
-                +{todaySummary.deltaPercent}% vs hier
-              </Text>
-            </View>
-          }
+          footer={<DeltaFooter deltaPercent={summary.deltaPercent} />}
         >
           <MoneyText
-            cents={todaySummary.revenueCents}
+            cents={summary.revenueCents}
             className="font-extra text-[40px] leading-[46px] tracking-tight text-white"
           />
         </StatCard>
@@ -60,14 +74,14 @@ export default function DashboardScreen() {
           <View className="flex-1">
             <StatCard tone="coral" label="Courses">
               <NumericText className="font-extra text-[28px] text-white">
-                {String(todaySummary.courses).padStart(2, '0')}
+                {String(summary.courses).padStart(2, '0')}
               </NumericText>
             </StatCard>
           </View>
           <View className="flex-1">
             <StatCard tone="purple" label="Heures">
               <NumericText className="font-extra text-[28px] text-white">
-                {formatDuration(todaySummary.workedMinutes)}
+                {formatDuration(summary.workedMinutes)}
               </NumericText>
             </StatCard>
           </View>
@@ -79,7 +93,7 @@ export default function DashboardScreen() {
               Distance parcourue
             </Text>
             <NumericText className="mt-1 font-extra text-[22px] text-ink">
-              {formatDistance(todaySummary.distanceMeters)}
+              {formatDistance(summary.distanceMeters)}
             </NumericText>
           </View>
           <CarFront size={28} color={light.inkFaint} />
@@ -122,7 +136,15 @@ export default function DashboardScreen() {
         </View>
 
         <View className="mt-3 gap-3">
-          {upcoming.length === 0 ? (
+          {isPending ? (
+            <Card>
+              <LoadingState label="Chargement de la journée…" />
+            </Card>
+          ) : error ? (
+            <Card>
+              <ErrorState error={error} onRetry={() => void refetch()} />
+            </Card>
+          ) : upcoming.length === 0 ? (
             <Card>
               <EmptyState
                 icon={CarFront}
@@ -136,13 +158,42 @@ export default function DashboardScreen() {
             upcoming.map((course) => (
               <CourseRow
                 key={course.id}
-                course={course}
-                onPress={() => {}}
+                course={toCourseRow(course)}
+                onPress={() => router.push(`/course/${course.id}`)}
               />
             ))
           )}
         </View>
       </ScrollView>
+    </View>
+  );
+}
+
+/**
+ * La comparaison a la veille n'a de sens que si la veille existe.
+ *
+ * « +100 % » sur une journee precedente vide ne veut rien dire, et un premier
+ * jour d'utilisation afficherait un chiffre absurde sous le CA.
+ */
+function DeltaFooter({ deltaPercent }: { deltaPercent: number | null }) {
+  if (deltaPercent === null) {
+    return (
+      <Text className="font-bold text-[13px] text-white/90">
+        Pas de comparaison avec hier
+      </Text>
+    );
+  }
+
+  const up = deltaPercent >= 0;
+  const Icon = up ? TrendingUp : TrendingDown;
+
+  return (
+    <View className="flex-row items-center gap-1.5">
+      <Icon size={14} color="rgba(255,255,255,0.9)" />
+      <Text className="font-bold text-[13px] text-white/90">
+        {up ? '+' : ''}
+        {deltaPercent}% vs hier
+      </Text>
     </View>
   );
 }

@@ -1,30 +1,48 @@
-import { useMemo, useState } from 'react';
-import { View, Text, ScrollView, TextInput, Pressable } from 'react-native';
+import { useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TextInput,
+  Pressable,
+  RefreshControl,
+} from 'react-native';
+import { router } from 'expo-router';
 import { Search, UserPlus, Users } from 'lucide-react-native';
 import { initials, light, touch } from '@ubersclap/shared';
 
 import { PageHeader } from '@/components/PageHeader';
 import { Card } from '@/components/Card';
-import { MoneyText, NumericText } from '@/components/MoneyText';
 import { EmptyState } from '@/components/EmptyState';
-import { clients } from '@/lib/mock';
+import { ErrorState, LoadingState } from '@/components/QueryState';
+import { useClients } from '@/lib/queries/clients';
+import { useDebounced } from '@/lib/use-debounced';
 
 export default function ClientsScreen() {
   const [query, setQuery] = useState('');
 
-  const results = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    if (!needle) return clients;
-    return clients.filter((client) =>
-      `${client.firstName} ${client.lastName} ${client.company}`
-        .toLowerCase()
-        .includes(needle),
-    );
-  }, [query]);
+  /**
+   * La recherche part cote serveur, pas dans un filtre local.
+   *
+   * Le repertoire d'un chauffeur atteint vite plusieurs centaines de fiches :
+   * les charger toutes pour filtrer en memoire gaspille du reseau et casse la
+   * recherche des que la liste depasse la pagination.
+   */
+  const search = useDebounced(query.trim(), 300);
+  const { data, isPending, isRefetching, error, refetch } = useClients(search);
+
+  const clients = data ?? [];
 
   return (
     <View className="flex-1 bg-canvas">
-      <PageHeader title="Clients" greeting={`${clients.length} enregistrés`} />
+      <PageHeader
+        title="Clients"
+        greeting={
+          clients.length > 0
+            ? `${clients.length} enregistré${clients.length > 1 ? 's' : ''}`
+            : undefined
+        }
+      />
 
       <View className="px-6">
         <View
@@ -40,6 +58,7 @@ export default function ClientsScreen() {
             className="flex-1 font-medium text-[16px] text-ink"
             returnKeyType="search"
             autoCorrect={false}
+            autoCapitalize="none"
           />
         </View>
       </View>
@@ -48,29 +67,42 @@ export default function ClientsScreen() {
         contentContainerStyle={{ padding: 24, paddingBottom: 32 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={() => void refetch()}
+            tintColor={light.indigo}
+          />
+        }
       >
-        {results.length === 0 ? (
+        {isPending ? (
+          <LoadingState label="Chargement du répertoire…" />
+        ) : error ? (
+          <Card>
+            <ErrorState error={error} onRetry={() => void refetch()} />
+          </Card>
+        ) : clients.length === 0 ? (
           <Card>
             <EmptyState
-              icon={query ? Users : UserPlus}
-              title={query ? 'Aucun client trouvé' : 'Aucun client'}
+              icon={search ? Users : UserPlus}
+              title={search ? 'Aucun client trouvé' : 'Aucun client'}
               hint={
-                query
-                  ? `Rien ne correspond à « ${query} ».`
-                  : 'Ajoutez votre premier client pour créer une course en deux taps.'
+                search
+                  ? `Rien ne correspond à « ${search} ».`
+                  : "Le répertoire se remplit tout seul : créez une course, le passager y est ajouté."
               }
-              actionLabel={query ? undefined : 'Ajouter un client'}
-              onAction={query ? undefined : () => {}}
+              actionLabel={search ? undefined : 'Créer une course'}
+              onAction={search ? undefined : () => router.push('/course/nouvelle')}
             />
           </Card>
         ) : (
           <View className="gap-3">
-            {results.map((client) => (
+            {clients.map((client) => (
               <Pressable
                 key={client.id}
-                onPress={() => {}}
+                onPress={() => router.push(`/client/${client.id}`)}
                 accessibilityRole="button"
-                accessibilityLabel={`${client.firstName} ${client.lastName}, ${client.courses} courses`}
+                accessibilityLabel={`${client.firstName} ${client.lastName}`}
                 className="flex-row items-center gap-3 rounded-lg bg-surface p-4"
                 style={{ minHeight: touch.primary }}
               >
@@ -91,18 +123,8 @@ export default function ClientsScreen() {
                     className="font-medium text-[13px] text-ink-muted"
                     numberOfLines={1}
                   >
-                    {client.company}
+                    {client.company ?? client.phone}
                   </Text>
-                </View>
-
-                <View className="items-end">
-                  <MoneyText
-                    cents={client.totalCents}
-                    className="font-extra text-[15px] text-ink"
-                  />
-                  <NumericText className="font-medium text-[12px] text-ink-faint">
-                    {client.courses} courses
-                  </NumericText>
                 </View>
               </Pressable>
             ))}
