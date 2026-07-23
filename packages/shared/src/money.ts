@@ -61,7 +61,16 @@ export const VAT_RATE = {
   FRANCHISE: 0,
 } as const;
 
-export type VatRegime = 'FRANCHISE' | 'NORMAL';
+/**
+ * Regime de TVA — pilote le calcul et les mentions de chaque facture.
+ *
+ * Voir ADR-012 : generer une facture avec TVA pour un chauffeur en franchise
+ * en base produit une facture fausse. Le champ n'est donc pas administratif,
+ * il est comptable.
+ */
+export const VAT_REGIMES = ['FRANCHISE', 'NORMAL'] as const;
+
+export type VatRegime = (typeof VAT_REGIMES)[number];
 
 export interface AmountBreakdown {
   exclTax: Cents;

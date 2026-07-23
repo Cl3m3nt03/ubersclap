@@ -6,6 +6,7 @@ import type { CreateClientInput, PassengerInput } from '@ubersclap/shared';
 import { DATABASE } from '../database/database.module';
 import type { Database } from '../database/client';
 import { clients, courses } from '../database/schema';
+import { serializeClient } from '../common/serialize';
 
 /**
  * Normalise un numero pour le rapprochement.
@@ -28,7 +29,7 @@ export class ClientsService {
   async list(driverId: string, search?: string) {
     const term = search?.trim();
 
-    return this.db
+    const rows = await this.db
       .select()
       .from(clients)
       .where(
@@ -48,9 +49,40 @@ export class ClientsService {
       )
       .orderBy(clients.lastName, clients.firstName)
       .limit(200);
+
+    return rows.map(serializeClient);
   }
 
   async findOne(driverId: string, id: string) {
+    const record = await this.findRow(driverId, id);
+
+    const [stats] = await this.db
+      .select({
+        courseCount: sql<number>`count(*)::int`,
+        totalCents: sql<number>`coalesce(sum(coalesce(${courses.finalPriceInclTaxCents}, ${courses.priceInclTaxCents})), 0)::int`,
+        lastCourseAt: sql<Date | null>`max(${courses.scheduledAt})`,
+      })
+      .from(courses)
+      .where(
+        and(
+          eq(courses.clientId, id),
+          eq(courses.driverId, driverId),
+          isNull(courses.deletedAt),
+        ),
+      );
+
+    return {
+      ...serializeClient(record),
+      stats: {
+        ...stats,
+        lastCourseAt: stats.lastCourseAt
+          ? new Date(stats.lastCourseAt).toISOString()
+          : null,
+      },
+    };
+  }
+
+  private async findRow(driverId: string, id: string) {
     const record = await this.db.query.clients.findFirst({
       where: and(
         eq(clients.id, id),
@@ -68,22 +100,7 @@ export class ClientsService {
       });
     }
 
-    const [stats] = await this.db
-      .select({
-        courseCount: sql<number>`count(*)::int`,
-        totalCents: sql<number>`coalesce(sum(coalesce(${courses.finalPriceInclTaxCents}, ${courses.priceInclTaxCents})), 0)::int`,
-        lastCourseAt: sql<Date | null>`max(${courses.scheduledAt})`,
-      })
-      .from(courses)
-      .where(
-        and(
-          eq(courses.clientId, id),
-          eq(courses.driverId, driverId),
-          isNull(courses.deletedAt),
-        ),
-      );
-
-    return { ...record, stats };
+    return record;
   }
 
   async create(driverId: string, input: CreateClientInput) {
@@ -102,11 +119,11 @@ export class ClientsService {
       })
       .returning();
 
-    return created;
+    return serializeClient(created);
   }
 
   async update(driverId: string, id: string, patch: Partial<CreateClientInput>) {
-    await this.findOne(driverId, id);
+    await this.findRow(driverId, id);
 
     const [updated] = await this.db
       .update(clients)
@@ -118,7 +135,7 @@ export class ClientsService {
       .where(and(eq(clients.id, id), eq(clients.driverId, driverId)))
       .returning();
 
-    return updated;
+    return serializeClient(updated);
   }
 
   /**
@@ -129,7 +146,7 @@ export class ClientsService {
    * Une suppression physique casserait l'historique comptable.
    */
   async remove(driverId: string, id: string) {
-    await this.findOne(driverId, id);
+    await this.findRow(driverId, id);
 
     await this.db
       .update(clients)
