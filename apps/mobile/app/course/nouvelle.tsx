@@ -9,6 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { router } from 'expo-router';
+import { onlineManager } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X, ArrowDown, Check, UserPlus } from 'lucide-react-native';
 import {
@@ -101,6 +102,17 @@ export default function NewCourseScreen() {
 
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? 'Formulaire incomplet');
+      return;
+    }
+
+    // Hors-ligne, la mutation est mise en pause (ADR-011) : `mutateAsync` ne se
+    // resoudrait qu'a la reconnexion et figerait l'ecran dans un parking sans
+    // reseau. On enfile la course et on ferme aussitot ; le bandeau signale
+    // qu'elle attend d'etre envoyee. En ligne, on attend la reponse pour
+    // afficher une eventuelle erreur de validation serveur sous le formulaire.
+    if (!onlineManager.isOnline()) {
+      createCourse.mutate(parsed.data);
+      router.back();
       return;
     }
 

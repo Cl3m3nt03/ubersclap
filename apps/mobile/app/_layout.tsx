@@ -5,7 +5,7 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import {
   useFonts,
   PlusJakartaSans_500Medium,
@@ -17,6 +17,8 @@ import { light } from '@ubersclap/shared';
 
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { queryClient } from '@/lib/query-client';
+import { sqlitePersister } from '@/lib/persister';
+import { OfflineBanner } from '@/components/OfflineBanner';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -31,14 +33,30 @@ export default function RootLayout() {
   if (!fontsLoaded && !fontError) return null;
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{
+        persister: sqlitePersister,
+        // Le cache serveur au-dela de 24 h est rafraichi de toute facon ; la
+        // borne evite de restaurer des donnees perimees au demarrage. Les
+        // mutations en pause, elles, ne portent pas de date de peremption et
+        // sont conservees jusqu'a leur rejeu.
+        maxAge: 24 * 60 * 60 * 1000,
+      }}
+      // Cache restaure : on relance les mutations mises en pause avant la
+      // fermeture de l'app (course creee hors-ligne, ADR-011).
+      onSuccess={() => {
+        void queryClient.resumePausedMutations();
+      }}
+    >
       <AuthProvider>
         <SafeAreaProvider>
           <StatusBar style="dark" />
+          <OfflineBanner />
           <RootNavigator />
         </SafeAreaProvider>
       </AuthProvider>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { onlineManager } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, ArrowDown, MapPin } from 'lucide-react-native';
 import {
@@ -37,6 +38,15 @@ export default function CourseDetailScreen() {
 
   async function apply(to: CourseStatus) {
     setFailure(null);
+
+    // Terminer ou annuler une course doit marcher hors-ligne (ADR-011). La
+    // mutation en pause figerait `mutateAsync` jusqu'a la reconnexion : on
+    // l'enfile et on laisse le bandeau signaler l'attente de synchronisation.
+    if (!onlineManager.isOnline()) {
+      transition.mutate({ id, to });
+      return;
+    }
+
     try {
       await transition.mutateAsync({ id, to });
     } catch (cause) {

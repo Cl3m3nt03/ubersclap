@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
   ClientDetail,
   ClientRecord,
@@ -6,7 +6,7 @@ import type {
 } from '@ubersclap/shared';
 
 import { apiRequest } from '../api';
-import { queryKeys } from './keys';
+import { mutationKeys, queryKeys } from './keys';
 
 export function useClients(search?: string) {
   return useQuery({
@@ -31,18 +31,12 @@ export function useClient(id: string) {
   });
 }
 
+/**
+ * `mutationFn` et `onSuccess` vivent dans `registerMutationDefaults` (ADR-011),
+ * pour que la creation faite hors-ligne soit rejouable apres un redemarrage.
+ */
 export function useCreateClient() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (input: CreateClientInput) =>
-      apiRequest<ClientRecord>('/clients', {
-        method: 'POST',
-        body: input,
-        idempotencyKey: input.id,
-      }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['clients'] });
-    },
+  return useMutation<ClientRecord, unknown, CreateClientInput>({
+    mutationKey: mutationKeys.createClient,
   });
 }

@@ -12,3 +12,18 @@ export const queryKeys = {
   clients: (search?: string) => ['clients', search ?? ''] as const,
   client: (id: string) => ['client', id] as const,
 };
+
+/**
+ * Cles de mutation, indispensables a l'offline (ADR-011).
+ *
+ * Une mutation mise en pause hors-ligne ne persiste que sa cle et ses
+ * variables, jamais sa fonction. Pour la rejouer apres un redemarrage, le
+ * client doit retrouver la `mutationFn` par cette cle — voir
+ * `registerMutationDefaults`. Sans cle stable, la mutation en pause est
+ * illisible au reveil et la saisie est perdue.
+ */
+export const mutationKeys = {
+  createCourse: ['createCourse'] as const,
+  transitionCourse: ['transitionCourse'] as const,
+  createClient: ['createClient'] as const,
+};

@@ -1,6 +1,8 @@
 import { QueryClient } from '@tanstack/react-query';
 
 import { ApiError } from './api';
+import { wireOnlineManager } from './online';
+import { registerMutationDefaults } from './queries/mutations';
 
 /**
  * Cache de donnees serveur.
@@ -30,3 +32,8 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// L'etat reseau pilote la mise en pause des mutations (ADR-011) ; les fonctions
+// de mutation sont enregistrees pour pouvoir etre rejouees apres un redemarrage.
+wireOnlineManager();
+registerMutationDefaults(queryClient);

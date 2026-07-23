@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
   Course,
   CourseStatus,
@@ -7,7 +7,8 @@ import type {
 } from '@ubersclap/shared';
 
 import { apiRequest } from '../api';
-import { queryKeys } from './keys';
+import { mutationKeys, queryKeys } from './keys';
+import type { TransitionCourseInput } from './mutations';
 
 export interface CourseFilters {
   from?: string;
@@ -38,48 +39,19 @@ export function useCourse(id: string) {
   });
 }
 
+/**
+ * `mutationFn` et `onSuccess` vivent dans `registerMutationDefaults` (ADR-011) :
+ * une mutation creee hors-ligne doit pouvoir etre rejouee apres un redemarrage,
+ * quand la closure du composant n'existe plus. Le hook ne fournit que la cle.
+ */
 export function useCreateCourse() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (input: CreateCourseInput) =>
-      apiRequest<Course>('/courses', {
-        method: 'POST',
-        body: input,
-        // La cle d'idempotence est l'ID de la course (ADR-010 + ADR-011) :
-        // un rejeu apres coupure reseau porte la meme cle et ne cree pas de
-        // doublon, sans avoir a stocker une cle separee.
-        idempotencyKey: input.id,
-      }),
-    onSuccess: () => {
-      // Le serveur peut avoir cree le client au passage : les deux listes
-      // bougent apres une creation de course.
-      void queryClient.invalidateQueries({ queryKey: ['courses'] });
-      void queryClient.invalidateQueries({ queryKey: ['clients'] });
-    },
+  return useMutation<Course, unknown, CreateCourseInput>({
+    mutationKey: mutationKeys.createCourse,
   });
 }
 
 export function useTransitionCourse() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      id,
-      to,
-      finalPriceInclTaxCents,
-    }: {
-      id: string;
-      to: CourseStatus;
-      finalPriceInclTaxCents?: number;
-    }) =>
-      apiRequest<Course>(`/courses/${id}/transitions`, {
-        method: 'POST',
-        body: { to, finalPriceInclTaxCents },
-      }),
-    onSuccess: (course) => {
-      queryClient.setQueryData(queryKeys.course(course.id), course);
-      void queryClient.invalidateQueries({ queryKey: ['courses'] });
-    },
+  return useMutation<Course, unknown, TransitionCourseInput>({
+    mutationKey: mutationKeys.transitionCourse,
   });
 }
