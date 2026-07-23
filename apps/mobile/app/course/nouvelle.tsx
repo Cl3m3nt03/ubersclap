@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -9,11 +9,13 @@ import {
   Platform,
 } from 'react-native';
 import { router } from 'expo-router';
+import { onlineManager } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { X, ArrowDown, Check } from 'lucide-react-native';
+import { X, ArrowDown, Check, UserPlus } from 'lucide-react-native';
 import {
   COURSE_TYPES,
   COURSE_TYPE_LABEL,
+  createCourseSchema,
   parseEuros,
   formatEuros,
   initials,
@@ -23,7 +25,11 @@ import {
 } from '@ubersclap/shared';
 
 import { Button } from '@/components/Button';
-import { clients } from '@/lib/mock';
+import { DateTimeField } from '@/components/DateTimeField';
+import { useClients } from '@/lib/queries/clients';
+import { useCreateCourse } from '@/lib/queries/courses';
+import { deviceTimezone } from '@/lib/dates';
+import { uuidv7 } from '@/lib/uuid';
 
 /**
  * Creation d'une course.
@@ -31,19 +37,92 @@ import { clients } from '@/lib/mock';
  * Objectif de USER_FLOW.md : moins de 30 secondes, une seule main. D'ou les
  * champs pleine largeur, les cibles a 56 px, et un seul bouton d'action fixe
  * en bas — dans la zone atteignable au pouce.
+ *
+ * Le passager peut etre saisi directement, sans creer de fiche client au
+ * prealable : le serveur rapproche par telephone et cree le client si besoin.
+ * C'est ce qui permet de noter une reservation prise au telephone sans
+ * interrompre l'appel.
  */
 export default function NewCourseScreen() {
   const insets = useSafeAreaInsets();
+  const createCourse = useCreateCourse();
+  const { data: clients } = useClients();
 
-  const [client, setClient] = useState(clients[0]);
-  const [pickup, setPickup] = useState('Hôtel Ritz, Paris');
+  const [clientId, setClientId] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState('');
+
+  const [scheduledAt, setScheduledAt] = useState(nextRoundHour);
+  const [pickup, setPickup] = useState('');
   const [destination, setDestination] = useState('');
   const [price, setPrice] = useState('');
   const [type, setType] = useState<CourseType>('ONE_WAY');
+  const [error, setError] = useState<string | null>(null);
+
+  // Les habitues d'abord : au-dela d'une poignee de pastilles, la selection
+  // devient plus lente que la saisie directe du passager.
+  const recent = useMemo(() => (clients ?? []).slice(0, 6), [clients]);
 
   const priceCents = parseEuros(price);
+  const hasPassenger =
+    firstName.trim().length > 0 &&
+    lastName.trim().length > 0 &&
+    phone.trim().length >= 6;
+
   const canSubmit =
-    Boolean(client) && destination.trim().length > 0 && priceCents !== null;
+    (clientId !== null || hasPassenger) &&
+    pickup.trim().length > 0 &&
+    destination.trim().length > 0 &&
+    priceCents !== null &&
+    priceCents > 0;
+
+  async function submit() {
+    setError(null);
+
+    const parsed = createCourseSchema.safeParse({
+      // L'ID nait ici, pas au retour du serveur (ADR-011). Il sert aussi de
+      // cle d'idempotence : un rejeu apres coupure ne cree pas de doublon.
+      id: uuidv7(),
+      clientId: clientId ?? undefined,
+      passenger: clientId
+        ? undefined
+        : {
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            phone: phone.trim(),
+          },
+      type,
+      pickup: { label: pickup.trim() },
+      destination: { label: destination.trim() },
+      scheduledAt: scheduledAt.toISOString(),
+      timezone: deviceTimezone(),
+      priceInclTaxCents: priceCents ?? 0,
+    });
+
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? 'Formulaire incomplet');
+      return;
+    }
+
+    // Hors-ligne, la mutation est mise en pause (ADR-011) : `mutateAsync` ne se
+    // resoudrait qu'a la reconnexion et figerait l'ecran dans un parking sans
+    // reseau. On enfile la course et on ferme aussitot ; le bandeau signale
+    // qu'elle attend d'etre envoyee. En ligne, on attend la reponse pour
+    // afficher une eventuelle erreur de validation serveur sous le formulaire.
+    if (!onlineManager.isOnline()) {
+      createCourse.mutate(parsed.data);
+      router.back();
+      return;
+    }
+
+    try {
+      await createCourse.mutateAsync(parsed.data);
+      router.back();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Création impossible');
+    }
+  }
 
   return (
     <KeyboardAvoidingView
@@ -74,14 +153,14 @@ export default function NewCourseScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <FieldLabel>Client</FieldLabel>
+        <FieldLabel>Passager</FieldLabel>
         <View className="flex-row flex-wrap gap-2">
-          {clients.map((item) => {
-            const active = client?.id === item.id;
+          {recent.map((client) => {
+            const active = clientId === client.id;
             return (
               <Pressable
-                key={item.id}
-                onPress={() => setClient(item)}
+                key={client.id}
+                onPress={() => setClientId(active ? null : client.id)}
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
                 className="flex-row items-center gap-2 rounded-sm px-3"
@@ -94,34 +173,80 @@ export default function NewCourseScreen() {
               >
                 <View
                   className="h-7 w-7 items-center justify-center rounded-full"
-                  style={{ backgroundColor: active ? 'rgba(255,255,255,0.2)' : '#EEF2FF' }}
+                  style={{
+                    backgroundColor: active ? 'rgba(255,255,255,0.2)' : '#EEF2FF',
+                  }}
                 >
                   <Text
                     className="font-extra text-[11px]"
                     style={{ color: active ? '#FFFFFF' : light.indigo }}
                   >
-                    {initials(item.firstName, item.lastName)}
+                    {initials(client.firstName, client.lastName)}
                   </Text>
                 </View>
                 <Text
                   className="font-bold text-[14px]"
                   style={{ color: active ? '#FFFFFF' : light.ink }}
                 >
-                  {item.firstName} {item.lastName}
+                  {client.firstName} {client.lastName}
                 </Text>
               </Pressable>
             );
           })}
         </View>
 
+        {clientId === null ? (
+          <View className="mt-3 gap-3">
+            <View className="flex-row items-center gap-2">
+              <UserPlus size={16} color={light.inkFaint} />
+              <Text className="font-medium text-[13px] text-ink-faint">
+                Nouveau passager — il sera ajouté au répertoire
+              </Text>
+            </View>
+
+            <View className="flex-row gap-3">
+              <View className="flex-1">
+                <Input
+                  value={firstName}
+                  onChangeText={setFirstName}
+                  placeholder="Prénom"
+                  autoComplete="given-name"
+                />
+              </View>
+              <View className="flex-1">
+                <Input
+                  value={lastName}
+                  onChangeText={setLastName}
+                  placeholder="Nom"
+                  autoComplete="family-name"
+                />
+              </View>
+            </View>
+
+            <Input
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="Téléphone"
+              keyboardType="phone-pad"
+              autoComplete="tel"
+            />
+          </View>
+        ) : null}
+
+        <FieldLabel>Date et heure</FieldLabel>
+        <DateTimeField value={scheduledAt} onChange={setScheduledAt} />
+
         <FieldLabel>Départ</FieldLabel>
-        <Input value={pickup} onChangeText={setPickup} placeholder="Adresse de départ" />
+        <Input
+          value={pickup}
+          onChangeText={setPickup}
+          placeholder="Adresse de départ"
+        />
 
         <View className="items-center py-2">
           <ArrowDown size={20} color={light.inkFaint} />
         </View>
 
-        <FieldLabel>Destination</FieldLabel>
         <Input
           value={destination}
           onChangeText={setDestination}
@@ -170,6 +295,14 @@ export default function NewCourseScreen() {
             );
           })}
         </View>
+
+        {error ? (
+          <View className="mt-5 rounded-md p-4" style={{ backgroundColor: '#FEF2F2' }}>
+            <Text className="font-bold text-[14px]" style={{ color: light.danger }}>
+              {error}
+            </Text>
+          </View>
+        ) : null}
       </ScrollView>
 
       {/* Action principale fixee en bas : zone du pouce. */}
@@ -183,11 +316,19 @@ export default function NewCourseScreen() {
         <Button
           label="Créer la course"
           disabled={!canSubmit}
-          onPress={() => router.back()}
+          loading={createCourse.isPending}
+          onPress={submit}
         />
       </View>
     </KeyboardAvoidingView>
   );
+}
+
+/** Prochaine heure ronde : la valeur par defaut la plus souvent juste. */
+function nextRoundHour(): Date {
+  const date = new Date();
+  date.setMinutes(date.getMinutes() > 30 ? 60 : 30, 0, 0);
+  return date;
 }
 
 function FieldLabel({ children }: { children: string }) {
