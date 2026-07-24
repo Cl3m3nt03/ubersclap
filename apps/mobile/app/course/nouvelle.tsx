@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -11,18 +11,29 @@ import {
 import { router } from 'expo-router';
 import { onlineManager } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { X, ArrowDown, Check, UserPlus, BookUser } from 'lucide-react-native';
+import {
+  X,
+  ArrowDown,
+  Check,
+  UserPlus,
+  BookUser,
+  Route as RouteIcon,
+} from 'lucide-react-native';
 import {
   COURSE_TYPES,
   COURSE_TYPE_LABEL,
   createCourseSchema,
   parseEuros,
   formatEuros,
+  formatDistance,
+  formatDuration,
+  suggestFareCents,
   initials,
   light,
   touch,
   type Address,
   type CourseType,
+  type RouteResult,
 } from '@ubersclap/shared';
 
 import { Button } from '@/components/Button';
@@ -31,6 +42,7 @@ import { AddressField } from '@/components/AddressField';
 import { DateTimeField } from '@/components/DateTimeField';
 import { useClients } from '@/lib/queries/clients';
 import { useCreateCourse } from '@/lib/queries/courses';
+import { fetchRoute } from '@/lib/queries/geo';
 import { deviceTimezone } from '@/lib/dates';
 import { uuidv7 } from '@/lib/uuid';
 
@@ -63,6 +75,63 @@ export default function NewCourseScreen() {
   const [type, setType] = useState<CourseType>('ONE_WAY');
   const [error, setError] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [route, setRoute] = useState<RouteResult | null>(null);
+  const [routeLoading, setRouteLoading] = useState(false);
+
+  // Le prix suggere ne s'ecrit qu'une fois : des que le chauffeur touche au
+  // champ, sa saisie fait foi et un nouveau calcul d'itineraire ne l'ecrase
+  // plus. C'est lui qui negocie le prix, pas le bareme.
+  const priceTouched = useRef(false);
+
+  const pickupLat = pickup.latitude;
+  const pickupLng = pickup.longitude;
+  const destLat = destination.latitude;
+  const destLng = destination.longitude;
+
+  // Itineraire calcule cote serveur des que les deux adresses sont geocodees.
+  // Hors-ligne on s'abstient : pas de reseau, pas de calcul — le prix reste
+  // saisi a la main, ce que le formulaire permet de toute facon.
+  useEffect(() => {
+    if (
+      pickupLat === undefined ||
+      pickupLng === undefined ||
+      destLat === undefined ||
+      destLng === undefined
+    ) {
+      setRoute(null);
+      return;
+    }
+    if (!onlineManager.isOnline()) return;
+
+    const controller = new AbortController();
+    setRouteLoading(true);
+
+    fetchRoute(
+      { latitude: pickupLat, longitude: pickupLng },
+      { latitude: destLat, longitude: destLng },
+      controller.signal,
+    )
+      .then((result) => {
+        setRoute(result);
+        if (!priceTouched.current) {
+          setPrice(
+            formatEuros(
+              suggestFareCents(result.distanceMeters, result.durationMinutes),
+              { symbol: false },
+            ),
+          );
+        }
+      })
+      .catch(() => setRoute(null))
+      .finally(() => setRouteLoading(false));
+
+    return () => controller.abort();
+  }, [pickupLat, pickupLng, destLat, destLng]);
+
+  function changePrice(text: string) {
+    priceTouched.current = true;
+    setPrice(text);
+  }
 
   // Un contact choisi ne fait que pre-remplir les champs, qui restent
   // editables : le repertoire du telephone formate les numeros de mille facons,
@@ -113,6 +182,8 @@ export default function NewCourseScreen() {
       scheduledAt: scheduledAt.toISOString(),
       timezone: deviceTimezone(),
       priceInclTaxCents: priceCents ?? 0,
+      distanceMeters: route?.distanceMeters,
+      durationMinutes: route?.durationMinutes,
     });
 
     if (!parsed.success) {
@@ -286,16 +357,35 @@ export default function NewCourseScreen() {
           placeholder="Adresse d'arrivée"
         />
 
+        {routeLoading || route ? (
+          <View
+            className="mt-3 flex-row items-center gap-2 rounded-md px-4"
+            style={{
+              height: touch.secondary,
+              backgroundColor: '#EEF2FF',
+            }}
+          >
+            <RouteIcon size={16} color={light.indigo} />
+            <Text className="font-bold text-[14px] text-indigo">
+              {route
+                ? `${formatDistance(route.distanceMeters)} · ${formatDuration(route.durationMinutes)}`
+                : 'Calcul de l’itinéraire…'}
+            </Text>
+          </View>
+        ) : null}
+
         <FieldLabel>Prix TTC</FieldLabel>
         <Input
           value={price}
-          onChangeText={setPrice}
+          onChangeText={changePrice}
           placeholder="0,00 €"
           keyboardType="decimal-pad"
         />
         {priceCents !== null && priceCents > 0 ? (
           <Text className="mt-1.5 font-medium text-[13px] text-ink-faint">
-            Soit {formatEuros(priceCents)} TTC
+            {route && !priceTouched.current
+              ? `Suggéré d’après ${formatDistance(route.distanceMeters)} — modifiable`
+              : `Soit ${formatEuros(priceCents)} TTC`}
           </Text>
         ) : null}
 

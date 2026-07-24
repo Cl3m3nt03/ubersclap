@@ -120,6 +120,8 @@ export class CoursesService {
         luggage: input.luggage,
         childSeat: input.childSeat,
         priceInclTaxCents: input.priceInclTaxCents,
+        distanceMeters: input.distanceMeters,
+        durationMinutes: input.durationMinutes,
         notes: input.notes,
       })
       .returning();
@@ -155,6 +157,8 @@ export class CoursesService {
         luggage: patch.luggage,
         childSeat: patch.childSeat,
         priceInclTaxCents: patch.priceInclTaxCents,
+        distanceMeters: patch.distanceMeters,
+        durationMinutes: patch.durationMinutes,
         notes: patch.notes,
         updatedAt: new Date(),
       })
