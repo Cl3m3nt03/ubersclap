@@ -5,6 +5,8 @@ import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import {
   formatLongDate,
   formatDuration,
+  findConflictingIds,
+  courseTimeWindow,
   light,
   touch,
   type CourseWithClient,
@@ -35,6 +37,7 @@ export default function AgendaScreen() {
   );
 
   const today = isSameDay(day, new Date());
+  const conflicts = findConflictingIds(courses);
 
   return (
     <View className="flex-1 bg-canvas">
@@ -87,6 +90,7 @@ export default function AgendaScreen() {
               <Gap previous={courses[index - 1]} current={course} />
               <CourseRow
                 course={toCourseRow(course)}
+                conflict={conflicts.has(course.id)}
                 onPress={() => router.push(`/course/${course.id}`)}
               />
             </View>
@@ -188,29 +192,32 @@ function Gap({
 }) {
   if (!previous) return null;
 
-  const minutes = Math.round(
-    (new Date(current.scheduledAt).getTime() -
-      new Date(previous.scheduledAt).getTime()) /
-      60_000,
-  );
+  // Le temps libre part de la FIN estimee de la course precedente (depart +
+  // duree de l'itineraire), pas de son heure de depart : c'est ce qui rend le
+  // conflit reel visible plutot qu'un simple ecart entre deux horaires.
+  const previousEnd = courseTimeWindow(previous).end;
+  const currentStart = new Date(current.scheduledAt).getTime();
+  const minutes = Math.round((currentStart - previousEnd) / 60_000);
 
-  // Seuil provisoire. A remplacer par un temps de trajet reel via Directions
-  // API des que la cartographie est branchee.
-  const tooTight = minutes < 45;
+  const overlap = minutes < 0;
+  const tooTight = minutes >= 0 && minutes < 15;
+  const danger = overlap || tooTight;
 
   return (
     <View className="flex-row items-center gap-2 py-2.5 pl-[26px]">
       <View
         className="h-full w-px"
-        style={{ backgroundColor: tooTight ? light.danger : light.border }}
+        style={{ backgroundColor: danger ? light.danger : light.border }}
       />
       <Text
         className="font-bold text-[13px]"
-        style={{ color: tooTight ? light.danger : light.inkFaint }}
+        style={{ color: danger ? light.danger : light.inkFaint }}
       >
-        {tooTight
-          ? `Seulement ${formatDuration(minutes)} entre les deux`
-          : `${formatDuration(minutes)} libre`}
+        {overlap
+          ? `Chevauchement de ${formatDuration(-minutes)}`
+          : tooTight
+            ? `Seulement ${formatDuration(minutes)} entre les deux`
+            : `${formatDuration(minutes)} libre`}
       </Text>
     </View>
   );

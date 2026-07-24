@@ -18,6 +18,7 @@ import {
   UserPlus,
   BookUser,
   Route as RouteIcon,
+  TriangleAlert,
 } from 'lucide-react-native';
 import {
   COURSE_TYPES,
@@ -27,7 +28,9 @@ import {
   formatEuros,
   formatDistance,
   formatDuration,
+  formatTime,
   suggestFareCents,
+  conflictsFor,
   initials,
   light,
   touch,
@@ -41,9 +44,9 @@ import { ContactPicker, type PickedContact } from '@/components/ContactPicker';
 import { AddressField } from '@/components/AddressField';
 import { DateTimeField } from '@/components/DateTimeField';
 import { useClients } from '@/lib/queries/clients';
-import { useCreateCourse } from '@/lib/queries/courses';
+import { useCourses, useCreateCourse } from '@/lib/queries/courses';
 import { fetchRoute } from '@/lib/queries/geo';
-import { deviceTimezone } from '@/lib/dates';
+import { deviceTimezone, startOfDay, endOfDay } from '@/lib/dates';
 import { uuidv7 } from '@/lib/uuid';
 
 /**
@@ -132,6 +135,27 @@ export default function NewCourseScreen() {
     priceTouched.current = true;
     setPrice(text);
   }
+
+  // Conflit d'agenda : les courses du jour choisi, confrontees a celle en cours
+  // de saisie. Non bloquant — le chauffeur peut avoir un remplacant ou savoir
+  // que l'une va sauter —, mais il doit le voir avant d'enregistrer.
+  const dayCourses = useCourses({
+    from: startOfDay(scheduledAt).toISOString(),
+    to: endOfDay(scheduledAt).toISOString(),
+  });
+  const conflicts = useMemo(
+    () =>
+      conflictsFor(
+        {
+          id: 'candidate',
+          scheduledAt: scheduledAt.toISOString(),
+          durationMinutes: route?.durationMinutes ?? null,
+          status: 'CONFIRMED',
+        },
+        dayCourses.data ?? [],
+      ),
+    [scheduledAt, route, dayCourses.data],
+  );
 
   // Un contact choisi ne fait que pre-remplir les champs, qui restent
   // editables : le repertoire du telephone formate les numeros de mille facons,
@@ -339,6 +363,27 @@ export default function NewCourseScreen() {
 
         <FieldLabel>Date et heure</FieldLabel>
         <DateTimeField value={scheduledAt} onChange={setScheduledAt} />
+
+        {conflicts.length > 0 ? (
+          <View className="mt-3 rounded-md p-4" style={{ backgroundColor: '#FEF2F2' }}>
+            <View className="flex-row items-center gap-2">
+              <TriangleAlert size={16} color={light.danger} />
+              <Text className="font-bold text-[14px]" style={{ color: light.danger }}>
+                Conflit d'horaire
+              </Text>
+            </View>
+            <Text className="mt-1 font-medium text-[13px]" style={{ color: light.danger }}>
+              Chevauche{' '}
+              {conflicts
+                .map(
+                  (c) =>
+                    `${formatTime(new Date(c.scheduledAt))} ${c.client.firstName} ${c.client.lastName}`,
+                )
+                .join(', ')}
+              . Vous pouvez tout de même enregistrer.
+            </Text>
+          </View>
+        ) : null}
 
         <FieldLabel>Départ</FieldLabel>
         <AddressField
