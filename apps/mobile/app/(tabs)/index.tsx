@@ -24,13 +24,14 @@ import { CourseRow } from '@/components/CourseRow';
 import { EmptyState } from '@/components/EmptyState';
 import { ErrorState, LoadingState } from '@/components/QueryState';
 import { useAuth } from '@/lib/auth';
-import { useDaySummary } from '@/lib/queries/dashboard';
+import { useDaySummary, useMonthSummary } from '@/lib/queries/dashboard';
 import { toCourseRow } from '@/lib/course-row';
 
 export default function DashboardScreen() {
   const { user } = useAuth();
   const { summary, today, isPending, isRefetching, error, refetch } =
     useDaySummary();
+  const { summary: month } = useMonthSummary();
 
   const upcoming = today.filter(
     (course) => course.status === 'CONFIRMED' || course.status === 'IN_PROGRESS',
@@ -99,6 +100,61 @@ export default function DashboardScreen() {
           </View>
           <CarFront size={28} color={light.inkFaint} />
         </Card>
+
+        <SectionTitle>Ce mois-ci</SectionTitle>
+
+        <View className="flex-row gap-4">
+          <View className="flex-1">
+            <StatCard tone="teal" label="Chiffre d'affaires">
+              <MoneyText
+                cents={month.revenueCents}
+                className="font-extra text-[24px] text-white"
+              />
+            </StatCard>
+          </View>
+          <View className="flex-1">
+            <StatCard tone="coral" label="Dépenses">
+              <MoneyText
+                cents={month.expenseCents}
+                className="font-extra text-[24px] text-white"
+              />
+            </StatCard>
+          </View>
+        </View>
+
+        <Card className="mt-4 flex-row items-center justify-between">
+          <View>
+            <Text className="font-extra text-[12px] uppercase tracking-widest text-ink-faint">
+              Résultat net
+            </Text>
+            <MoneyText
+              cents={month.netCents}
+              className="mt-1 font-extra text-[22px]"
+              style={{ color: month.netCents >= 0 ? light.success : light.danger }}
+            />
+          </View>
+          <Text className="max-w-[45%] text-right font-medium text-[12px] text-ink-faint">
+            Chiffre d'affaires des courses terminées, moins les dépenses.
+          </Text>
+        </Card>
+
+        <Pressable
+          onPress={() => router.push('/factures')}
+          accessibilityRole="button"
+          className="mt-4 flex-row items-center justify-between rounded-lg bg-surface p-4"
+          style={{ minHeight: touch.primary, borderWidth: 1, borderColor: light.border }}
+        >
+          <View>
+            <Text className="font-extra text-[12px] uppercase tracking-widest text-ink-faint">
+              Encours à recouvrer
+            </Text>
+            <MoneyText
+              cents={month.outstandingCents}
+              className="mt-1 font-extra text-[22px] text-ink"
+            />
+          </View>
+          <FileText size={24} color={light.indigo} />
+        </Pressable>
 
         <SectionTitle>Accès rapide</SectionTitle>
 
