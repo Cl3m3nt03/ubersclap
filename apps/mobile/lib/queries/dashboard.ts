@@ -1,8 +1,17 @@
 import { useMemo } from 'react';
-import type { CourseWithClient } from '@ubersclap/shared';
+import { sumCents, type CourseWithClient } from '@ubersclap/shared';
 
-import { addDays, endOfDay, isSameDay, startOfDay } from '../dates';
+import {
+  addDays,
+  endOfDay,
+  endOfMonth,
+  isSameDay,
+  startOfDay,
+  startOfMonth,
+} from '../dates';
 import { useCourses } from './courses';
+import { useExpenses } from './expenses';
+import { useInvoices } from './invoices';
 
 export interface DaySummary {
   revenueCents: number;
@@ -69,6 +78,59 @@ export function useDaySummary() {
   }, [query.data]);
 
   return { ...query, ...summary };
+}
+
+export interface MonthSummary {
+  /** CA TTC des courses terminees du mois. */
+  revenueCents: number;
+  /** Depenses du mois. */
+  expenseCents: number;
+  /** Resultat = CA - depenses. Indicateur de tresorerie, pas un resultat comptable. */
+  netCents: number;
+  /** Factures envoyees ou en retard, pas encore payees. */
+  outstandingCents: number;
+}
+
+/**
+ * Le bilan du mois : CA, depenses, resultat et encours a recouvrer.
+ *
+ * Le mois est la maille du chauffeur. On agrege trois sources deja typees —
+ * courses terminees, depenses, factures impayees — plutot qu'un endpoint
+ * dedie : le calcul est exact, reste lisible hors ligne, et ne double aucun
+ * aller-retour reseau.
+ */
+export function useMonthSummary() {
+  const from = startOfMonth().toISOString();
+  const to = endOfMonth().toISOString();
+
+  const coursesQuery = useCourses({ from, to });
+  const expensesQuery = useExpenses({ from, to });
+  const invoicesQuery = useInvoices();
+
+  const summary = useMemo<MonthSummary>(() => {
+    const revenueCents = revenueOf(coursesQuery.data ?? []);
+    const expenseCents = sumCents(
+      (expensesQuery.data ?? []).map((expense) => expense.amountCents),
+    );
+    const outstandingCents = sumCents(
+      (invoicesQuery.data ?? [])
+        .filter((i) => i.status === 'SENT' || i.status === 'OVERDUE')
+        .map((i) => i.totalInclTaxCents),
+    );
+
+    return {
+      revenueCents,
+      expenseCents,
+      netCents: revenueCents - expenseCents,
+      outstandingCents,
+    };
+  }, [coursesQuery.data, expensesQuery.data, invoicesQuery.data]);
+
+  return {
+    summary,
+    isPending:
+      coursesQuery.isPending || expensesQuery.isPending || invoicesQuery.isPending,
+  };
 }
 
 /**
