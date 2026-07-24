@@ -2,14 +2,16 @@ import type {
   ClientRecord,
   Course,
   CourseWithClient,
+  Expense,
   Invoice,
   InvoiceSummary,
 } from '@ubersclap/shared';
 
-import { clients, courses, invoices, invoiceLines } from '../database/schema';
+import { clients, courses, expenses, invoices, invoiceLines } from '../database/schema';
 
 type ClientRow = typeof clients.$inferSelect;
 type CourseRow = typeof courses.$inferSelect;
+type ExpenseRow = typeof expenses.$inferSelect;
 type InvoiceRow = typeof invoices.$inferSelect;
 type InvoiceLineRow = typeof invoiceLines.$inferSelect;
 
@@ -117,6 +119,22 @@ export function serializeInvoice(
       taxRate: line.taxRate,
     })),
     pdfUrl: row.pdfUrl,
+  };
+}
+
+export function serializeExpense(row: ExpenseRow): Expense {
+  return {
+    id: row.id,
+    driverId: row.driverId,
+    courseId: row.courseId,
+    vehicleId: row.vehicleId,
+    category: row.category,
+    amountCents: row.amountCents,
+    description: row.description,
+    spentAt: row.spentAt.toISOString(),
+    receiptUrl: row.receiptUrl,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
   };
 }
 

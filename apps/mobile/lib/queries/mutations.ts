@@ -5,6 +5,8 @@ import type {
   CourseStatus,
   CreateClientInput,
   CreateCourseInput,
+  CreateExpenseInput,
+  Expense,
 } from '@ubersclap/shared';
 
 import { apiRequest } from '../api';
@@ -67,6 +69,20 @@ export function registerMutationDefaults(queryClient: QueryClient): void {
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['clients'] });
+    },
+  });
+
+  queryClient.setMutationDefaults(mutationKeys.createExpense, {
+    mutationFn: (input: CreateExpenseInput) =>
+      apiRequest<Expense>('/expenses', {
+        method: 'POST',
+        body: input,
+        // Cle d'idempotence = ID de la depense : une depense notee a la pompe
+        // sans reseau est rejouee sans doublon au retour de la connexion.
+        idempotencyKey: input.id,
+      }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['expenses'] });
     },
   });
 }

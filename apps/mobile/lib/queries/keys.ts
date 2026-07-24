@@ -14,6 +14,8 @@ export const queryKeys = {
   geoAutocomplete: (query: string) => ['geo', 'autocomplete', query] as const,
   invoices: () => ['invoices'] as const,
   me: () => ['me'] as const,
+  expenses: (filters?: { from?: string; to?: string }) =>
+    ['expenses', filters ?? {}] as const,
 };
 
 /**
@@ -29,4 +31,5 @@ export const mutationKeys = {
   createCourse: ['createCourse'] as const,
   transitionCourse: ['transitionCourse'] as const,
   createClient: ['createClient'] as const,
+  createExpense: ['createExpense'] as const,
 };

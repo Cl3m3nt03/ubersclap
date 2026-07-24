@@ -10,6 +10,7 @@ import { ClientsModule } from './clients/clients.module';
 import { CoursesModule } from './courses/courses.module';
 import { GeoModule } from './geo/geo.module';
 import { InvoicesModule } from './invoices/invoices.module';
+import { ExpensesModule } from './expenses/expenses.module';
 import { AuthGuard } from './auth/auth.guard';
 import { HealthController } from './health.controller';
 
@@ -25,6 +26,7 @@ import { HealthController } from './health.controller';
     CoursesModule,
     GeoModule,
     InvoicesModule,
+    ExpensesModule,
   ],
   controllers: [HealthController],
   providers: [
