@@ -61,7 +61,16 @@ export const VAT_RATE = {
   FRANCHISE: 0,
 } as const;
 
-export type VatRegime = 'FRANCHISE' | 'NORMAL';
+/**
+ * Regime de TVA — pilote le calcul et les mentions de chaque facture.
+ *
+ * Voir ADR-012 : generer une facture avec TVA pour un chauffeur en franchise
+ * en base produit une facture fausse. Le champ n'est donc pas administratif,
+ * il est comptable.
+ */
+export const VAT_REGIMES = ['FRANCHISE', 'NORMAL'] as const;
+
+export type VatRegime = (typeof VAT_REGIMES)[number];
 
 export interface AmountBreakdown {
   exclTax: Cents;
@@ -106,4 +115,52 @@ export function breakdownFromInclTax(
 /** Somme de centimes. Explicite, pour eviter tout `reduce` avec un float. */
 export function sumCents(values: readonly Cents[]): Cents {
   return values.reduce<Cents>((total, value) => total + Math.round(value), 0);
+}
+
+/**
+ * Tarif indicatif — ADR-015 (non tranchee).
+ *
+ * Le prix d'une course reste saisi et modifiable a la main : un chauffeur
+ * negocie, applique un forfait aeroport, arrondit pour un habitue. Ce bareme ne
+ * sert qu'a PROPOSER un prix de depart a partir de la distance calculee, jamais
+ * a l'imposer.
+ *
+ * Les deux nombres vivent ici, en un seul endroit, tant qu'ADR-015 n'a pas
+ * fige une vraie grille (forfaits, majoration de nuit, minimum de course). Le
+ * jour ou le chauffeur pourra les regler lui-meme, ce type devient le contenu
+ * d'un reglage ; la fonction de calcul, elle, ne bouge pas.
+ */
+export interface Tariff {
+  /** Prise en charge, appliquee une fois par course. */
+  baseFareCents: Cents;
+  /** Prix au kilometre parcouru. */
+  perKmCents: Cents;
+  /** Prix a la minute — 0 par defaut, la plupart facturent au km. */
+  perMinuteCents: Cents;
+}
+
+export const DEFAULT_TARIFF: Tariff = {
+  baseFareCents: 500,
+  perKmCents: 200,
+  perMinuteCents: 0,
+};
+
+/**
+ * Prix indicatif TTC d'une course a partir de son itineraire.
+ *
+ * Arrondi aux 50 centimes : un prix annonce au client est « 42,50 € », pas
+ * « 42,37 € ». C'est un devis parle, pas une caisse enregistreuse.
+ */
+export function suggestFareCents(
+  distanceMeters: number,
+  durationMinutes: number,
+  tariff: Tariff = DEFAULT_TARIFF,
+): Cents {
+  const km = distanceMeters / 1000;
+  const raw =
+    tariff.baseFareCents +
+    km * tariff.perKmCents +
+    durationMinutes * tariff.perMinuteCents;
+
+  return Math.round(raw / 50) * 50;
 }

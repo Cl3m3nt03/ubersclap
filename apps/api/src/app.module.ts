@@ -6,6 +6,11 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './auth/auth.module';
+import { ClientsModule } from './clients/clients.module';
+import { CoursesModule } from './courses/courses.module';
+import { GeoModule } from './geo/geo.module';
+import { InvoicesModule } from './invoices/invoices.module';
+import { ExpensesModule } from './expenses/expenses.module';
 import { AuthGuard } from './auth/auth.guard';
 import { HealthController } from './health.controller';
 
@@ -17,6 +22,11 @@ import { HealthController } from './health.controller';
     JwtModule.register({}),
     DatabaseModule,
     AuthModule,
+    ClientsModule,
+    CoursesModule,
+    GeoModule,
+    InvoicesModule,
+    ExpensesModule,
   ],
   controllers: [HealthController],
   providers: [

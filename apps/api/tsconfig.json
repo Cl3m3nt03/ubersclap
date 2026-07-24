@@ -15,6 +15,11 @@
     "rootDir": "./src",
     "baseUrl": "./",
     "incremental": true,
+    // Doit vivre DANS dist : nest-cli supprime dist a chaque build
+    // (deleteOutDir), mais laissait le cache incremental a la racine. tsc
+    // concluait alors « rien a recompiler » et n'emettait aucun fichier —
+    // build vert, dist vide ou incomplet.
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
     "skipLibCheck": true,
     "strict": true,
     "strictNullChecks": true,

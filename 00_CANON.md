@@ -534,12 +534,29 @@ la signature, alors que beaucoup la choisiront pour la facture.
 **Statut :** Proposé — décision business à confirmer
 **Contradictoire avec :** MONETIZATION.md et PAYMENT_AND_BILLING.md (9,99 €)
 
-## Problème du modèle actuel
+## Le SMS est abandonné au profit de l'email
 
-**Marge négative possible.** Premium à 9,99 € inclut « SMS rappel » et des
-crédits IA — deux **coûts variables réels**. À ~0,08 €/SMS en France, un
-chauffeur qui envoie 100 SMS/mois consomme 8 € sur 9,99 € de revenu, avant
-même l'IA, l'hébergement et la TVA.
+**Décision : toutes les communications client passent par email.** Aucun SMS,
+ni au MVP ni ensuite.
+
+**Pourquoi c'est la bonne décision, au-delà du canal :**
+
+Le SMS était le principal coût variable du modèle. À ~0,08 €/SMS, un chauffeur
+qui en envoie 100 par mois consommait 8 € sur 9,99 € de revenu — avant
+l'hébergement, l'IA et la TVA. Le plan pouvait être **déficitaire sur ses
+utilisateurs les plus actifs**, c'est-à-dire exactement ceux qu'on veut garder.
+
+L'email coûte environ mille fois moins cher. La marge cesse de dépendre de
+l'intensité d'usage, ce qui supprime le besoin de quotas, de compteurs, et de
+l'écran qui explique au chauffeur qu'il a épuisé ses SMS.
+
+**Ce qu'on perd :** le taux d'ouverture. Un SMS se lit dans les minutes ; un
+email peut attendre. Pour un rappel de course à J-1, c'est acceptable. Pour un
+« votre chauffeur arrive dans 5 minutes », ça ne l'est pas — donc cette
+notification-là n'existera pas, ou passera par un autre moyen plus tard.
+
+**Ce qu'on gagne, en plus du coût :** la facture PDF s'attache à un email, pas
+à un SMS. Le canal qui compte vraiment pour ce métier était déjà l'email.
 
 **Free mal calibré.** 50 courses/mois pour un chauffeur qui en fait 150 à 450 :
 le free s'épuise en 4 jours, avant que l'habitude ne se crée.
@@ -553,7 +570,7 @@ COMPETITIVE_ANALYSIS.md (Indy, Henrri) sont plus chers.
 | Plan     | Prix         | Contenu                                                   |
 | -------- | ------------ | --------------------------------------------------------- |
 | Free     | 0 €          | Clients + courses + planning **illimités**, **3 factures/mois** |
-| Pro      | 16,99 €/mois | Tout illimité, dépenses, dashboard, **50 SMS inclus**      |
+| Pro      | 16,99 €/mois | Tout illimité, dépenses, dashboard, emails automatiques    |
 | Business | 39,99 €/mois | Multi-chauffeurs, planning partagé, stats équipe           |
 
 Annuel : 2 mois offerts.
@@ -563,7 +580,8 @@ Le chauffeur utilise l'app gratuitement tous les jours, prend l'habitude, puis
 se heurte à la limite au moment exact où il perçoit la valeur — quand il doit
 facturer. C'est le meilleur moment de conversion possible.
 
-Les SMS deviennent un quota explicite, ce qui rend la marge prévisible.
+Sans SMS, le seul coût variable qui reste est l'IA, plafonnable par crédits.
+La marge devient prévisible sans imposer de quota sur l'usage quotidien.
 
 ---
 

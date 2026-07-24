@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { FileText, Download } from 'lucide-react-native';
 import {
   formatShortDate,
@@ -8,13 +8,16 @@ import {
   touch,
   sumCents,
   type InvoiceStatus,
+  type InvoiceSummary,
 } from '@ubersclap/shared';
 
 import { PageHeader } from '@/components/PageHeader';
 import { Card } from '@/components/Card';
 import { MoneyText, NumericText } from '@/components/MoneyText';
 import { EmptyState } from '@/components/EmptyState';
-import { invoices } from '@/lib/mock';
+import { LoadingState, ErrorState } from '@/components/QueryState';
+import { useInvoices } from '@/lib/queries/invoices';
+import { shareInvoicePdf } from '@/lib/invoice-pdf';
 
 const FILTERS = [
   { key: 'ALL', label: 'Toutes' },
@@ -35,17 +38,36 @@ const STATUS_COLOR: Record<InvoiceStatus, string> = {
 
 export default function InvoicesScreen() {
   const [filter, setFilter] = useState<FilterKey>('ALL');
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const { data: invoices, isLoading, isError, error, refetch } = useInvoices();
 
-  const results = useMemo(
-    () => (filter === 'ALL' ? invoices : invoices.filter((i) => i.status === filter)),
-    [filter],
-  );
+  const results = useMemo(() => {
+    const all = invoices ?? [];
+    return filter === 'ALL' ? all : all.filter((i) => i.status === filter);
+  }, [invoices, filter]);
 
+  // Encours : ce qui est envoyé ou en retard et pas encore payé. Calculé sur
+  // toutes les factures, pas seulement l'onglet visible.
   const outstanding = sumCents(
-    invoices
+    (invoices ?? [])
       .filter((i) => i.status === 'SENT' || i.status === 'OVERDUE')
       .map((i) => i.totalInclTaxCents),
   );
+
+  async function downloadPdf(invoice: InvoiceSummary) {
+    if (downloadingId) return;
+    setDownloadingId(invoice.id);
+    try {
+      await shareInvoicePdf(invoice);
+    } catch (cause) {
+      Alert.alert(
+        'PDF indisponible',
+        cause instanceof Error ? cause.message : 'Réessayez dans un instant.',
+      );
+    } finally {
+      setDownloadingId(null);
+    }
+  }
 
   return (
     <View className="flex-1 bg-canvas">
@@ -98,7 +120,11 @@ export default function InvoicesScreen() {
         </ScrollView>
 
         <View className="mt-4 gap-3">
-          {results.length === 0 ? (
+          {isLoading ? (
+            <LoadingState label="Chargement des factures…" />
+          ) : isError ? (
+            <ErrorState error={error} onRetry={refetch} />
+          ) : results.length === 0 ? (
             <Card>
               <EmptyState
                 icon={FileText}
@@ -110,7 +136,8 @@ export default function InvoicesScreen() {
             results.map((invoice) => (
               <Pressable
                 key={invoice.id}
-                onPress={() => {}}
+                onPress={() => downloadPdf(invoice)}
+                disabled={downloadingId !== null}
                 accessibilityRole="button"
                 accessibilityLabel={`Facture ${invoice.invoiceNumber}, ${invoice.clientName}`}
                 className="rounded-lg bg-surface p-4"
@@ -150,10 +177,17 @@ export default function InvoicesScreen() {
                   style={{ borderTopColor: light.border }}
                 >
                   <Text className="font-medium text-[13px] text-ink-faint">
-                    {invoice.courseCount} courses · {formatShortDate(invoice.issuedAt)}
+                    {invoice.courseCount} course{invoice.courseCount > 1 ? 's' : ''}
+                    {invoice.issuedAt
+                      ? ` · ${formatShortDate(new Date(invoice.issuedAt))}`
+                      : ''}
                   </Text>
                   <View className="flex-row items-center gap-1.5">
-                    <Download size={14} color={light.indigo} />
+                    {downloadingId === invoice.id ? (
+                      <ActivityIndicator size="small" color={light.indigo} />
+                    ) : (
+                      <Download size={14} color={light.indigo} />
+                    )}
                     <Text className="font-bold text-[13px] text-indigo">PDF</Text>
                   </View>
                 </View>
