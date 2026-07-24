@@ -6,7 +6,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { v7 as uuidv7 } from 'uuid';
 import {
   breakdownFromInclTax,
@@ -28,7 +28,11 @@ import {
   invoices,
   users,
 } from '../database/schema';
-import { serializeInvoice, serializeInvoiceSummary } from '../common/serialize';
+import {
+  serializeCourseWithClient,
+  serializeInvoice,
+  serializeInvoiceSummary,
+} from '../common/serialize';
 import { buildIssuerSnapshot } from './issuer-snapshot';
 
 const DEFAULT_DUE_DAYS = 30;
@@ -68,6 +72,36 @@ export class InvoicesService {
         row.company ?? `${row.firstName} ${row.lastName}`,
         row.courseCount,
       ),
+    );
+  }
+
+  /**
+   * Courses facturables : terminees et pas encore sur une facture.
+   *
+   * Une course DRAFT ou en cours n'est pas un revenu acquis, et une course deja
+   * facturee ne doit pas ressortir — la ligne d'invoice absente (`isNull`)
+   * garantit qu'on ne propose jamais de facturer deux fois la meme.
+   */
+  async listBillableCourses(driverId: string, clientId?: string) {
+    const rows = await this.db
+      .select({ course: courses, client: clients })
+      .from(courses)
+      .innerJoin(clients, eq(courses.clientId, clients.id))
+      .leftJoin(invoiceLines, eq(invoiceLines.courseId, courses.id))
+      .where(
+        and(
+          eq(courses.driverId, driverId),
+          isNull(courses.deletedAt),
+          eq(courses.status, 'COMPLETED'),
+          isNull(invoiceLines.id),
+          clientId ? eq(courses.clientId, clientId) : undefined,
+        ),
+      )
+      .orderBy(asc(courses.scheduledAt))
+      .limit(500);
+
+    return rows.map(({ course, client }) =>
+      serializeCourseWithClient(course, client),
     );
   }
 

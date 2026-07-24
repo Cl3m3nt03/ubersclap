@@ -8,6 +8,8 @@ type Props = {
   title: string;
   onNotifications?: () => void;
   unreadCount?: number;
+  /** Action a droite du titre. Prioritaire sur la cloche de notifications. */
+  right?: React.ReactNode;
 };
 
 /**
@@ -29,6 +31,7 @@ export function PageHeader({
   title,
   onNotifications,
   unreadCount = 0,
+  right,
 }: Props) {
   const insets = useSafeAreaInsets();
 
@@ -49,7 +52,9 @@ export function PageHeader({
         </Text>
       </View>
 
-      {onNotifications ? (
+      {right ? (
+        right
+      ) : onNotifications ? (
         <Pressable
           onPress={onNotifications}
           accessibilityRole="button"

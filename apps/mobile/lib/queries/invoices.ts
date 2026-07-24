@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type {
+  CourseWithClient,
   CreateInvoiceInput,
   Invoice,
   InvoiceSummary,
@@ -19,6 +20,21 @@ export function useInvoices() {
   return useQuery({
     queryKey: queryKeys.invoices(),
     queryFn: () => apiRequest<InvoiceSummary[]>('/invoices'),
+  });
+}
+
+/**
+ * Courses facturables : terminées et pas encore facturées.
+ *
+ * Sert l'écran de facturation, qui laisse cocher plusieurs courses d'un même
+ * client pour une facture groupée (ADR-005). `staleTime` court : dès qu'une
+ * facture est émise, ces courses n'en sont plus.
+ */
+export function useBillableCourses() {
+  return useQuery({
+    queryKey: queryKeys.billableCourses(),
+    queryFn: () => apiRequest<CourseWithClient[]>('/invoices/billable-courses'),
+    staleTime: 0,
   });
 }
 
