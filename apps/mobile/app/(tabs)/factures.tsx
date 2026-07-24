@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
-import { FileText, Download } from 'lucide-react-native';
+import { router } from 'expo-router';
+import { FileText, Download, Plus } from 'lucide-react-native';
 import {
   formatShortDate,
   INVOICE_STATUS_LABEL,
@@ -71,7 +72,25 @@ export default function InvoicesScreen() {
 
   return (
     <View className="flex-1 bg-canvas">
-      <PageHeader title="Factures" greeting="Suivi des paiements" />
+      <PageHeader
+        title="Factures"
+        greeting="Suivi des paiements"
+        right={
+          <Pressable
+            onPress={() => router.push('/facture/nouvelle')}
+            accessibilityRole="button"
+            accessibilityLabel="Nouvelle facture"
+            className="items-center justify-center rounded-full"
+            style={{
+              width: touch.secondary,
+              height: touch.secondary,
+              backgroundColor: light.indigo,
+            }}
+          >
+            <Plus size={22} color="#FFFFFF" />
+          </Pressable>
+        }
+      />
 
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 32 }}

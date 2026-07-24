@@ -37,6 +37,18 @@ export class InvoicesController {
     return this.invoices.list(driverId, { status });
   }
 
+  /**
+   * Declaree avant `:id` : sinon « billable-courses » serait pris pour un
+   * identifiant et rejete par ParseUUIDPipe.
+   */
+  @Get('billable-courses')
+  billableCourses(
+    @CurrentDriverId() driverId: string,
+    @Query('clientId') clientId?: string,
+  ) {
+    return this.invoices.listBillableCourses(driverId, clientId);
+  }
+
   @Get(':id')
   findOne(
     @CurrentDriverId() driverId: string,
