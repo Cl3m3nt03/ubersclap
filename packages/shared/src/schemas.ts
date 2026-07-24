@@ -330,6 +330,26 @@ export const invoiceSchema = z.object({
 export type Invoice = z.infer<typeof invoiceSchema>;
 export type InvoiceLine = z.infer<typeof invoiceLineSchema>;
 
+/**
+ * Facture telle qu'affichee dans la liste.
+ *
+ * La liste n'a pas besoin des lignes — elle affiche un numero, un client, un
+ * total et un statut. Charger les lignes de chaque facture pour ne montrer
+ * qu'un total serait une jointure inutile a chaque ouverture de l'ecran.
+ */
+export const invoiceSummarySchema = z.object({
+  id: uuidSchema,
+  invoiceNumber: z.string(),
+  status: z.enum(INVOICE_STATUSES),
+  issuedAt: instantSchema.nullable(),
+  dueAt: instantSchema.nullable(),
+  totalInclTaxCents: centsSchema,
+  clientName: z.string(),
+  courseCount: z.number().int(),
+});
+
+export type InvoiceSummary = z.infer<typeof invoiceSummarySchema>;
+
 // ------------------------------------------------------------------- Geo
 
 /**

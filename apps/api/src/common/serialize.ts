@@ -2,12 +2,16 @@ import type {
   ClientRecord,
   Course,
   CourseWithClient,
+  Invoice,
+  InvoiceSummary,
 } from '@ubersclap/shared';
 
-import { clients, courses } from '../database/schema';
+import { clients, courses, invoices, invoiceLines } from '../database/schema';
 
 type ClientRow = typeof clients.$inferSelect;
 type CourseRow = typeof courses.$inferSelect;
+type InvoiceRow = typeof invoices.$inferSelect;
+type InvoiceLineRow = typeof invoiceLines.$inferSelect;
 
 /**
  * Traduction ligne SQL → ressource d'API.
@@ -83,5 +87,52 @@ export function serializeCourseWithClient(
       lastName: client.lastName,
       phone: client.phone,
     },
+  };
+}
+
+export function serializeInvoice(
+  row: InvoiceRow,
+  lines: InvoiceLineRow[],
+): Invoice {
+  return {
+    id: row.id,
+    driverId: row.driverId,
+    clientId: row.clientId,
+    invoiceNumber: row.invoiceNumber,
+    status: row.status,
+    // Une facture emise porte toujours ces dates ; le `!` reste defensif face a
+    // une ligne heritee d'un brouillon jamais emis.
+    issuedAt: (row.issuedAt ?? row.createdAt).toISOString(),
+    dueAt: (row.dueAt ?? row.createdAt).toISOString(),
+    paidAt: row.paidAt?.toISOString() ?? null,
+    totalExclTaxCents: row.totalExclTaxCents,
+    taxCents: row.taxCents,
+    totalInclTaxCents: row.totalInclTaxCents,
+    lines: lines.map((line) => ({
+      id: line.id,
+      courseId: line.courseId,
+      label: line.label,
+      quantity: line.quantity,
+      unitPriceExclTaxCents: line.unitPriceExclTaxCents,
+      taxRate: line.taxRate,
+    })),
+    pdfUrl: row.pdfUrl,
+  };
+}
+
+export function serializeInvoiceSummary(
+  row: InvoiceRow,
+  clientName: string,
+  courseCount: number,
+): InvoiceSummary {
+  return {
+    id: row.id,
+    invoiceNumber: row.invoiceNumber,
+    status: row.status,
+    issuedAt: row.issuedAt?.toISOString() ?? null,
+    dueAt: row.dueAt?.toISOString() ?? null,
+    totalInclTaxCents: row.totalInclTaxCents,
+    clientName,
+    courseCount,
   };
 }

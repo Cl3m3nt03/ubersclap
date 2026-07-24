@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { ClientsModule } from './clients/clients.module';
 import { CoursesModule } from './courses/courses.module';
 import { GeoModule } from './geo/geo.module';
+import { InvoicesModule } from './invoices/invoices.module';
 import { AuthGuard } from './auth/auth.guard';
 import { HealthController } from './health.controller';
 
@@ -23,6 +24,7 @@ import { HealthController } from './health.controller';
     ClientsModule,
     CoursesModule,
     GeoModule,
+    InvoicesModule,
   ],
   controllers: [HealthController],
   providers: [
