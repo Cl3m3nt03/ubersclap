@@ -8,7 +8,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { router } from 'expo-router';
-import { Search, UserPlus, Users } from 'lucide-react-native';
+import { Search, UserPlus, Users, Plus } from 'lucide-react-native';
 import { initials, light, touch } from '@ubersclap/shared';
 
 import { PageHeader } from '@/components/PageHeader';
@@ -41,6 +41,21 @@ export default function ClientsScreen() {
           clients.length > 0
             ? `${clients.length} enregistré${clients.length > 1 ? 's' : ''}`
             : undefined
+        }
+        right={
+          <Pressable
+            onPress={() => router.push('/client/nouveau')}
+            accessibilityRole="button"
+            accessibilityLabel="Nouveau client"
+            className="items-center justify-center rounded-full"
+            style={{
+              width: touch.secondary,
+              height: touch.secondary,
+              backgroundColor: light.indigo,
+            }}
+          >
+            <Plus size={22} color="#FFFFFF" />
+          </Pressable>
         }
       />
 
@@ -89,10 +104,10 @@ export default function ClientsScreen() {
               hint={
                 search
                   ? `Rien ne correspond à « ${search} ».`
-                  : "Le répertoire se remplit tout seul : créez une course, le passager y est ajouté."
+                  : 'Ajoutez un client, ou créez une course : le passager y est ajouté automatiquement.'
               }
-              actionLabel={search ? undefined : 'Créer une course'}
-              onAction={search ? undefined : () => router.push('/course/nouvelle')}
+              actionLabel={search ? undefined : 'Ajouter un client'}
+              onAction={search ? undefined : () => router.push('/client/nouveau')}
             />
           </Card>
         ) : (

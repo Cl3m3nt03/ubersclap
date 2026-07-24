@@ -1,7 +1,7 @@
 import { View, Text, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { AlertTriangle, Pencil } from 'lucide-react-native';
-import { initials, light, VAT_REGIME_LABEL } from '@ubersclap/shared';
+import { initials, light, PLAN_LABEL, VAT_REGIME_LABEL } from '@ubersclap/shared';
 
 import { PageHeader } from '@/components/PageHeader';
 import { Card } from '@/components/Card';
@@ -49,6 +49,16 @@ export default function ProfileScreen() {
               <Text className="font-medium text-[14px] text-ink-muted">
                 {me.email}
               </Text>
+              {me.plan ? (
+                <View
+                  className="mt-1.5 self-start rounded-sm px-2 py-0.5"
+                  style={{ backgroundColor: '#EEF2FF' }}
+                >
+                  <Text className="font-extra text-[11px] uppercase tracking-widest text-indigo">
+                    Abonnement {PLAN_LABEL[me.plan.tier]}
+                  </Text>
+                </View>
+              ) : null}
             </View>
           </Card>
 

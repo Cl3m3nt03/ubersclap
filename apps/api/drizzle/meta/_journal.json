@@ -8,6 +8,13 @@
       "when": 1784740533033,
       "tag": "0000_strong_big_bertha",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1784892023579,
+      "tag": "0001_dusty_radioactive_man",
+      "breakpoints": true
     }
   ]
 }

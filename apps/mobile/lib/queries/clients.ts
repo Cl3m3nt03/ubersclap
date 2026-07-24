@@ -40,3 +40,20 @@ export function useCreateClient() {
     mutationKey: mutationKeys.createClient,
   });
 }
+
+/**
+ * Met a jour une fiche client.
+ *
+ * Appel direct plutot que file offline : corriger un numero ou un email est un
+ * geste ponctuel, fait en ligne depuis la fiche, pas une saisie a enfiler sans
+ * reseau. L'ecran invalide ensuite la fiche et la liste.
+ */
+export function updateClient(
+  id: string,
+  patch: Partial<Omit<CreateClientInput, 'id'>>,
+): Promise<ClientRecord> {
+  return apiRequest<ClientRecord>(`/clients/${id}`, {
+    method: 'PATCH',
+    body: patch,
+  });
+}

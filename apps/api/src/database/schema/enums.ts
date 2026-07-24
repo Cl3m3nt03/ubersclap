@@ -69,3 +69,21 @@ export const fuelType = pgEnum('fuel_type', [
   'HYBRID',
   'ELECTRIC',
 ]);
+
+/**
+ * Offre d'abonnement — ADR-015.
+ *
+ * SOLO : un chauffeur independant, une organisation d'une personne.
+ * BUSINESS : une societe de transport, plusieurs chauffeurs sous un
+ * administrateur. La distinction est posee des maintenant pour que toute
+ * l'architecture soit pensee autour, meme si le BUSINESS n'est pas encore
+ * developpe.
+ */
+export const planTier = pgEnum('plan_tier', ['SOLO', 'BUSINESS']);
+
+export const subscriptionStatus = pgEnum('subscription_status', [
+  'TRIALING',
+  'ACTIVE',
+  'PAST_DUE',
+  'CANCELLED',
+]);
