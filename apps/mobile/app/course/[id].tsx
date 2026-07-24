@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { onlineManager } from '@tanstack/react-query';
+import { onlineManager, useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, ArrowDown, MapPin } from 'lucide-react-native';
+import { ArrowLeft, ArrowDown, MapPin, FileText } from 'lucide-react-native';
 import {
   COURSE_STATUS_LABEL,
   COURSE_TRANSITION_LABEL,
@@ -21,6 +21,9 @@ import { MoneyText } from '@/components/MoneyText';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ErrorState, LoadingState } from '@/components/QueryState';
 import { useCourse, useTransitionCourse } from '@/lib/queries/courses';
+import { createInvoice } from '@/lib/queries/invoices';
+import { queryKeys } from '@/lib/queries/keys';
+import { uuidv7 } from '@/lib/uuid';
 
 /**
  * Fiche d'une course.
@@ -34,7 +37,48 @@ export default function CourseDetailScreen() {
   const insets = useSafeAreaInsets();
   const { data: course, isPending, error, refetch } = useCourse(id);
   const transition = useTransitionCourse();
+  const queryClient = useQueryClient();
   const [failure, setFailure] = useState<string | null>(null);
+  const [invoicing, setInvoicing] = useState(false);
+
+  /**
+   * Emet une facture pour cette seule course.
+   *
+   * En ligne uniquement : l'emission attribue un numero legal cote serveur
+   * (ADR-012), elle ne se met pas en file offline. Le serveur refuse une course
+   * deja facturee, donc un double appui produit un message clair, pas un doublon.
+   */
+  async function invoiceCourse() {
+    if (!course || invoicing) return;
+    if (!onlineManager.isOnline()) {
+      Alert.alert(
+        'Connexion requise',
+        'La facturation attribue un numéro légal : elle nécessite une connexion.',
+      );
+      return;
+    }
+
+    setInvoicing(true);
+    try {
+      const invoice = await createInvoice({
+        id: uuidv7(),
+        clientId: course.clientId,
+        courseIds: [course.id],
+      });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.invoices() });
+      Alert.alert('Facture émise', `Facture ${invoice.invoiceNumber} créée.`, [
+        { text: 'Voir les factures', onPress: () => router.push('/(tabs)/factures') },
+        { text: 'Fermer', style: 'cancel' },
+      ]);
+    } catch (cause) {
+      Alert.alert(
+        'Facturation impossible',
+        cause instanceof Error ? cause.message : 'Réessayez dans un instant.',
+      );
+    } finally {
+      setInvoicing(false);
+    }
+  }
 
   async function apply(to: CourseStatus) {
     setFailure(null);
@@ -185,6 +229,8 @@ export default function CourseDetailScreen() {
             busy={transition.isPending}
             onAdvance={apply}
             onCancel={confirmCancel}
+            onInvoice={invoiceCourse}
+            invoicing={invoicing}
           />
         </>
       )}
@@ -203,11 +249,15 @@ function TransitionBar({
   busy,
   onAdvance,
   onCancel,
+  onInvoice,
+  invoicing,
 }: {
   status: CourseStatus;
   busy: boolean;
   onAdvance: (to: CourseStatus) => void;
   onCancel: () => void;
+  onInvoice: () => void;
+  invoicing: boolean;
 }) {
   const insets = useSafeAreaInsets();
   const available = nextStatuses(status);
@@ -216,16 +266,26 @@ function TransitionBar({
   if (available.length === 0) {
     return (
       <View
-        className="border-t bg-surface px-6 pt-4"
+        className="gap-3 border-t bg-surface px-6 pt-4"
         style={{
           borderTopColor: light.border,
           paddingBottom: Math.max(insets.bottom, 16),
         }}
       >
-        <Text className="text-center font-medium text-[14px] text-ink-faint">
-          Course {COURSE_STATUS_LABEL[status].toLowerCase()} — plus aucune action
-          possible.
-        </Text>
+        {/* Une course terminee est le seul etat facturable (ADR-005). */}
+        {status === 'COMPLETED' ? (
+          <Button
+            label="Facturer cette course"
+            icon={<FileText size={18} color="#FFFFFF" />}
+            loading={invoicing}
+            onPress={onInvoice}
+          />
+        ) : (
+          <Text className="text-center font-medium text-[14px] text-ink-faint">
+            Course {COURSE_STATUS_LABEL[status].toLowerCase()} — plus aucune action
+            possible.
+          </Text>
+        )}
       </View>
     );
   }
