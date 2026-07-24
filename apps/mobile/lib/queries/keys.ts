@@ -13,6 +13,7 @@ export const queryKeys = {
   client: (id: string) => ['client', id] as const,
   geoAutocomplete: (query: string) => ['geo', 'autocomplete', query] as const,
   invoices: () => ['invoices'] as const,
+  billableCourses: () => ['invoices', 'billable-courses'] as const,
   me: () => ['me'] as const,
   expenses: (filters?: { from?: string; to?: string }) =>
     ['expenses', filters ?? {}] as const,
