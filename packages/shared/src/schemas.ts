@@ -319,3 +319,30 @@ export const invoiceSchema = z.object({
 
 export type Invoice = z.infer<typeof invoiceSchema>;
 export type InvoiceLine = z.infer<typeof invoiceLineSchema>;
+
+// ------------------------------------------------------------------- Geo
+
+/**
+ * Geocodage et calcul d'itineraire.
+ *
+ * Le fournisseur (OpenStreetMap aujourd'hui, Google demain) vit derriere l'API,
+ * jamais dans le bundle mobile : une cle d'API embarquee dans une app est une
+ * cle publiee. Le mobile ne connait donc que ces deux formes, stables quel que
+ * soit le fournisseur choisi cote serveur.
+ */
+export const geoSuggestionSchema = z.object({
+  /** Libelle affichable, ex. « 12 Rue de Rivoli, Paris ». */
+  label: z.string(),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+});
+
+export type GeoSuggestion = z.infer<typeof geoSuggestionSchema>;
+
+/** Resultat d'un calcul d'itineraire entre deux points. */
+export const routeResultSchema = z.object({
+  distanceMeters: z.number().int().nonnegative(),
+  durationMinutes: z.number().int().nonnegative(),
+});
+
+export type RouteResult = z.infer<typeof routeResultSchema>;

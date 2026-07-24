@@ -21,11 +21,13 @@ import {
   initials,
   light,
   touch,
+  type Address,
   type CourseType,
 } from '@ubersclap/shared';
 
 import { Button } from '@/components/Button';
 import { ContactPicker, type PickedContact } from '@/components/ContactPicker';
+import { AddressField } from '@/components/AddressField';
 import { DateTimeField } from '@/components/DateTimeField';
 import { useClients } from '@/lib/queries/clients';
 import { useCreateCourse } from '@/lib/queries/courses';
@@ -55,8 +57,8 @@ export default function NewCourseScreen() {
   const [phone, setPhone] = useState('');
 
   const [scheduledAt, setScheduledAt] = useState(nextRoundHour);
-  const [pickup, setPickup] = useState('');
-  const [destination, setDestination] = useState('');
+  const [pickup, setPickup] = useState<Address>({ label: '' });
+  const [destination, setDestination] = useState<Address>({ label: '' });
   const [price, setPrice] = useState('');
   const [type, setType] = useState<CourseType>('ONE_WAY');
   const [error, setError] = useState<string | null>(null);
@@ -85,8 +87,8 @@ export default function NewCourseScreen() {
 
   const canSubmit =
     (clientId !== null || hasPassenger) &&
-    pickup.trim().length > 0 &&
-    destination.trim().length > 0 &&
+    pickup.label.trim().length > 0 &&
+    destination.label.trim().length > 0 &&
     priceCents !== null &&
     priceCents > 0;
 
@@ -106,8 +108,8 @@ export default function NewCourseScreen() {
             phone: phone.trim(),
           },
       type,
-      pickup: { label: pickup.trim() },
-      destination: { label: destination.trim() },
+      pickup: { ...pickup, label: pickup.label.trim() },
+      destination: { ...destination, label: destination.label.trim() },
       scheduledAt: scheduledAt.toISOString(),
       timezone: deviceTimezone(),
       priceInclTaxCents: priceCents ?? 0,
@@ -268,9 +270,9 @@ export default function NewCourseScreen() {
         <DateTimeField value={scheduledAt} onChange={setScheduledAt} />
 
         <FieldLabel>Départ</FieldLabel>
-        <Input
+        <AddressField
           value={pickup}
-          onChangeText={setPickup}
+          onChange={setPickup}
           placeholder="Adresse de départ"
         />
 
@@ -278,9 +280,9 @@ export default function NewCourseScreen() {
           <ArrowDown size={20} color={light.inkFaint} />
         </View>
 
-        <Input
+        <AddressField
           value={destination}
-          onChangeText={setDestination}
+          onChange={setDestination}
           placeholder="Adresse d'arrivée"
         />
 
