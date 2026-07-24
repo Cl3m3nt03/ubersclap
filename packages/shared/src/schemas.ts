@@ -167,6 +167,14 @@ export const createCourseSchema = z
       'Le prix ne peut pas être négatif',
     ),
 
+    /**
+     * Distance et duree de l'itineraire, calculees cote serveur (module geo)
+     * quand les deux adresses sont geocodees. Optionnelles : une adresse tapee
+     * sans etre resolue n'a pas d'itineraire, et la course reste valable.
+     */
+    distanceMeters: z.number().int().nonnegative().optional(),
+    durationMinutes: z.number().int().nonnegative().optional(),
+
     notes: z.string().trim().optional(),
   })
   .refine((data) => Boolean(data.clientId) || Boolean(data.passenger), {
@@ -214,6 +222,8 @@ export const updateCourseSchema = z.object({
   luggage: z.number().int().min(0).max(20).optional(),
   childSeat: z.boolean().optional(),
   priceInclTaxCents: centsSchema.nonnegative().optional(),
+  distanceMeters: z.number().int().nonnegative().optional(),
+  durationMinutes: z.number().int().nonnegative().optional(),
   notes: z.string().trim().nullable().optional(),
 });
 
