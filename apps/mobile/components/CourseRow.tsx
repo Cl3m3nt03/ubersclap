@@ -1,5 +1,5 @@
 import { View, Text, Pressable } from 'react-native';
-import { ArrowRight } from 'lucide-react-native';
+import { ArrowRight, TriangleAlert } from 'lucide-react-native';
 import {
   formatTime,
   light,
@@ -33,17 +33,24 @@ export type CourseRowData = {
 export function CourseRow({
   course,
   onPress,
+  conflict = false,
 }: {
   course: CourseRowData;
   onPress?: () => void;
+  /** La course en chevauche une autre : le chauffeur ne peut pas etre aux deux. */
+  conflict?: boolean;
 }) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`Course de ${formatTime(course.scheduledAt)}, ${course.clientName}, ${course.pickup} vers ${course.destination}`}
+      accessibilityLabel={`Course de ${formatTime(course.scheduledAt)}, ${course.clientName}, ${course.pickup} vers ${course.destination}${conflict ? ', en conflit horaire' : ''}`}
       className="flex-row items-center gap-3 rounded-lg bg-surface px-4 py-3.5"
-      style={{ minHeight: touch.primary }}
+      style={{
+        minHeight: touch.primary,
+        borderWidth: conflict ? 1 : 0,
+        borderColor: conflict ? light.danger : 'transparent',
+      }}
     >
       {/* Heure — toujours a gauche, toujours au meme endroit. */}
       <View className="items-center" style={{ width: 52 }}>
@@ -78,9 +85,33 @@ export function CourseRow({
 
       <View className="items-end gap-1.5">
         <MoneyText cents={course.priceCents} className="font-extra text-[15px] text-ink" />
-        {course.pendingSync ? <PendingSyncChip /> : <StatusBadge status={course.status} />}
+        {conflict ? (
+          <ConflictChip />
+        ) : course.pendingSync ? (
+          <PendingSyncChip />
+        ) : (
+          <StatusBadge status={course.status} />
+        )}
       </View>
     </Pressable>
+  );
+}
+
+/** Chevauchement horaire : deux courses sur le meme creneau. */
+function ConflictChip() {
+  return (
+    <View
+      className="flex-row items-center gap-1 rounded-sm px-2.5 py-1"
+      style={{ backgroundColor: '#FEF2F2' }}
+    >
+      <TriangleAlert size={12} color={light.danger} />
+      <Text
+        className="font-extra text-[12px] uppercase tracking-wider"
+        style={{ color: light.danger }}
+      >
+        Conflit
+      </Text>
+    </View>
   );
 }
 
