@@ -350,6 +350,69 @@ export const invoiceSummarySchema = z.object({
 
 export type InvoiceSummary = z.infer<typeof invoiceSummarySchema>;
 
+// -------------------------------------------------------------- Depenses
+
+export const EXPENSE_CATEGORIES = [
+  'FUEL',
+  'TOLL',
+  'PARKING',
+  'MAINTENANCE',
+  'INSURANCE',
+  'OTHER',
+] as const;
+
+export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
+
+export const EXPENSE_CATEGORY_LABEL: Record<ExpenseCategory, string> = {
+  FUEL: 'Carburant',
+  TOLL: 'Péage',
+  PARKING: 'Stationnement',
+  MAINTENANCE: 'Entretien',
+  INSURANCE: 'Assurance',
+  OTHER: 'Autre',
+};
+
+export const createExpenseSchema = z.object({
+  id: uuidSchema,
+  category: z.enum(EXPENSE_CATEGORIES),
+  /** Montant TTC en centimes. Une depense est toujours strictement positive. */
+  amountCents: centsSchema.positive('Le montant doit être supérieur à 0'),
+  description: z.string().trim().max(500).optional(),
+  spentAt: instantSchema,
+  /** Rattachement facultatif a une course ou un vehicule. */
+  courseId: uuidSchema.optional(),
+  vehicleId: uuidSchema.optional(),
+});
+
+export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;
+
+export const updateExpenseSchema = z.object({
+  category: z.enum(EXPENSE_CATEGORIES).optional(),
+  amountCents: centsSchema.positive().optional(),
+  description: z.string().trim().max(500).nullable().optional(),
+  spentAt: instantSchema.optional(),
+  courseId: uuidSchema.nullable().optional(),
+  vehicleId: uuidSchema.nullable().optional(),
+});
+
+export type UpdateExpenseInput = z.infer<typeof updateExpenseSchema>;
+
+export const expenseSchema = z.object({
+  id: uuidSchema,
+  driverId: uuidSchema,
+  courseId: uuidSchema.nullable(),
+  vehicleId: uuidSchema.nullable(),
+  category: z.enum(EXPENSE_CATEGORIES),
+  amountCents: centsSchema,
+  description: z.string().nullable(),
+  spentAt: instantSchema,
+  receiptUrl: z.string().nullable(),
+  createdAt: instantSchema,
+  updatedAt: instantSchema,
+});
+
+export type Expense = z.infer<typeof expenseSchema>;
+
 // ------------------------------------------------------------------- Geo
 
 /**

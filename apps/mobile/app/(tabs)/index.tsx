@@ -7,6 +7,7 @@ import {
   FileText,
   Users,
   CarFront,
+  Wallet,
 } from 'lucide-react-native';
 import {
   formatLongDate,
@@ -119,6 +120,12 @@ export default function DashboardScreen() {
             label="Clients"
             color="#F43F5E"
             onPress={() => router.push('/clients')}
+          />
+          <QuickAction
+            icon={<Wallet size={22} color="#FFFFFF" />}
+            label="Dépenses"
+            color="#7C3AED"
+            onPress={() => router.push('/depenses')}
           />
         </View>
 
