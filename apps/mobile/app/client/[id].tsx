@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, Pressable, Linking } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Phone, Mail, CarFront } from 'lucide-react-native';
+import { ArrowLeft, Phone, Mail, CarFront, Pencil } from 'lucide-react-native';
 import {
   CLIENT_CATEGORY_LABEL,
   formatShortDate,
@@ -52,9 +52,21 @@ export default function ClientDetailScreen() {
         >
           <ArrowLeft size={20} color={light.ink} />
         </Pressable>
-        <Text className="font-extra text-[24px] tracking-tight text-ink">
+        <Text className="flex-1 font-extra text-[24px] tracking-tight text-ink">
           Client
         </Text>
+        {client ? (
+          <Pressable
+            onPress={() => router.push(`/client/edit/${id}`)}
+            accessibilityRole="button"
+            accessibilityLabel="Modifier le client"
+            hitSlop={12}
+            className="h-11 w-11 items-center justify-center rounded-full"
+            style={{ backgroundColor: light.border }}
+          >
+            <Pencil size={18} color={light.ink} />
+          </Pressable>
+        ) : null}
       </View>
 
       {isPending ? (
