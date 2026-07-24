@@ -11,6 +11,7 @@ export const queryKeys = {
   course: (id: string) => ['course', id] as const,
   clients: (search?: string) => ['clients', search ?? ''] as const,
   client: (id: string) => ['client', id] as const,
+  geoAutocomplete: (query: string) => ['geo', 'autocomplete', query] as const,
 };
 
 /**
