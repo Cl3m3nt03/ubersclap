@@ -31,7 +31,13 @@
       "expo-splash-screen",
       "expo-secure-store",
       "@react-native-community/datetimepicker",
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "Uber's Clap accède à vos contacts pour ajouter un passager sans ressaisir son numéro."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

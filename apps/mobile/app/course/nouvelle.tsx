@@ -11,7 +11,7 @@ import {
 import { router } from 'expo-router';
 import { onlineManager } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { X, ArrowDown, Check, UserPlus } from 'lucide-react-native';
+import { X, ArrowDown, Check, UserPlus, BookUser } from 'lucide-react-native';
 import {
   COURSE_TYPES,
   COURSE_TYPE_LABEL,
@@ -25,6 +25,7 @@ import {
 } from '@ubersclap/shared';
 
 import { Button } from '@/components/Button';
+import { ContactPicker, type PickedContact } from '@/components/ContactPicker';
 import { DateTimeField } from '@/components/DateTimeField';
 import { useClients } from '@/lib/queries/clients';
 import { useCreateCourse } from '@/lib/queries/courses';
@@ -59,6 +60,18 @@ export default function NewCourseScreen() {
   const [price, setPrice] = useState('');
   const [type, setType] = useState<CourseType>('ONE_WAY');
   const [error, setError] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  // Un contact choisi ne fait que pre-remplir les champs, qui restent
+  // editables : le repertoire du telephone formate les numeros de mille facons,
+  // et le chauffeur doit pouvoir corriger avant d'enregistrer.
+  function fillFromContact(contact: PickedContact) {
+    setClientId(null);
+    setFirstName(contact.firstName);
+    setLastName(contact.lastName);
+    setPhone(contact.phone);
+    setPickerOpen(false);
+  }
 
   // Les habitues d'abord : au-dela d'une poignee de pastilles, la selection
   // devient plus lente que la saisie directe du passager.
@@ -197,6 +210,24 @@ export default function NewCourseScreen() {
 
         {clientId === null ? (
           <View className="mt-3 gap-3">
+            <Pressable
+              onPress={() => setPickerOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Choisir dans mes contacts"
+              className="flex-row items-center justify-center gap-2 rounded-md"
+              style={{
+                height: touch.secondary,
+                borderWidth: 1,
+                borderColor: light.indigo,
+                backgroundColor: '#EEF2FF',
+              }}
+            >
+              <BookUser size={18} color={light.indigo} />
+              <Text className="font-bold text-[15px] text-indigo">
+                Choisir dans mes contacts
+              </Text>
+            </Pressable>
+
             <View className="flex-row items-center gap-2">
               <UserPlus size={16} color={light.inkFaint} />
               <Text className="font-medium text-[13px] text-ink-faint">
@@ -320,6 +351,12 @@ export default function NewCourseScreen() {
           onPress={submit}
         />
       </View>
+
+      <ContactPicker
+        visible={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={fillFromContact}
+      />
     </KeyboardAvoidingView>
   );
 }
