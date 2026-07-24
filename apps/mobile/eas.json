@@ -11,6 +11,7 @@
     },
     "preview": {
       "distribution": "internal",
+      "android": { "buildType": "apk" },
       "ios": { "simulator": false },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://REMPLACER-par-URL-API-publique/v1"
