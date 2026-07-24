@@ -23,7 +23,14 @@ import type {
 
 import { DATABASE } from '../database/database.module';
 import type { Database } from '../database/client';
-import { users, driverProfiles, refreshTokens } from '../database/schema';
+import {
+  users,
+  driverProfiles,
+  refreshTokens,
+  organizations,
+  organizationMemberships,
+  subscriptions,
+} from '../database/schema';
 
 const ACCESS_TOKEN_TTL = '15m';
 const REFRESH_TOKEN_TTL_DAYS = 30;
@@ -66,8 +73,9 @@ export class AuthService {
     const userId = uuidv7();
     const passwordHash = await hash(input.password, ARGON2_OPTIONS);
 
-    // Le compte et son profil professionnel sont crees ensemble : un
-    // utilisateur sans profil casserait la generation de facture plus tard.
+    // Le compte, son profil professionnel et son organisation sont crees
+    // ensemble : un utilisateur sans profil casserait la facturation, et sans
+    // organisation il n'aurait pas d'abonnement — donc pas de tier a verifier.
     await this.db.transaction(async (tx) => {
       await tx.insert(users).values({
         id: userId,
@@ -85,6 +93,28 @@ export class AuthService {
       await tx.insert(driverProfiles).values({
         id: uuidv7(),
         userId,
+      });
+
+      // Organisation d'une personne : le compte nait en SOLO, chauffeur ADMIN
+      // de sa propre organisation. Le modele est le meme qu'en BUSINESS, ce qui
+      // evite un cas particulier « compte sans organisation » (ADR-015).
+      const organizationId = uuidv7();
+      await tx.insert(organizations).values({
+        id: organizationId,
+        name: `${input.firstName} ${input.lastName}`,
+        ownerUserId: userId,
+      });
+      await tx.insert(organizationMemberships).values({
+        id: uuidv7(),
+        organizationId,
+        userId,
+        role: 'ADMIN',
+      });
+      await tx.insert(subscriptions).values({
+        id: uuidv7(),
+        organizationId,
+        tier: 'SOLO',
+        status: 'TRIALING',
       });
     });
 
@@ -215,6 +245,30 @@ export class AuthService {
       where: eq(driverProfiles.userId, id),
     });
 
+    // Organisation + abonnement. Un compte cree apres ADR-015 en a toujours ;
+    // le `?? null` couvre les comptes anterieurs, qui ne doivent pas casser.
+    const membership = await this.db.query.organizationMemberships.findFirst({
+      where: eq(organizationMemberships.userId, id),
+    });
+
+    let organization: Me['organization'] = null;
+    let plan: Me['plan'] = null;
+
+    if (membership) {
+      const org = await this.db.query.organizations.findFirst({
+        where: eq(organizations.id, membership.organizationId),
+      });
+      const sub = await this.db.query.subscriptions.findFirst({
+        where: eq(subscriptions.organizationId, membership.organizationId),
+      });
+      if (org) {
+        organization = { id: org.id, name: org.name, role: membership.role };
+      }
+      if (sub) {
+        plan = { tier: sub.tier, status: sub.status };
+      }
+    }
+
     return {
       ...user,
       phone: record?.phone ?? null,
@@ -228,6 +282,8 @@ export class AuthService {
         address: profile?.address ?? null,
         logoUrl: profile?.logoUrl ?? null,
       },
+      organization,
+      plan,
     };
   }
 

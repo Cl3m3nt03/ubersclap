@@ -5,6 +5,7 @@
 import { z } from 'zod';
 import { uuidSchema, instantSchema } from './schemas';
 import { VAT_REGIMES, type VatRegime } from './money';
+import { MEMBERSHIP_ROLES, PLAN_TIERS, SUBSCRIPTION_STATUSES } from './plans';
 
 /**
  * Mot de passe : longueur minimale, aucune regle de composition.
@@ -81,9 +82,29 @@ export type DriverProfile = z.infer<typeof driverProfileSchema>;
  * Deux requetes au demarrage pour afficher un seul ecran serait du gaspillage
  * sur une connexion mobile.
  */
+/** Organisation de l'utilisateur et son role. Toujours presente au MVP. */
+export const organizationContextSchema = z.object({
+  id: uuidSchema,
+  name: z.string(),
+  role: z.enum(MEMBERSHIP_ROLES),
+});
+
+export type OrganizationContext = z.infer<typeof organizationContextSchema>;
+
+/** Abonnement de l'organisation. */
+export const planContextSchema = z.object({
+  tier: z.enum(PLAN_TIERS),
+  status: z.enum(SUBSCRIPTION_STATUSES),
+});
+
+export type PlanContext = z.infer<typeof planContextSchema>;
+
 export const meSchema = authUserSchema.extend({
   phone: z.string().nullable(),
   profile: driverProfileSchema,
+  /** Nullable defensif : un compte anterieur au systeme d'orgs n'en a pas. */
+  organization: organizationContextSchema.nullable(),
+  plan: planContextSchema.nullable(),
 });
 
 export type Me = z.infer<typeof meSchema>;
