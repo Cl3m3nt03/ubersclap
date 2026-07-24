@@ -12,6 +12,7 @@ export const queryKeys = {
   clients: (search?: string) => ['clients', search ?? ''] as const,
   client: (id: string) => ['client', id] as const,
   geoAutocomplete: (query: string) => ['geo', 'autocomplete', query] as const,
+  invoices: () => ['invoices'] as const,
 };
 
 /**
