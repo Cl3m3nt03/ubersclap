@@ -531,7 +531,7 @@ la signature, alors que beaucoup la choisiront pour la facture.
 
 # ADR-015 — Tarification
 
-**Statut :** ✅ **Tranché le 2026-07-25** — Solo 9,99 € / Entreprise 39,89 €
+**Statut :** ✅ **Tranché le 2026-07-25** — Solo 9,99 € / Entreprise 39,99 €
 **Ne contredit plus** MONETIZATION.md ni PAYMENT_AND_BILLING.md : la décision
 retient bien 9,99 €, le prix de ces deux documents.
 
@@ -571,7 +571,7 @@ COMPETITIVE_ANALYSIS.md (Indy, Henrri) sont plus chers.
 | Plan       | Tier en base | Prix         | Contenu                                          |
 | ---------- | ------------ | ------------ | ------------------------------------------------ |
 | Solo       | `SOLO`       | 9,99 €/mois  | Clients, courses, planning, dépenses, facturation |
-| Entreprise | `BUSINESS`   | 39,89 €/mois | + multi-chauffeurs, planning partagé, stats équipe |
+| Entreprise | `BUSINESS`   | 39,99 €/mois | + multi-chauffeurs, planning partagé, stats équipe |
 
 Annuel : 2 mois offerts.
 
@@ -610,6 +610,37 @@ comptes stores et les premiers utilisateurs, il est très élevé.
 
 **Action recommandée :** trancher le nom **avant** de commander la direction
 artistique.
+
+## Candidat retenu — « Cadence » (2026-07-25)
+
+Le fond est bon : un mot français comme anglais, court, prononçable, qui parle
+de régularité et de rythme de travail — exactement ce que l'app organise. Aucun
+lien avec Uber, ce qui règle le risque d'origine.
+
+**Ce qu'il reste à vérifier avant d'investir un euro en identité :**
+
+« Cadence » est une marque déposée par Cadence Design Systems, éditeur de
+logiciels américain de premier plan. Le dépôt couvre la classe 9 (logiciels) et
+la classe 42 (services informatiques) — celles-là mêmes dont relève une
+application de gestion pour chauffeurs. Le domaine d'activité diffère, ce qui
+joue en notre faveur, mais l'antériorité et la notoriété comptent dans
+l'appréciation du risque de confusion.
+
+Le mot est par ailleurs très employé dans le logiciel grand public, ce qui pèse
+sur le référencement et sur la disponibilité des noms de domaine courts.
+
+**À faire, dans cet ordre, avant le logo et le domaine :**
+
+1. Recherche d'antériorité INPI (France) et EUIPO (Europe) sur les classes 9 et
+   42. Gratuit, en ligne, une demi-heure.
+2. Vérifier la disponibilité du `.fr` et du `.com`, et des identifiants sur les
+   stores.
+3. Si le risque paraît réel, un nom composé ou modifié (« Cadence VTC »,
+   « Kadence ») le réduit sans perdre l'idée.
+
+Tant que le point 1 n'est pas fait, « Cadence » reste un candidat, pas une
+décision : le coût d'un changement de nom est nul aujourd'hui et très élevé
+après la DA, le domaine et les premiers utilisateurs.
 
 ---
 

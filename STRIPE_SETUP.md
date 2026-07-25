@@ -37,8 +37,8 @@ tranchés le 2026-07-25 (ADR-015), annuel = 2 mois offerts :
 | ---------- | ----------- | ----------- | ------------------------------- |
 | Solo       | mensuel     | 9,99 €      | `STRIPE_PRICE_SOLO_MONTHLY`     |
 | Solo       | annuel      | 99,90 €     | `STRIPE_PRICE_SOLO_YEARLY`      |
-| Entreprise | mensuel     | 39,89 €     | `STRIPE_PRICE_BUSINESS_MONTHLY` |
-| Entreprise | annuel      | 398,90 €    | `STRIPE_PRICE_BUSINESS_YEARLY`  |
+| Entreprise | mensuel     | 39,99 €     | `STRIPE_PRICE_BUSINESS_MONTHLY` |
+| Entreprise | annuel      | 399,90 €    | `STRIPE_PRICE_BUSINESS_YEARLY`  |
 
 Le nom du produit est celui que verra le chauffeur sur son reçu — il dépend
 donc d'ADR-016, encore ouvert.
