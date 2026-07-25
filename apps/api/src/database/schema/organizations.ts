@@ -3,6 +3,7 @@ import {
   uuid,
   varchar,
   timestamp,
+  boolean,
   unique,
   index,
 } from 'drizzle-orm/pg-core';
@@ -76,9 +77,16 @@ export const organizationMemberships = pgTable(
  * Abonnement d'une organisation — une organisation, un abonnement.
  *
  * Le tier pilote les fonctionnalites disponibles (voir la table de permissions
- * dans @cadance/shared). Les champs de facturation externe (Stripe & co.) ne
- * sont pas ici : ils viendront quand le paiement sera branche. Ce qu'on fige
- * maintenant, c'est le tier et l'etat, sur lesquels tout le reste s'appuiera.
+<<<<<<< HEAD
+ * dans @cadance/shared). `tier` et `status` restent la SEULE verite lue par
+ * l'application : les colonnes `stripe_*` ne servent qu'a dialoguer avec le
+ * prestataire de paiement. Interroger Stripe pour savoir si un ecran est
+ * accessible rendrait l'app dependante d'un appel reseau externe a chaque
+ * requete — l'abonnement est donc recopie ici et tenu a jour par webhook.
+ *
+ * Aucun montant, aucune donnee bancaire : les prix vivent dans le tableau de
+ * bord Stripe et les moyens de paiement chez Stripe uniquement (regle de
+ * PAYMENT_AND_BILLING.md, « aucune donnee bancaire stockee »).
  */
 export const subscriptions = pgTable(
   'subscriptions',
@@ -95,6 +103,25 @@ export const subscriptions = pgTable(
     /** Fin de la periode courante (essai ou cycle paye). Null tant qu'illimite. */
     currentPeriodEnd: timestamp('current_period_end', { withTimezone: true }),
 
+    /**
+     * Client chez le prestataire de paiement. Cree au premier passage en
+     * caisse et conserve ensuite : le recreer perdrait l'historique de
+     * facturation et les moyens de paiement enregistres.
+     */
+    stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
+    /** Abonnement en cours chez le prestataire. Null = jamais paye (essai). */
+    stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }),
+    /** Tarif souscrit — sert a retrouver le tier et la periodicite. */
+    stripePriceId: varchar('stripe_price_id', { length: 255 }),
+    /** MONTHLY / YEARLY. Chaine libre : la periodicite vient du tarif Stripe. */
+    billingInterval: varchar('billing_interval', { length: 16 }),
+    /**
+     * Resilie, mais encore actif jusqu'a la fin de la periode payee. Sans ce
+     * drapeau on ne peut pas distinguer « abonne » de « part a la fin du
+     * mois », et l'ecran d'abonnement mentirait au chauffeur.
+     */
+    cancelAtPeriodEnd: boolean('cancel_at_period_end').notNull().default(false),
+
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -102,4 +129,30 @@ export const subscriptions = pgTable(
       .notNull()
       .defaultNow(),
   },
+  (table) => [
+    // Un webhook n'apporte souvent que l'identifiant Stripe : c'est par lui
+    // qu'on retrouve la ligne, donc il doit etre indexe.
+    index('subscriptions_stripe_customer_idx').on(table.stripeCustomerId),
+    index('subscriptions_stripe_subscription_idx').on(table.stripeSubscriptionId),
+  ],
 );
+
+/**
+ * Evenements de facturation deja traites — idempotence des webhooks.
+ *
+ * Stripe garantit la livraison « au moins une fois » : le meme evenement peut
+ * arriver deux fois, et arrive effectivement deux fois en cas de timeout de
+ * notre cote. Sans cette table, un `invoice.paid` rejoue pourrait reappliquer
+ * un changement de tier apres une resiliation arrivee entre-temps.
+ *
+ * La cle primaire est l'identifiant d'evenement Stripe : l'insertion sert de
+ * verrou, un conflit signifie « deja traite, ne rien faire ».
+ */
+export const billingEvents = pgTable('billing_events', {
+  /** `evt_...` fourni par Stripe. */
+  id: varchar('id', { length: 255 }).primaryKey(),
+  type: varchar('type', { length: 120 }).notNull(),
+  processedAt: timestamp('processed_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});

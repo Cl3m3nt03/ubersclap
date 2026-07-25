@@ -1,6 +1,6 @@
 import { View, Text, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { AlertTriangle, Pencil } from 'lucide-react-native';
+import { AlertTriangle, CreditCard, Pencil } from 'lucide-react-native';
 import { initials, light, PLAN_LABEL, VAT_REGIME_LABEL } from '@cadance/shared';
 
 import { PageHeader } from '@/components/PageHeader';
@@ -61,6 +61,15 @@ export default function ProfileScreen() {
               ) : null}
             </View>
           </Card>
+
+          <View className="mt-4">
+            <Button
+              label="Gérer mon abonnement"
+              variant="secondary"
+              icon={<CreditCard size={18} color="#4F46E5" />}
+              onPress={() => router.push('/profil/abonnement')}
+            />
+          </View>
 
           <LegalSection profile={me.profile} />
         </ScrollView>

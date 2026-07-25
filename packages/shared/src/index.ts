@@ -6,5 +6,6 @@ export * from './format';
 export * from './schemas';
 export * from './planning';
 export * from './plans';
+export * from './billing';
 export * from './auth';
 export * from './fixtures/demo';

@@ -1,0 +1,9 @@
+**/node_modules
+**/dist
+**/.expo
+**/.turbo
+.git
+apps/mobile/android
+apps/mobile/ios
+**/*.log
+HANDOFF.md
