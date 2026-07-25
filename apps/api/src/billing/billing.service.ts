@@ -88,7 +88,9 @@ export class BillingService {
         }
 
         try {
-          const price = await this.stripe.requireClient().prices.retrieve(priceId);
+          const price = await this.stripe.run('prices.retrieve', () =>
+            this.stripe.requireClient().prices.retrieve(priceId),
+          );
           options.push({
             tier,
             interval,
@@ -130,6 +132,10 @@ export class BillingService {
     const { organization, subscription, role } =
       await this.resolveOrganization(driverId);
     this.requireBillingAdmin(role);
+    // Avant tout diagnostic sur l'offre : sans prestataire configure, la vraie
+    // cause est l'environnement, pas le tarif demande. Un 400 « offre
+    // indisponible » enverrait chercher le probleme dans le mauvais endroit.
+    this.stripe.requireClient();
 
     const priceId = this.stripe.priceIdFor(input.tier, input.interval);
     if (!priceId) {
@@ -141,19 +147,21 @@ export class BillingService {
 
     const customerId = await this.ensureCustomer(driverId, organization.id, subscription);
 
-    const session = await this.stripe.requireClient().checkout.sessions.create({
-      mode: 'subscription',
-      customer: customerId,
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: this.stripe.returnUrl('success'),
-      cancel_url: this.stripe.returnUrl('cancel'),
-      // L'organisation est portee par la session ET par l'abonnement : le
-      // webhook `customer.subscription.*` ne voit pas la session, il n'a que
-      // ces metadonnees pour savoir quel compte mettre a jour.
-      client_reference_id: organization.id,
-      subscription_data: { metadata: { organizationId: organization.id } },
-      metadata: { organizationId: organization.id },
-    });
+    const session = await this.stripe.run('checkout.sessions.create', () =>
+      this.stripe.requireClient().checkout.sessions.create({
+        mode: 'subscription',
+        customer: customerId,
+        line_items: [{ price: priceId, quantity: 1 }],
+        success_url: this.stripe.returnUrl('success'),
+        cancel_url: this.stripe.returnUrl('cancel'),
+        // L'organisation est portee par la session ET par l'abonnement : le
+        // webhook `customer.subscription.*` ne voit pas la session, il n'a que
+        // ces metadonnees pour savoir quel compte mettre a jour.
+        client_reference_id: organization.id,
+        subscription_data: { metadata: { organizationId: organization.id } },
+        metadata: { organizationId: organization.id },
+      }),
+    );
 
     if (!session.url) {
       // Ne devrait pas arriver en mode `subscription` ; sans URL l'app n'a
@@ -177,20 +185,23 @@ export class BillingService {
   async openPortal(driverId: string): Promise<HostedBillingSession> {
     const { subscription, role } = await this.resolveOrganization(driverId);
     this.requireBillingAdmin(role);
+    this.stripe.requireClient();
 
-    if (!subscription.stripeCustomerId) {
+    const customerId = subscription.stripeCustomerId;
+
+    if (!customerId) {
       throw new BadRequestException({
         message: "Aucun abonnement payant à gérer pour l'instant",
         code: 'NO_BILLING_ACCOUNT',
       });
     }
 
-    const session = await this.stripe
-      .requireClient()
-      .billingPortal.sessions.create({
-        customer: subscription.stripeCustomerId,
+    const session = await this.stripe.run('billingPortal.sessions.create', () =>
+      this.stripe.requireClient().billingPortal.sessions.create({
+        customer: customerId,
         return_url: this.stripe.returnUrl('portal'),
-      });
+      }),
+    );
 
     return { url: session.url };
   }
@@ -203,6 +214,11 @@ export class BillingService {
    * L'insertion dans `billing_events` sert de verrou : Stripe livre « au moins
    * une fois » et rejoue en cas de timeout. Un `invoice.paid` rejoue apres une
    * resiliation rouvrirait l'acces d'un compte resilie.
+   *
+   * En cas d'echec du traitement, la trace est RETIREE avant de propager
+   * l'erreur. Sans cela, l'evenement resterait marque « traite » alors qu'il ne
+   * l'a pas ete : le rejeu de Stripe serait ignore et la mise a jour perdue
+   * definitivement — un paiement encaisse sans changement de tier.
    */
   async handleEvent(event: Stripe.Event): Promise<{ processed: boolean }> {
     const inserted = await this.db
@@ -216,6 +232,17 @@ export class BillingService {
       return { processed: false };
     }
 
+    try {
+      await this.applyEvent(event);
+    } catch (error) {
+      await this.db.delete(billingEvents).where(eq(billingEvents.id, event.id));
+      throw error;
+    }
+
+    return { processed: true };
+  }
+
+  private async applyEvent(event: Stripe.Event): Promise<void> {
     switch (event.type) {
       case 'checkout.session.completed': {
         // La session ne porte pas l'etat de l'abonnement, seulement son
@@ -228,9 +255,10 @@ export class BillingService {
             : session.subscription?.id;
 
         if (subscriptionId) {
-          const subscription = await this.stripe
-            .requireClient()
-            .subscriptions.retrieve(subscriptionId);
+          const subscription = await this.stripe.run(
+            'subscriptions.retrieve',
+            () => this.stripe.requireClient().subscriptions.retrieve(subscriptionId),
+          );
           await this.syncSubscription(subscription);
         }
         break;
@@ -255,9 +283,10 @@ export class BillingService {
             : invoice.subscription?.id;
 
         if (subscriptionId) {
-          const subscription = await this.stripe
-            .requireClient()
-            .subscriptions.retrieve(subscriptionId);
+          const subscription = await this.stripe.run(
+            'subscriptions.retrieve',
+            () => this.stripe.requireClient().subscriptions.retrieve(subscriptionId),
+          );
           await this.syncSubscription(subscription);
         }
         break;
@@ -269,8 +298,6 @@ export class BillingService {
         // retenter Stripe en boucle sur un evenement qui ne nous concerne pas.
         this.logger.log(`Evenement ${event.type} ignore (non gere).`);
     }
-
-    return { processed: true };
   }
 
   /**
@@ -373,11 +400,13 @@ export class BillingService {
       where: eq(users.id, driverId),
     });
 
-    const customer = await this.stripe.requireClient().customers.create({
-      email: user?.email,
-      name: user ? `${user.firstName} ${user.lastName}` : undefined,
-      metadata: { organizationId },
-    });
+    const customer = await this.stripe.run('customers.create', () =>
+      this.stripe.requireClient().customers.create({
+        email: user?.email,
+        name: user ? `${user.firstName} ${user.lastName}` : undefined,
+        metadata: { organizationId },
+      }),
+    );
 
     await this.db
       .update(subscriptions)

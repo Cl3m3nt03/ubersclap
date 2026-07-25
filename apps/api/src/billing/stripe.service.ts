@@ -57,6 +57,35 @@ export class StripeService {
   }
 
   /**
+   * Execute un appel Stripe en traduisant ses erreurs.
+   *
+   * Indispensable : les erreurs du SDK portent un `statusCode`, que Nest
+   * reexpose tel quel. Une cle invalide devenait ainsi un **401** cote client —
+   * or le mobile interprete tout 401 comme une session expiree, tente un
+   * refresh, puis DECONNECTE le chauffeur. Une erreur de configuration de notre
+   * cote ne doit jamais vider la session de l'utilisateur.
+   *
+   * Le message d'origine reste dans les logs serveur et n'est pas renvoye au
+   * client : il contient un fragment de la cle secrete.
+   */
+  async run<T>(label: string, call: () => Promise<T>): Promise<T> {
+    try {
+      return await call();
+    } catch (error) {
+      if (error instanceof Stripe.errors.StripeError) {
+        this.logger.error(
+          `Appel Stripe « ${label} » en echec : ${error.type} — ${error.message}`,
+        );
+        throw new ServiceUnavailableException({
+          message: 'Le service de paiement est momentanément indisponible',
+          code: 'BILLING_PROVIDER_ERROR',
+        });
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Identifiant du tarif pour une offre, lu dans l'environnement.
    *
    * Les tarifs ne sont pas dans le code : ADR-015 n'est pas tranchee et les

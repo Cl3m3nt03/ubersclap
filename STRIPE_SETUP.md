@@ -125,6 +125,11 @@ profond ne se rouvre pas dans Expo Go de la même façon que dans un build natif
 7. Rejouer deux fois le même événement → le second est ignoré (table
    `billing_events`, livraison « au moins une fois » de Stripe).
 
+Si Stripe est injoignable ou la clé invalide, les routes répondent `503
+BILLING_PROVIDER_ERROR` — jamais 401. Un 401 serait interprété par le mobile
+comme une session expirée et déconnecterait le chauffeur pour une erreur de
+configuration serveur.
+
 ## 7. Stores — à savoir avant publication
 
 Apple et Google exigent leur achat intégré pour du contenu numérique consommé
