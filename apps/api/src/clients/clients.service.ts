@@ -103,6 +103,20 @@ export class ClientsService {
     return record;
   }
 
+  /**
+   * Creation d'un client, rejouable.
+   *
+   * L'identifiant vient du mobile (ADR-011) : il est genere au moment de la
+   * saisie, avant tout reseau. Une meme creation peut donc arriver deux fois
+   * avec une cle d'idempotence differente — file offline rejouee apres une
+   * reinstallation, ou cache purge. L'`Idempotency-Key` ne couvre pas ce cas,
+   * puisque la cle a change.
+   *
+   * `onConflictDoNothing` puis relecture : la seconde arrivee renvoie la ligne
+   * existante au lieu d'une violation de cle primaire remontee en 500. Le
+   * chauffeur voyait une erreur illisible sur une action qui avait deja
+   * abouti.
+   */
   async create(driverId: string, input: CreateClientInput) {
     const [created] = await this.db
       .insert(clients)
@@ -117,9 +131,16 @@ export class ClientsService {
         category: input.category,
         notes: input.notes,
       })
+      .onConflictDoNothing({ target: clients.id })
       .returning();
 
-    return serializeClient(created);
+    if (created) return serializeClient(created);
+
+    // Deja cree : on renvoie l'existant, mais seulement s'il appartient bien au
+    // chauffeur. Un identifiant appartenant a un autre compte ne doit rien
+    // reveler — c'est un conflit, pas une lecture.
+    const existing = await this.findRow(driverId, input.id);
+    return serializeClient(existing);
   }
 
   async update(driverId: string, id: string, patch: Partial<CreateClientInput>) {

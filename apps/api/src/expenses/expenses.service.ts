@@ -49,7 +49,14 @@ export class ExpensesService {
         description: input.description,
         spentAt: new Date(input.spentAt),
       })
+      .onConflictDoNothing({ target: expenses.id })
       .returning();
+
+    // Meme creation rejouee avec une autre cle d'idempotence : on renvoie la
+    // depense existante au lieu d'un 500. Voir ClientsService.create.
+    if (!created) {
+      return serializeExpense(await this.findRow(driverId, input.id));
+    }
 
     return serializeExpense(created);
   }
