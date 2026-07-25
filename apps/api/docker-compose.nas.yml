@@ -1,0 +1,123 @@
+# Déploiement Cadance API sur le NAS (Proximité), à côté des autres sites de
+# /volume1/docker/sites. Modèle repris de Proximite/docker-compose.yml.
+#
+# Usage sur le NAS, depuis /volume1/docker/sites/cadance :
+#   docker compose -f apps/api/docker-compose.nas.yml --env-file apps/api/.env up -d --build
+#
+# Nginx Proxy Manager fait ensuite le HTTPS : proxy host pointant vers
+# http://<IP-du-NAS>:3021 (ou le nom du conteneur si NPM est sur le même
+# réseau docker — voir note réseau en bas de fichier).
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: cadance-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cadance}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cadance}
+      POSTGRES_DB: ${POSTGRES_DB:-cadance}
+    volumes:
+      - cadance-db-data:/var/lib/postgresql/data
+    networks:
+      - cadance-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cadance} -d ${POSTGRES_DB:-cadance}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
+
+  redis:
+    image: redis:7-alpine
+    container_name: cadance-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - cadance-redis-data:/data
+    networks:
+      - cadance-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 64m
+          cpus: "0.1"
+
+  api:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    image: cadance-api:latest
+    container_name: cadance-api
+    restart: unless-stopped
+    # Port hôte 3021 : libre au moment de la préparation (vérifié contre les
+    # ports déjà utilisés par les autres sites du NAS). À adapter si occupé.
+    ports:
+      - "3021:3000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_URL: postgres://${POSTGRES_USER:-cadance}:${POSTGRES_PASSWORD:-cadance}@db:5432/${POSTGRES_DB:-cadance}
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - cadance-net
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
+
+  migrate:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    image: cadance-api:latest
+    container_name: cadance-migrate
+    restart: "no"
+    entrypoint: []
+    # Le script compilé (dist/database/migrate.js) est un fichier .ts source
+    # dans le repo ; l'image ne contient que le dist de l'API NestJS. On lance
+    # donc les migrations via drizzle-kit, présent dans les devDependencies
+    # de apps/api, plutôt que via tsx (absent du build de prod --prod).
+    command: ["node", "dist/database/migrate.js"]
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-cadance}:${POSTGRES_PASSWORD:-cadance}@db:5432/${POSTGRES_DB:-cadance}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - cadance-net
+    profiles:
+      - migrate
+
+networks:
+  cadance-net:
+    driver: bridge
+
+volumes:
+  cadance-db-data:
+  cadance-redis-data:

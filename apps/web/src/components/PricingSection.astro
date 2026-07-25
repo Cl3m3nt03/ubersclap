@@ -4,8 +4,11 @@
  *
  * Offres et libellés depuis plans.ts (PLAN_LABEL, PLAN_FEATURES_BY_TIER) —
  * jamais de libellé marketing inventé pour une feature absente du code.
- * PRIX : jetons {{PRIX_SOLO}} / {{PRIX_ENTREPRISE}} BIEN VISIBLES tant
- * qu'ils ne sont pas dans plans.ts (§8, §15) — jamais un chiffre inventé.
+ * PRIX : tranchés le 2026-07-25 (00_CANON.md, ADR-015 pricing) — Solo
+ * 9,99 €/mois, Entreprise 39,99 €/mois. Le montant réel côté paiement
+ * vient de Stripe à l'exécution (packages/shared/src/billing.ts) ; ces
+ * deux valeurs sont la référence de communication tant que les jetons
+ * PRIX_* n'ont plus lieu d'être (§8, §15).
  * Pas de toggle mensuel/annuel : il n'existe aucune donnée de prix à
  * basculer ; le toggle viendra avec les prix réels.
  * Carte recommandée : bordure indigo, badge, shadow-lift (PricingCard).
@@ -18,7 +21,7 @@
  *  Rôles Administrateur / Manager / Chauffeur : MEMBERSHIP_ROLE_LABEL
  *  Essai gratuit : SUBSCRIPTION_STATUSES 'TRIALING' (plans.ts:20).
  */
-import { PLAN_LABEL } from '@cadance/shared';
+import { PLAN_LABEL, formatEuros } from '@cadance/shared';
 import PricingCard from './PricingCard.astro';
 
 interface Props {
@@ -26,6 +29,10 @@ interface Props {
 }
 
 const { ctaLabel } = Astro.props;
+
+/* Prix tranchés (00_CANON.md, ADR-015 pricing, 2026-07-25). */
+const SOLO_PRICE_CENTS = 999;
+const BUSINESS_PRICE_CENTS = 3999;
 
 /* Libellés FR des features de plans.ts — reformulation directe des
    identifiants techniques, pas d'invention. */
@@ -60,7 +67,7 @@ const businessFeatures = [
     <div class="pricing-grid">
       <PricingCard
         planName={PLAN_LABEL.SOLO}
-        price="{{PRIX_SOLO}}"
+        price={formatEuros(SOLO_PRICE_CENTS)}
         priceNote="par mois"
         features={soloFeatures}
         missingFeatures={['Plusieurs chauffeurs', 'Facturation centralisée']}
@@ -69,7 +76,7 @@ const businessFeatures = [
       />
       <PricingCard
         planName={PLAN_LABEL.BUSINESS}
-        price="{{PRIX_ENTREPRISE}}"
+        price={formatEuros(BUSINESS_PRICE_CENTS)}
         priceNote="par mois"
         features={businessFeatures}
         ctaLabel={ctaLabel}

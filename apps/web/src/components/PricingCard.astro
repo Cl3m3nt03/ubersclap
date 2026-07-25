@@ -5,7 +5,10 @@
  * Carte d'offre : nom, prix, features. Carte recommandée : bordure indigo,
  * badge, shadow-lift. Features avec check-circle-2 (Lucide inline) en
  * success ; absentes en ink-faint avec un tiret. Le prix est un JETON
- * {{PRIX_*}} tant qu'il n'est pas dans plans.ts — jamais un chiffre inventé.
+ * Le prix est un jeton {{PRIX_*}} tant qu'il n'est pas tranché — jamais un
+ * chiffre inventé. Depuis le 2026-07-25 (00_CANON.md, ADR-015), les deux
+ * offres ont un prix réel ; PricingSection passe désormais formatEuros(),
+ * et .is-token ne s'active plus que si un jeton réapparaît.
  * Les libellés d'offre viennent de PLAN_LABEL de @cadance/shared.
  */
 interface Props {
