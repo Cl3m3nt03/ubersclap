@@ -12,6 +12,92 @@ nécessaire.
 
 ---
 
+# 🚀 Pas à pas — à dérouler dans le dashboard
+
+La version cliquable. Le reste du document explique le *pourquoi* de chaque
+réglage ; cette section dit seulement où appuyer. Compter vingt minutes.
+
+## ① Compte et mode test
+
+`dashboard.stripe.com` → créer le compte. En haut à droite, basculer sur
+**« Mode test »** — l'interface passe en orange. Tout ce qui suit se fait en
+test : cartes fictives, aucun euro réel, aucune vérification d'identité exigée.
+
+## ② Les quatre tarifs
+
+Menu de gauche → **Catalogue de produits** → **+ Ajouter un produit**.
+
+**Produit 1**
+
+- Nom : `Cadence Solo` — modifiable, ADR-016 n'est pas tranchée
+- Modèle tarifaire : **Récurrent**
+- Montant : `9,99` EUR, période **mensuelle** → Enregistrer
+- Rouvrir le produit → **+ Ajouter un autre tarif** → `99,90` EUR, **annuelle**
+
+**Produit 2** — même chose : `Cadence Entreprise`, `39,99` mensuel puis
+`399,90` annuel.
+
+Sur chaque tarif, copier l'identifiant `price_...` (bouton de copie à côté du
+montant). **Quatre au total.**
+
+## ③ La clé secrète
+
+**Développeurs** → **Clés API** → « Clé secrète », cliquer pour révéler →
+`sk_test_...`
+
+## ④ Le portail client
+
+**Paramètres** (roue crantée) → **Facturation** → **Portail client** →
+**Activer**. Cocher : modifier le moyen de paiement, voir les factures, annuler
+l'abonnement — **à la fin de la période**, pas immédiatement.
+
+Sans cette activation, `POST /v1/billing/portal` échoue.
+
+## ⑤ Coller dans `apps/api/.env`
+
+```
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PRICE_SOLO_MONTHLY=price_...
+STRIPE_PRICE_SOLO_YEARLY=price_...
+STRIPE_PRICE_BUSINESS_MONTHLY=price_...
+STRIPE_PRICE_BUSINESS_YEARLY=price_...
+```
+
+L'API redémarre seule en mode watch.
+
+## ⑥ Le webhook, en local
+
+Il ne s'ajoute **pas** dans le dashboard tant que l'API tourne sur localhost —
+Stripe ne peut pas joindre ta machine. On passe par la CLI, dans un troisième
+terminal :
+
+```powershell
+stripe login
+stripe listen --forward-to localhost:3000/v1/billing/webhook
+```
+
+Elle affiche un `whsec_...` **différent** de celui du dashboard. C'est
+celui-là :
+
+```
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+## ⑦ Vérifier
+
+```powershell
+# doit renvoyer les 4 tarifs avec available: true et les bons montants
+curl http://localhost:3000/v1/billing/plans -H "Authorization: Bearer <TOKEN>"
+```
+
+Puis depuis le téléphone : Profil → Gérer mon abonnement → une offre →
+Souscrire. Carte de test `4242 4242 4242 4242`, date future, CVC au hasard.
+Au retour dans l'app, l'offre doit passer à **Actif**.
+
+Le détail de ce qui se joue à chaque étape est plus bas.
+
+---
+
 ## 1. Compte et clés
 
 1. Créer le compte sur dashboard.stripe.com, rester en **mode test** au début
