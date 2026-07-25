@@ -19,6 +19,33 @@ async function bootstrap() {
   // de domaine dit deja que c'est une API.
   app.setGlobalPrefix('v1');
 
+  /**
+   * CORS — pour le navigateur uniquement.
+   *
+   * L'app native ne connait pas cette regle : elle n'est appliquee que par les
+   * navigateurs. Elle devient indispensable des qu'on ouvre l'app en web
+   * (`expo start --web`), sinon la requete est bloquee AVANT d'etre envoyee et
+   * le client la lit comme une panne reseau — « Pas de connexion » sur un
+   * serveur qui repond parfaitement.
+   *
+   * Ouvert a tout en developpement, restreint a une liste explicite des qu'une
+   * origine est configuree : un `*` en production laisserait n'importe quel
+   * site appeler l'API avec les jetons d'un chauffeur.
+   */
+  const allowedOrigins = process.env.CORS_ORIGINS?.split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  app.enableCors({
+    origin: allowedOrigins?.length ? allowedOrigins : true,
+    // Les jetons voyagent dans l'en-tete Authorization, pas en cookie : aucun
+    // besoin d'autoriser les credentials, et ne pas le faire evite le couple
+    // interdit `origin: *` + `credentials: true`.
+    credentials: false,
+    allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'Accept'],
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  });
+
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port);
 
