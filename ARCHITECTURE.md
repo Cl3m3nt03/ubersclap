@@ -1,6 +1,6 @@
 # 🏗️ ARCHITECTURE.md
 
-# Uber's Clap
+# Cadance
 
 > Documentation architecture logicielle
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-Uber's Clap est une application mobile SaaS construite autour d'une architecture moderne séparant :
+Cadance est une application mobile SaaS construite autour d'une architecture moderne séparant :
 
 - Application mobile
 - API backend
@@ -628,4 +628,4 @@ Non adapté au besoin métier.
 
 # ✅ Conclusion
 
-L'architecture Uber's Clap est pensée pour commencer comme un MVP mobile simple tout en gardant une base capable d'évoluer vers un SaaS professionnel utilisé par plusieurs milliers de chauffeurs.
+L'architecture Cadance est pensée pour commencer comme un MVP mobile simple tout en gardant une base capable d'évoluer vers un SaaS professionnel utilisé par plusieurs milliers de chauffeurs.

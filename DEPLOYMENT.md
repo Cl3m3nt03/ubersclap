@@ -1,6 +1,6 @@
 # 🚀 DEPLOYMENT.md
 
-# Uber's Clap
+# Cadance
 
 > Documentation déploiement et infrastructure
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-Uber's Clap est une application SaaS mobile nécessitant une infrastructure fiable et scalable.
+Cadance est une application SaaS mobile nécessitant une infrastructure fiable et scalable.
 
 L'architecture de déploiement doit permettre :
 
@@ -628,4 +628,4 @@ Infrastructure mensuelle approximative :
 
 # Conclusion
 
-L'infrastructure Uber's Clap est conçue pour commencer avec une architecture simple et économique tout en permettant une évolution vers une plateforme SaaS professionnelle capable de supporter plusieurs milliers de chauffeurs.
+L'infrastructure Cadance est conçue pour commencer avec une architecture simple et économique tout en permettant une évolution vers une plateforme SaaS professionnelle capable de supporter plusieurs milliers de chauffeurs.

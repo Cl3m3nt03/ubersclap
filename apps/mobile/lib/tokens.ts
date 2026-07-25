@@ -1,8 +1,8 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
-const ACCESS_KEY = 'ubersclap.accessToken';
-const REFRESH_KEY = 'ubersclap.refreshToken';
+const ACCESS_KEY = 'cadance.accessToken';
+const REFRESH_KEY = 'cadance.refreshToken';
 
 /**
  * Stockage des jetons.

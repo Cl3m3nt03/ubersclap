@@ -3,7 +3,7 @@ import { pgEnum } from 'drizzle-orm/pg-core';
 /**
  * Enums Postgres.
  *
- * Les valeurs sont reprises telles quelles de @ubersclap/shared, qui reste la
+ * Les valeurs sont reprises telles quelles de @cadance/shared, qui reste la
  * source de verite. Drizzle exige des litteraux a la definition du schema, donc
  * on ne peut pas les importer directement — d'ou les tests de coherence dans
  * `schema.spec.ts` qui echouent si les deux listes divergent.

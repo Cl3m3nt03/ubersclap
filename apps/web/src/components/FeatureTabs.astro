@@ -1,0 +1,1883 @@
+---
+/**
+ * FeatureTabs — web-only. La section signature (DESIGN_CONTEXT.md §7).
+ *
+ * ÉTAT PHASE 7, ÉTAPES 1-4 :
+ *  1. cinq panneaux dans le DOM, ARIA complet, bascule de visibilité seule ;
+ *  2. écrans reconstruits en HTML/CSS depuis ref/ (barre d'onglets du bas
+ *     comprise, listes pleines jusqu'au bas du cadre) ;
+ *  3. fragments d'orbite — trois règles (§7) : un fragment AJOUTE une
+ *     information absente de l'écran, reste dans le sujet de l'onglet, et ne
+ *     recouvre jamais texte ou navigation (chevauchement bezel ≤ ~24px) ;
+ *  4. micro-action FACTURATION uniquement (calibrage du tempo) : course
+ *     terminée → appui → la facture PDF glisse vers le haut. Boucle 3,6 s,
+ *     transform et opacity seulement, grammaire §10. Les quatre autres
+ *     micro-actions attendent la validation de ce tempo.
+ *
+ * TRAÇABILITÉ DES PUCES : chaque argument est tracé vers une fonctionnalité
+ * livrée (code ou FEATURES.md) — voir le tableau de la session. Aucune
+ * promesse chiffrée non vérifiable.
+ *
+ * Écran TOUJOURS clair (§4), tokens light figés à la compilation. Données :
+ * src/data/demo.ts, agrégats calculés, dates relatives uniquement.
+ */
+import {
+  light,
+  formatEuros,
+  formatDuration,
+  formatDistance,
+  formatTime,
+  initials,
+  breakdownFromInclTax,
+  sumCents,
+  COURSE_STATUS_LABEL,
+  COURSE_STATUS_TONE,
+  INVOICE_STATUS_LABEL,
+  EXPENSE_CATEGORY_LABEL,
+} from '@cadance/shared';
+import { createLandingDemo, relativeDayLabel } from '../data/demo';
+import PhoneMockup from './PhoneMockup.astro';
+import PhoneTabBar from './PhoneTabBar.astro';
+import StatCard from './StatCard.astro';
+
+const demo = createLandingDemo();
+const agg = demo.aggregates;
+
+/* ---- Écrans : tranches pleines. ---- */
+
+const todayCourses = demo.display.todayCourses.slice(0, 7);
+const clients = demo.clients.slice(0, 7);
+const invoices = [...demo.display.invoices].reverse().slice(0, 5);
+const expenses = demo.display.expenses.slice(0, 8);
+
+/* ---- Valeurs des fragments : ce que l'écran NE montre PAS. ---- */
+
+// Agenda — le trou avant la prochaine course, et le volume de demain.
+const lastMorning = demo.display.todayCourses.filter((c) => c.status === 'COMPLETED').at(-1)!;
+const anchor = demo.display.todayCourses.find(
+  (c) => c.scheduledAt.getHours() === 14 && c.scheduledAt.getMinutes() === 30,
+)!;
+const gapMinutes = Math.round(
+  (anchor.scheduledAt.getTime() -
+    (lastMorning.scheduledAt.getTime() + lastMorning.durationMinutes * 60_000)) /
+    60_000,
+);
+
+// Micro-action Agenda : la course de 14:30 se pose dans le créneau. Avant la
+// pose, le créneau libre couvre TOUT le trou entre la fin de la dernière
+// course du matin et la course suivante (16:00) — cohérence d'état.
+const anchorIndex = todayCourses.indexOf(anchor);
+const coursesBeforeAnchor = todayCourses.slice(0, anchorIndex);
+const coursesAfterAnchor = todayCourses.slice(anchorIndex + 1);
+const nextAfterAnchor = coursesAfterAnchor[0]!;
+const fullGapMinutes = Math.round(
+  (nextAfterAnchor.scheduledAt.getTime() -
+    (lastMorning.scheduledAt.getTime() + lastMorning.durationMinutes * 60_000)) /
+    60_000,
+);
+// Le reste à encaisser aujourd'hui — somme EXACTE des courses CONFIRMÉES
+// affichées à l'écran (§7 : toute valeur de fragment est calculée).
+const upcomingTotal = sumCents(
+  todayCourses.filter((c) => c.status === 'CONFIRMED').map((c) => c.priceCents),
+);
+
+// Clients — la fiche du premier habitué. stats.totalCents de l'app somme
+// TOUTES les courses non supprimées (clients.service.ts:62), payées ou non :
+// le libellé est « chiffre d'affaires » (client/[id].tsx:124), pas
+// « encaissés » — la course de 11:45 facturée ENVOYÉE y figure légitimement.
+const topClient = demo.clients[0]!;
+const topClientCourses = demo.month.courses.filter(
+  (c) => c.client.id === topClient.id && c.status === 'COMPLETED',
+);
+const topClientTotal = sumCents(topClientCourses.map((c) => c.priceCents));
+
+// Facturation — le détail HT/TVA/TTC que la liste ne montre pas.
+const lastInvoice = invoices[0]!;
+const lastBreakdown = breakdownFromInclTax(lastInvoice.totalInclTaxCents, 'NORMAL');
+
+// Dépenses — le poste carburant agrégé.
+const fuelExpenses = demo.month.expenses.filter((e) => e.category === 'FUEL');
+const fuelTotal = sumCents(fuelExpenses.map((e) => e.amountCents));
+
+// Micro-action Tableau de bord : les compteurs. 5 pas calculés depuis les
+// agrégats (0 → 25 % → 50 % → 75 % → 100 %), affichés en crossfade — le
+// compteur du §10 en version déterministe, opacity seule.
+const counterSteps = (total: number) => [0, 0.25, 0.5, 0.75, 1].map((f) => Math.round(total * f));
+const caSteps = counterSteps(agg.revenueCents).map((c) => formatEuros(c));
+const courseSteps = counterSteps(agg.courseCount).map(String);
+const tempsSteps = counterSteps(agg.workedMinutes).map((m) => formatDuration(m));
+
+// Micro-action Dépenses : le ticket photographié devient la dépense du jour.
+const scannedExpense = expenses[0]!;
+const expensesRest = expenses.slice(1);
+const expenseTotalBefore = agg.expenseCents - scannedExpense.amountCents;
+
+// Micro-action Clients : la fiche de Karim s'ouvre, l'historique se remplit.
+const historyCourses = demo.month.courses
+  .filter((c) => c.client.id === topClient.id && c.status === 'COMPLETED')
+  .slice(-5)
+  .reverse();
+const clientsRest = clients.slice(1);
+
+// Tableau de bord — résultat net et distance, absents de l'écran.
+// Net = CA affiché − dépenses affichées ; panier = CA affiché ÷ courses affichées.
+const netCents = agg.revenueCents - agg.expenseCents;
+const basketCents = Math.round(agg.revenueCents / agg.courseCount);
+
+/**
+ * formatDistance de shared ne groupe pas les milliers (l'app ne dépasse
+ * jamais quelques dizaines de km par course). Pour un cumul mensuel,
+ * le format FR du §3 impose l'espace insécable : « 1 254 km ».
+ */
+function formatDistanceGrouped(meters: number): string {
+  return formatDistance(meters).replace(/\d{4,}/, (n) =>
+    n.replace(/\B(?=(\d{3})+(?!\d))/g, ' '),
+  );
+}
+
+/* ---- Micro-action facturation : la course facturée et son PDF. ---- */
+
+// Facturation GROUPÉE (ADR-005, schemas.ts:288) : les 6 dernières courses
+// terminées de Karim Belkacem sur une seule facture — le moment de
+// récompense porte un montant à trois chiffres, calculé.
+const billingClient = demo.clients[0]!;
+const billableCourses = demo.month.courses
+  .filter((c) => c.client.id === billingClient.id && c.status === 'COMPLETED')
+  .slice(-6);
+const billableTotal = sumCents(billableCourses.map((c) => c.priceCents));
+const billableBreakdown = breakdownFromInclTax(billableTotal, 'NORMAL');
+// Numéro suivant de la série — continuité chronologique (ADR-012).
+const nextInvoiceNumber = (() => {
+  const [year, seq] = demo.month.invoices.at(-1)!.invoiceNumber.split('-');
+  return `${year}-${String(Number(seq) + 1).padStart(5, '0')}`;
+})();
+
+/* Tokens sémantiques de l'écran clair, figés. */
+const screenStatusVars = [
+  `--phone-success: ${light.success}`,
+  `--phone-warning: ${light.warning}`,
+  `--phone-danger: ${light.danger}`,
+  `--phone-indigo-soft: ${light.indigoSoft}`,
+].join('; ');
+
+const invoiceToneVar: Record<string, string> = {
+  PAID: 'var(--phone-success)',
+  SENT: 'var(--phone-warning)',
+  OVERDUE: 'var(--phone-danger)',
+  DRAFT: 'var(--phone-ink-muted)',
+  CANCELLED: 'var(--phone-danger)',
+};
+
+const courseToneVar: Record<string, string> = {
+  neutral: 'var(--phone-ink-muted)',
+  info: 'var(--phone-indigo)',
+  success: 'var(--phone-success)',
+  warning: 'var(--phone-warning)',
+  danger: 'var(--phone-danger)',
+};
+
+/* ---- Les cinq onglets — puces tracées (voir tableau de session). ---- */
+
+const tabs = [
+  {
+    key: 'agenda',
+    label: 'Agenda et courses',
+    title: 'Votre journée, dans l’ordre',
+    args: [
+      'Chaque course à sa place, les temps libres affichés',
+      'Deux courses qui se chevauchent : signalé aussitôt',
+      'Le prix suggéré d’après la distance, toujours modifiable',
+    ],
+  },
+  {
+    key: 'clients',
+    label: 'Carnet clients',
+    title: 'Vos habitués, retrouvés en un geste',
+    args: [
+      'La fiche se crée toute seule à la première course',
+      'Historique et chiffre d’affaires par client',
+      'Le téléphone du répertoire, sans double saisie',
+    ],
+  },
+  {
+    key: 'facturation',
+    label: 'Facturation',
+    title: 'La facture part avant le client',
+    args: [
+      'Numérotation continue, conforme et automatique',
+      'Plusieurs courses sur une seule facture',
+      'Le PDF prêt à partager dès l’émission',
+    ],
+  },
+  {
+    key: 'depenses',
+    label: 'Dépenses',
+    title: 'Chaque ticket compté, rien d’oublié',
+    args: [
+      'Carburant, péage, entretien : six catégories claires',
+      'Le total du mois toujours sous les yeux',
+      'Saisie à la pompe, même sans réseau',
+    ],
+  },
+  {
+    key: 'tableau',
+    label: 'Tableau de bord',
+    title: 'Votre mois, en trois chiffres vrais',
+    args: [
+      'Le chiffre d’affaires des courses terminées, pas des promesses',
+      'Volume et temps de conduite calculés tout seuls',
+      'Le résultat net après dépenses',
+    ],
+  },
+] as const;
+
+/* Barre d'onglets du bas : item actif selon l'écran. */
+const TABBAR = [
+  { key: 'tableau', label: 'Tableau' },
+  { key: 'agenda', label: 'Agenda' },
+  { key: 'clients', label: 'Clients' },
+  { key: 'facturation', label: 'Factures' },
+  { key: 'profil', label: 'Profil' },
+] as const;
+---
+
+<section class="ft" aria-labelledby="ft-heading" style={screenStatusVars}>
+  <h2 class="visually-hidden" id="ft-heading">Fonctionnalités</h2>
+
+  <div class="ft-tablist" role="tablist" aria-label="Fonctionnalités de l’application">
+    {tabs.map((tab, index) => (
+      <button
+        class="ft-tab"
+        role="tab"
+        id={`ft-tab-${tab.key}`}
+        aria-selected={index === 0 ? 'true' : 'false'}
+        aria-controls={`ft-panel-${tab.key}`}
+        tabindex={index === 0 ? 0 : -1}
+        type="button"
+      >
+        {tab.label}
+        <span class="ft-tab-progress" aria-hidden="true"></span>
+      </button>
+    ))}
+  </div>
+
+  {tabs.map((tab, index) => (
+    <div
+      class="ft-panel"
+      role="tabpanel"
+      id={`ft-panel-${tab.key}`}
+      aria-labelledby={`ft-tab-${tab.key}`}
+      hidden={index !== 0}
+    >
+      <div class="ft-text">
+        <h3 class="ft-title">{tab.title}</h3>
+        <ul class="ft-args">
+          {tab.args.map((arg) => (
+            <li>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+              <span>{arg}</span>
+            </li>
+          ))}
+        </ul>
+        <a class="ft-more" href="#fonctionnalites">En savoir plus</a>
+      </div>
+
+      <div class="ft-stage">
+        <div class="ft-phone-wrap">
+          <PhoneMockup width="min(280px, 68vw)">
+            {tab.key === 'agenda' && (
+              <div class="scr" aria-hidden="true">
+                <p class="scr-eyebrow">Aujourd’hui</p>
+                <p class="scr-title">Agenda</p>
+                <div class="scr-list">
+                  {coursesBeforeAnchor.map((course) => (
+                    <div class="scr-course">
+                      <span class="scr-course-time">{formatTime(course.scheduledAt)}</span>
+                      <span class="scr-course-sep"></span>
+                      <span class="scr-course-main">
+                        <strong>{course.client.firstName} {course.client.lastName}</strong>
+                        <em>{course.pickup.split(',')[0]} → {course.destination.split(',')[0]}</em>
+                      </span>
+                      <span class="scr-course-right">
+                        <strong>{formatEuros(course.priceCents)}</strong>
+                        <i style={`color: ${courseToneVar[COURSE_STATUS_TONE[course.status]]};`}>{COURSE_STATUS_LABEL[course.status]}</i>
+                      </span>
+                    </div>
+                  ))}
+                  <!-- Micro-action : le créneau libre DEVIENT la course de
+                       14:30 (§7 : transformer, hauteur constante). Avant la
+                       pose, le libre couvre tout le trou jusqu'à 16:00. -->
+                  <div class="scr-slot ma-agenda">
+                    <div class="ma-out scr-gap">
+                      <span class="scr-gap-line"></span>
+                      <span class="scr-gap-label">{formatDuration(fullGapMinutes)} libre</span>
+                    </div>
+                    <div class="ma-in scr-course scr-course-inset">
+                      <span class="scr-course-time">{formatTime(anchor.scheduledAt)}</span>
+                      <span class="scr-course-sep"></span>
+                      <span class="scr-course-main">
+                        <strong>{anchor.client.firstName} {anchor.client.lastName}</strong>
+                        <em>{anchor.pickup.split(',')[0]} → {anchor.destination.split(',')[0]}</em>
+                      </span>
+                      <span class="scr-course-right">
+                        <strong>{formatEuros(anchor.priceCents)}</strong>
+                        <i style={`color: ${courseToneVar[COURSE_STATUS_TONE[anchor.status]]};`}>{COURSE_STATUS_LABEL[anchor.status]}</i>
+                      </span>
+                    </div>
+                  </div>
+                  {coursesAfterAnchor.map((course) => (
+                    <div class="scr-course">
+                      <span class="scr-course-time">{formatTime(course.scheduledAt)}</span>
+                      <span class="scr-course-sep"></span>
+                      <span class="scr-course-main">
+                        <strong>{course.client.firstName} {course.client.lastName}</strong>
+                        <em>{course.pickup.split(',')[0]} → {course.destination.split(',')[0]}</em>
+                      </span>
+                      <span class="scr-course-right">
+                        <strong>{formatEuros(course.priceCents)}</strong>
+                        <i style={`color: ${courseToneVar[COURSE_STATUS_TONE[course.status]]};`}>{COURSE_STATUS_LABEL[course.status]}</i>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <PhoneTabBar active="agenda" />
+              </div>
+            )}
+
+            {tab.key === 'clients' && (
+              <div class="scr" aria-hidden="true">
+                <p class="scr-eyebrow">{demo.clients.length} enregistrés</p>
+                <p class="scr-title">Clients</p>
+                <div class="scr-search">Rechercher un client</div>
+                <div class="scr-list">
+                  <!-- Micro-action : appui sur la ligne de Karim → elle
+                       DEVIENT sa fiche, l'historique apparaît ligne à ligne
+                       (§7 : transformer, hauteur constante). -->
+                  <div class="scr-clientcard ma-clients">
+                    <div class="ma-out">
+                      <div class="scr-client scr-client-inset ma-press">
+                        <span class="scr-avatar">{initials(topClient.firstName, topClient.lastName)}</span>
+                        <span class="scr-client-main">
+                          <strong>{topClient.firstName} {topClient.lastName}</strong>
+                          <em>{topClient.phone}</em>
+                        </span>
+                      </div>
+                      {clientsRest.slice(0, 6).map((client) => (
+                        <div class="scr-client scr-client-inset">
+                          <span class="scr-avatar">{initials(client.firstName, client.lastName)}</span>
+                          <span class="scr-client-main">
+                            <strong>{client.firstName} {client.lastName}</strong>
+                            <em>{client.company ?? client.phone}</em>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div class="ma-in scr-fiche">
+                      <div class="scr-fiche-head">
+                        <span class="scr-avatar scr-avatar-lg">{initials(topClient.firstName, topClient.lastName)}</span>
+                        <span class="scr-client-main">
+                          <strong>{topClient.firstName} {topClient.lastName}</strong>
+                          <em>{topClient.phone}</em>
+                        </span>
+                      </div>
+                      <div class="scr-fiche-stats">
+                        <span class="scr-fiche-stat"><strong>{topClientCourses.length}</strong><em>courses</em></span>
+                        <span class="scr-fiche-stat"><strong>{formatEuros(topClientTotal)}</strong><em>de chiffre d’affaires</em></span>
+                      </div>
+                      <p class="scr-subhead">Historique</p>
+                      {historyCourses.map((course, index) => (
+                        <div class={`scr-course scr-course-inset ma-hist ma-hist-${index}`}>
+                          <span class="scr-course-time">{formatTime(course.scheduledAt)}</span>
+                          <span class="scr-course-sep"></span>
+                          <span class="scr-course-main">
+                            <strong>{relativeDayLabel(course.scheduledAt)}</strong>
+                            <em>{course.pickup.split(',')[0]} → {course.destination.split(',')[0]}</em>
+                          </span>
+                          <strong class="scr-expense-amount">{formatEuros(course.priceCents)}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <PhoneTabBar active="clients" />
+              </div>
+            )}
+
+            {tab.key === 'facturation' && (
+              <div class="scr" aria-hidden="true">
+                <p class="scr-eyebrow">Suivi des paiements</p>
+                <p class="scr-title">Factures</p>
+                <div class="scr-total">
+                  <span class="scr-total-label">Encours à recouvrer</span>
+                  <span class="scr-total-value ma-swap">
+                    <span class="ma-swap-before">{formatEuros(agg.outstandingCents)}</span>
+                    <span class="ma-swap-after">{formatEuros(agg.outstandingCents + billableTotal)}</span>
+                  </span>
+                </div>
+                <!-- Micro-action : la carte des courses à facturer DEVIENT la
+                     ligne de facture 2026-00039 en tête de liste (§7 :
+                     transformer, jamais un trou). L'encours suit : +142,00 €.
+                     Hauteur constante SANS rangée fantôme : deux colonnes
+                     empilées dans un viewport clippé — la colonne « après »
+                     est plus courte du delta carte→rangée, et remonte en
+                     translateY(--ma-shift) pendant le crossfade. La ligne
+                     00039 arrive à hauteur de rangée normale, une facture
+                     plus ancienne (00036) se révèle en bas : l'écran reste
+                     plein, seul le contenu défile. -->
+                <div class="ma-flow">
+                  <div class="ma-out ma-flow-col">
+                    <div class="scr-billable">
+                      <div class="scr-billable-head">
+                        <span class="scr-billable-title">{billingClient.firstName} {billingClient.lastName}</span>
+                        <span class="scr-billable-count">{billableCourses.length} courses à facturer</span>
+                      </div>
+                      <div class="scr-billable-row">
+                        <span class="scr-billable-sum">{formatEuros(billableTotal)}</span>
+                        <i style={`color: var(--phone-success);`}>{COURSE_STATUS_LABEL.COMPLETED}</i>
+                      </div>
+                      <span class="scr-cta ma-press">Générer la facture</span>
+                    </div>
+                    {invoices.slice(0, 3).map((invoice) => (
+                      <div class="scr-invoice">
+                        <span class="scr-invoice-main">
+                          <strong>{invoice.invoiceNumber}</strong>
+                          <em>{invoice.clientName}</em>
+                        </span>
+                        <span class="scr-invoice-right">
+                          <strong>{formatEuros(invoice.totalInclTaxCents)}</strong>
+                          <i style={`color: ${invoiceToneVar[invoice.status]};`}>{INVOICE_STATUS_LABEL[invoice.status]}</i>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div class="ma-in ma-flow-col">
+                    <div class="scr-invoice">
+                      <span class="scr-invoice-main">
+                        <strong>{nextInvoiceNumber}</strong>
+                        <em>{billingClient.firstName} {billingClient.lastName} · {billableCourses.length} courses</em>
+                      </span>
+                      <span class="scr-invoice-right">
+                        <strong>{formatEuros(billableTotal)}</strong>
+                        <i style={`color: var(--phone-warning);`}>{INVOICE_STATUS_LABEL.SENT}</i>
+                      </span>
+                    </div>
+                    {invoices.slice(0, 4).map((invoice) => (
+                      <div class="scr-invoice">
+                        <span class="scr-invoice-main">
+                          <strong>{invoice.invoiceNumber}</strong>
+                          <em>{invoice.clientName}</em>
+                        </span>
+                        <span class="scr-invoice-right">
+                          <strong>{formatEuros(invoice.totalInclTaxCents)}</strong>
+                          <i style={`color: ${invoiceToneVar[invoice.status]};`}>{INVOICE_STATUS_LABEL[invoice.status]}</i>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <PhoneTabBar active="facturation" />
+                <!-- Micro-action, temps 2 : le PDF glisse vers le haut.
+                     Aperçu sobre : fond blanc, encre, filets, une touche
+                     d'indigo (§8 bloc 5). -->
+                <div class="ma-sheet">
+                  <span class="ma-sheet-grab"></span>
+                  <p class="ma-sheet-title">Facture {nextInvoiceNumber}</p>
+                  <p class="ma-sheet-client">{billingClient.firstName} {billingClient.lastName} · {billableCourses.length} courses</p>
+                  <div class="ma-sheet-lines">
+                    <span class="ma-line"><em>Total HT</em><strong>{formatEuros(billableBreakdown.exclTax)}</strong></span>
+                    <span class="ma-line"><em>TVA 10 %</em><strong>{formatEuros(billableBreakdown.tax)}</strong></span>
+                    <span class="ma-line ma-line-total"><em>Total TTC</em><strong>{formatEuros(billableBreakdown.inclTax)}</strong></span>
+                  </div>
+                  <span class="ma-sheet-cta">Partager le PDF</span>
+                </div>
+              </div>
+            )}
+
+            {tab.key === 'depenses' && (
+              <div class="scr" aria-hidden="true">
+                <div class="scr-backrow"><span class="scr-back">‹</span><p class="scr-title scr-title-inline">Dépenses</p></div>
+                <div class="scr-total">
+                  <span class="scr-total-label">Total ce mois-ci</span>
+                  <span class="scr-total-value ma-swap">
+                    <span class="ma-swap-before">{formatEuros(expenseTotalBefore)}</span>
+                    <span class="ma-swap-after">{formatEuros(agg.expenseCents)}</span>
+                  </span>
+                </div>
+                <div class="scr-list">
+                  <!-- Micro-action : la saisie d'une dépense — chip de
+                       catégorie cochée (depense/nouvelle.tsx:112), montant
+                       (:140), « Enregistrer la dépense » (:180) — DEVIENT la
+                       dépense en tête de liste ; le total du mois suit
+                       (§7 : transformer, hauteur constante). -->
+                  <div class="scr-scan ma-depenses">
+                    <div class="ma-out scr-entry">
+                      <span class="scr-entry-chip">
+                        <span class="scr-entry-check">✓</span>
+                        {EXPENSE_CATEGORY_LABEL[scannedExpense.category]}
+                      </span>
+                      <span class="scr-entry-amount">{formatEuros(scannedExpense.amountCents)}</span>
+                      <span class="scr-entry-cta ma-press">Enregistrer</span>
+                    </div>
+                    <div class="ma-in scr-expense scr-expense-inset">
+                      <span class="scr-cat-ico"></span>
+                      <span class="scr-expense-main">
+                        <strong>{EXPENSE_CATEGORY_LABEL[scannedExpense.category]}</strong>
+                        <em>{relativeDayLabel(scannedExpense.spentAt)} · {scannedExpense.description}</em>
+                      </span>
+                      <strong class="scr-expense-amount">{formatEuros(scannedExpense.amountCents)}</strong>
+                    </div>
+                  </div>
+                  {expensesRest.map((expense) => (
+                    <div class="scr-expense">
+                      <span class="scr-cat-ico"></span>
+                      <span class="scr-expense-main">
+                        <strong>{EXPENSE_CATEGORY_LABEL[expense.category]}</strong>
+                        <em>{relativeDayLabel(expense.spentAt)} · {expense.description}</em>
+                      </span>
+                      <strong class="scr-expense-amount">{formatEuros(expense.amountCents)}</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {tab.key === 'tableau' && (
+              <div class="scr" aria-hidden="true">
+                <p class="scr-eyebrow">Bonjour, Julien</p>
+                <p class="scr-title">Tableau de bord</p>
+                <!-- Micro-action : les trois StatCards comptent — 5 pas
+                     calculés en crossfade, teal puis coral puis purple en
+                     léger décalé. Le seul écran où les trois gradients
+                     apparaissent ensemble (§7). -->
+                <div class="scr-stats ma-tableau">
+                  <StatCard placement="mockup" tone="teal" label="Chiffre d’affaires">
+                    <span slot="value" class="ma-counter ma-counter-teal">
+                      {caSteps.map((step, index) => <span class={`ma-step ma-step-${index}`}>{step}</span>)}
+                    </span>
+                  </StatCard>
+                  <div class="scr-stats-half">
+                    <StatCard placement="mockup" tone="coral" label="Courses">
+                      <span slot="value" class="ma-counter ma-counter-coral">
+                        {courseSteps.map((step, index) => <span class={`ma-step ma-step-${index}`}>{step}</span>)}
+                      </span>
+                    </StatCard>
+                    <StatCard placement="mockup" tone="purple" label="Temps">
+                      <span slot="value" class="ma-counter ma-counter-purple">
+                        {tempsSteps.map((step, index) => <span class={`ma-step ma-step-${index}`}>{step}</span>)}
+                      </span>
+                    </StatCard>
+                  </div>
+                </div>
+                <p class="scr-subhead">Prochaine course</p>
+                <div class="scr-course">
+                  <span class="scr-course-time">{formatTime(anchor.scheduledAt)}</span>
+                  <span class="scr-course-sep"></span>
+                  <span class="scr-course-main">
+                    <strong>{anchor.client.firstName} {anchor.client.lastName}</strong>
+                    <em>{anchor.pickup.split(',')[0]} → {anchor.destination.split(',')[0]}</em>
+                  </span>
+                </div>
+                <!-- Bloc « Ce mois-ci » de ref/ios-dashboard : distance,
+                     dépenses, résultat net — valeurs calculées. -->
+                <p class="scr-subhead">Ce mois-ci</p>
+                <div class="scr-kpis">
+                  <div class="scr-kpi">
+                    <span class="scr-kpi-label">Distance parcourue</span>
+                    <span class="scr-kpi-value">{formatDistanceGrouped(agg.distanceMeters)}</span>
+                  </div>
+                  <div class="scr-kpi">
+                    <span class="scr-kpi-label">Dépenses</span>
+                    <span class="scr-kpi-value">{formatEuros(agg.expenseCents)}</span>
+                  </div>
+                  <div class="scr-kpi">
+                    <span class="scr-kpi-label">Résultat net</span>
+                    <span class="scr-kpi-value scr-kpi-net">{formatEuros(netCents)}</span>
+                  </div>
+                </div>
+                <PhoneTabBar active="tableau" />
+              </div>
+            )}
+          </PhoneMockup>
+
+        <!-- Étape 3 — fragments : chacun AJOUTE une information absente de
+             l'écran, reste dans le sujet, ne recouvre jamais le contenu. -->
+        <div class="ft-orbit" aria-hidden="true">
+          {tab.key === 'agenda' && (
+            <>
+              <div class="ft-fragment ft-frag-right">
+                <div class="frag-card">
+                  <span class="frag-main ma-swap">
+                    <span class="ma-swap-before">
+                      <strong>{formatDuration(fullGapMinutes)} libre</strong>
+                      <em>avant la course de {formatTime(nextAfterAnchor.scheduledAt)}</em>
+                    </span>
+                    <span class="ma-swap-after">
+                      <strong>{formatDuration(gapMinutes)} libre</strong>
+                      <em>avant la course de {formatTime(anchor.scheduledAt)}</em>
+                    </span>
+                  </span>
+                </div>
+              </div>
+              <div class="ft-fragment ft-frag-right-low">
+                <div class="frag-card">
+                  <span class="frag-main">
+                    <strong>{formatEuros(upcomingTotal)}</strong>
+                    <em>encore à encaisser aujourd’hui</em>
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
+          {tab.key === 'clients' && (
+            <div class="ft-fragment ft-frag-right">
+              <div class="frag-card frag-client">
+                <span class="frag-avatar">{initials(topClient.firstName, topClient.lastName)}</span>
+                <span class="frag-main">
+                  <strong>{topClient.firstName} {topClient.lastName}</strong>
+                  <em>{topClientCourses.length} courses · {formatEuros(topClientTotal)} de CA</em>
+                </span>
+              </div>
+            </div>
+          )}
+          {tab.key === 'facturation' && (
+            <div class="ft-fragment ft-frag-right">
+              <div class="frag-card">
+                <span class="frag-main">
+                  <strong>{lastInvoice.invoiceNumber}</strong>
+                  <em>HT {formatEuros(lastBreakdown.exclTax)} · TVA 10 % {formatEuros(lastBreakdown.tax)}</em>
+                  <em>TTC {formatEuros(lastBreakdown.inclTax)}</em>
+                </span>
+              </div>
+            </div>
+          )}
+          {tab.key === 'depenses' && (
+            <div class="ft-fragment ft-frag-right">
+              <div class="frag-card">
+                <span class="frag-main">
+                  <strong>Carburant · {formatEuros(fuelTotal)}</strong>
+                  <em>{fuelExpenses.length} pleins ce mois-ci</em>
+                </span>
+              </div>
+            </div>
+          )}
+          {tab.key === 'tableau' && (
+            <>
+              <div class="ft-fragment ft-frag-right">
+                <div class="frag-card">
+                  <span class="frag-main">
+                    <strong>{formatEuros(basketCents)}</strong>
+                    <em>de panier moyen par course</em>
+                  </span>
+                </div>
+              </div>
+              <div class="ft-fragment ft-frag-right-low">
+                <div class="frag-card">
+                  <span class="frag-main">
+                    <strong>{formatEuros(agg.outstandingCents)}</strong>
+                    <em>de factures à encaisser</em>
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+        </div>
+
+        <!-- Repli mobile (§7) : les fragments d'orbite sont cachés sous
+             768px — leur information ne disparaît pas, le fragment principal
+             devient cette ligne de légende sous le téléphone. Même donnée
+             calculée, qui change avec l'onglet. -->
+        <p class="ft-legend" aria-hidden="true">
+          {tab.key === 'agenda' && (
+            <span class="ma-swap">
+              <span class="ma-swap-before">{formatDuration(fullGapMinutes)} libre avant la course de {formatTime(nextAfterAnchor.scheduledAt)}</span>
+              <span class="ma-swap-after">{formatDuration(gapMinutes)} libre avant la course de {formatTime(anchor.scheduledAt)}</span>
+            </span>
+          )}
+          {tab.key === 'clients' && (
+            <span>{topClient.firstName} {topClient.lastName} · {topClientCourses.length} courses · {formatEuros(topClientTotal)} de CA</span>
+          )}
+          {tab.key === 'facturation' && (
+            <span>{lastInvoice.invoiceNumber} · HT {formatEuros(lastBreakdown.exclTax)} · TVA 10 % {formatEuros(lastBreakdown.tax)} · TTC {formatEuros(lastBreakdown.inclTax)}</span>
+          )}
+          {tab.key === 'depenses' && (
+            <span>Carburant · {formatEuros(fuelTotal)} · {fuelExpenses.length} pleins ce mois-ci</span>
+          )}
+          {tab.key === 'tableau' && (
+            <span>{formatEuros(basketCents)} de panier moyen par course</span>
+          )}
+        </p>
+      </div>
+    </div>
+  ))}
+</section>
+
+<script>
+  /**
+   * Étapes 1 + 5 : bascule + clavier, puis enchaînement automatique.
+   *
+   * - Un onglet reste affiché 7 200 ms = deux boucles de micro-action (§7).
+   * - Barre de progression fine sur l'onglet actif (transform scaleX,
+   *   pilotée par requestAnimationFrame — jamais width, §10).
+   * - ARRÊT DÉFINITIF au premier clic/touche de l'utilisateur : on ne
+   *   reprend jamais la main après une interaction (§7).
+   * - Pause au survol de la section, reprise à la sortie.
+   * - prefers-reduced-motion : aucun enchaînement (§7, étape 6 anticipée
+   *   ici car l'enchaînement naît à cette étape).
+   */
+  const TAB_DURATION = 7200;
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  for (const root of document.querySelectorAll<HTMLElement>('.ft')) {
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    const panels = [...root.querySelectorAll<HTMLElement>('[role="tabpanel"]')];
+
+    let autoplay = !reducedMotion;
+    let paused = false;
+    let elapsed = 0;
+    let lastTick: number | null = null;
+    let rafId = 0;
+
+    function currentIndex() {
+      return tabs.findIndex((t) => t.getAttribute('aria-selected') === 'true');
+    }
+
+    function setProgress(fraction: number) {
+      const active = tabs[currentIndex()];
+      for (const tab of tabs) {
+        const bar = tab.querySelector<HTMLElement>('.ft-tab-progress');
+        if (bar) bar.style.transform = `scaleX(${tab === active ? fraction : 0})`;
+      }
+    }
+
+    function select(index: number, focus = true) {
+      tabs.forEach((tab, i) => {
+        const active = i === index;
+        tab.setAttribute('aria-selected', active ? 'true' : 'false');
+        tab.tabIndex = active ? 0 : -1;
+        const panel = panels[i];
+        if (panel) panel.hidden = !active;
+      });
+      elapsed = 0;
+      lastTick = null;
+      if (focus) tabs[index]?.focus();
+    }
+
+    /** Le premier geste de l'utilisateur arrête l'enchaînement pour de bon. */
+    function stopForever() {
+      if (!autoplay) return;
+      autoplay = false;
+      cancelAnimationFrame(rafId);
+      setProgress(0);
+      root.classList.add('ft-manual');
+    }
+
+    let tick = (now: number) => {
+      if (!autoplay) return;
+      if (!paused) {
+        if (lastTick !== null) elapsed += now - lastTick;
+        if (elapsed >= TAB_DURATION) {
+          select((currentIndex() + 1) % tabs.length, false);
+        }
+        setProgress(Math.min(1, elapsed / TAB_DURATION));
+      }
+      lastTick = now;
+      rafId = requestAnimationFrame(tick);
+    };
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => {
+        stopForever();
+        select(index, false);
+      });
+      tab.addEventListener('keydown', (event) => {
+        const current = currentIndex();
+        let next: number | null = null;
+        if (event.key === 'ArrowRight') next = (current + 1) % tabs.length;
+        else if (event.key === 'ArrowLeft') next = (current - 1 + tabs.length) % tabs.length;
+        else if (event.key === 'Home') next = 0;
+        else if (event.key === 'End') next = tabs.length - 1;
+        if (next !== null) {
+          event.preventDefault();
+          stopForever();
+          select(next);
+        }
+      });
+    });
+
+    // Pause au survol de toute la section ; reprise à la sortie.
+    root.addEventListener('mouseenter', () => {
+      paused = true;
+    });
+    root.addEventListener('mouseleave', () => {
+      paused = false;
+      lastTick = null;
+    });
+
+    // Observateur PERSISTANT (§7) : hors écran, TOUT s'arrête — les boucles
+    // CSS des micro-actions (classe ft-offscreen) et l'enchaînement (le
+    // chrono ne tourne plus). Reprise à l'entrée. La règle « observateur
+    // déconnecté après usage » (§10) vaut pour les révélations ponctuelles,
+    // pas pour une animation continue.
+    let visible = false;
+    let started = false;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        visible = entries.some((e) => e.isIntersecting);
+        root.classList.toggle('ft-offscreen', !visible);
+        if (visible) {
+          lastTick = null;
+          if (autoplay && !started) {
+            started = true;
+            rafId = requestAnimationFrame(tick);
+          }
+        }
+      },
+      { threshold: 0.15 },
+    );
+    observer.observe(root);
+
+    // Le tick ne compte que si la section est visible.
+    const baseTick = tick;
+    tick = function visibilityAwareTick(now: number) {
+      if (!visible) {
+        lastTick = null;
+        rafId = requestAnimationFrame(visibilityAwareTick);
+        return;
+      }
+      baseTick(now);
+    };
+  }
+</script>
+
+<style>
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* ------------------------------------------------ onglets */
+
+  .ft-tablist {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: var(--block-gap);
+  }
+
+  .ft-tab {
+    display: inline-flex;
+    align-items: center;
+    height: var(--touch-secondary);
+    padding: 0 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    color: var(--ink-muted);
+    font: inherit;
+    font-size: var(--text-label);
+    font-weight: var(--weight-bold);
+    cursor: pointer;
+    transition: color var(--dur-base) var(--ease-out), background var(--dur-base) var(--ease-out);
+  }
+
+  .ft-tab[aria-selected='true'] {
+    background: var(--indigo);
+    border-color: var(--indigo);
+    color: white;
+  }
+
+  .ft-tab:focus-visible {
+    outline: 2px solid var(--indigo);
+    outline-offset: 3px;
+  }
+
+  /* Barre de progression fine de l'enchaînement (étape 5) : scaleX piloté
+     par le script, jamais width (§10). Sur fond indigo de l'onglet actif. */
+  .ft-tab {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ft-tab-progress {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 5px;
+    height: 2px;
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    opacity: 0.6;
+    transform: scaleX(0);
+    transform-origin: left;
+    pointer-events: none;
+  }
+
+  .ft-tab[aria-selected='false'] .ft-tab-progress { background: transparent; }
+
+  /* Arrêt définitif : plus aucune barre. */
+  .ft-manual .ft-tab-progress { display: none; }
+
+  /* Hors écran (observateur persistant, §7) : toutes les boucles s'arrêtent. */
+  .ft-offscreen :is(.ma-out, .ma-in, .ma-press, .ma-sheet, .ma-swap-before, .ma-swap-after, .ma-hist, .ma-step) {
+    animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ft-tab-progress { display: none; }
+  }
+
+  /* ------------------------------------------------ panneaux */
+
+  .ft-panel {
+    display: grid;
+    grid-template-columns: minmax(280px, 5fr) 7fr;
+    gap: var(--block-gap);
+    align-items: center;
+  }
+
+  .ft-panel[hidden] { display: none; }
+
+  .ft-title {
+    margin: 0 0 20px;
+    font-size: var(--scale-display);
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .ft-args {
+    list-style: none;
+    margin: 0 0 24px;
+    padding: 0;
+    display: grid;
+    gap: 14px;
+  }
+
+  .ft-args li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: var(--text-body);
+    color: var(--ink-muted);
+  }
+
+  .ft-args svg {
+    flex: none;
+    color: var(--success);
+    margin-top: 2px;
+  }
+
+  .ft-more {
+    color: var(--indigo);
+    font-weight: var(--weight-bold);
+    text-decoration: none;
+  }
+
+  .ft-more:hover { text-decoration: underline; }
+  .ft-more:focus-visible { outline: 2px solid var(--indigo); outline-offset: 3px; }
+
+  /* ------------------------------------------------ scène */
+
+  /* Scène SANS panneau : le téléphone est posé directement sur la page,
+     centré dans sa colonne. Le panneau crème doublait le cadre d'une
+     seconde boîte et poussait l'app sur le côté ; l'écran est l'objet, il
+     n'a pas besoin d'un contenant. */
+  .ft-stage {
+    position: relative;
+    display: grid;
+    align-items: center;
+    /* Le cadre se cale à gauche de sa colonne : la gouttière droite
+       appartient aux fragments, qui restent dans le container (§7 — ne pas
+       chercher à remplir la largeur avec le téléphone). */
+    justify-items: start;
+  }
+
+  .ft-phone-wrap {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ------------------------------------------------ écran reconstruit */
+
+  .scr {
+    height: 100%;
+    padding: 6px 12px 0;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--phone-ink);
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .scr p { margin: 0; max-width: none; }
+
+  .scr-eyebrow { color: var(--phone-ink-faint); font-weight: 500; font-size: 11px; }
+
+  .scr-title {
+    color: var(--phone-indigo);
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-top: -5px;
+  }
+
+  .scr-backrow { display: flex; align-items: center; gap: 10px; padding-top: 2px; }
+  .scr-back {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    background: var(--phone-surface);
+    border-radius: 999px;
+    font-size: 14px;
+    color: var(--phone-ink);
+  }
+  .scr-title-inline { margin-top: 0; color: var(--phone-ink); }
+
+  .scr-search {
+    background: var(--phone-surface);
+    border: 1px solid var(--phone-border);
+    border-radius: 12px;
+    padding: 8px 12px;
+    color: var(--phone-ink-faint);
+    font-size: 11px;
+  }
+
+  .scr-list { display: grid; gap: 6px; }
+
+  .scr-course,
+  .scr-client,
+  .scr-invoice,
+  .scr-expense {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--phone-surface);
+    border-radius: 12px;
+    padding: 7px 10px;
+  }
+
+  .scr-course-time {
+    font-weight: 800;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    flex: none;
+  }
+
+  .scr-course-sep { width: 1px; align-self: stretch; background: var(--phone-border); flex: none; }
+
+  .scr-course-main,
+  .scr-client-main,
+  .scr-invoice-main,
+  .scr-expense-main {
+    display: grid;
+    gap: 1px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .scr strong { font-weight: 700; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .scr em {
+    font-style: normal;
+    color: var(--phone-ink-muted);
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .scr-course-right,
+  .scr-invoice-right {
+    display: grid;
+    gap: 2px;
+    justify-items: end;
+    flex: none;
+  }
+
+  .scr-course-right strong,
+  .scr-invoice-right strong,
+  .scr-expense-amount {
+    font-variant-numeric: tabular-nums;
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .scr i {
+    font-style: normal;
+    font-weight: 800;
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .scr-avatar {
+    flex: none;
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--phone-indigo) 12%, white);
+    color: var(--phone-indigo);
+    font-weight: 800;
+    font-size: 10px;
+  }
+
+  .scr-cat-ico {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--phone-indigo) 12%, white);
+  }
+
+  .scr-total {
+    background: var(--phone-surface);
+    border-radius: 12px;
+    padding: 9px 12px;
+    display: grid;
+    gap: 2px;
+  }
+
+  .scr-total-label {
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--phone-ink-faint);
+  }
+
+  .scr-total-value {
+    font-size: 19px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .scr-stats { display: grid; gap: 6px; }
+  .scr-stats-half { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+
+  .scr-stats :global(.statcard) {
+    min-height: 0;
+    padding: 10px 12px;
+    border-radius: 14px;
+  }
+
+  .scr-stats :global(.statcard-label) { font-size: 8px; }
+  .scr-stats :global(.statcard-value) { font-size: 15px; }
+
+  .scr-subhead {
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--phone-ink-faint);
+    margin-top: 2px;
+  }
+
+  /* Bloc « Ce mois-ci » du tableau de bord (ref/ios-dashboard). */
+  .scr-kpis { display: grid; gap: 6px; }
+
+  .scr-kpi {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    background: var(--phone-surface);
+    border-radius: 12px;
+    padding: 8px 10px;
+  }
+
+  .scr-kpi-label {
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--phone-ink-faint);
+  }
+
+  .scr-kpi-value {
+    font-size: 12px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .scr-kpi-net { color: var(--phone-success); }
+
+  /* Barre d'onglets du bas : composant PhoneTabBar (vraies icônes Lucide
+     tracées jusqu'à (tabs)/_layout.tsx). */
+
+  /* ------------------------------------------------ micro-action facturation
+     Boucle 3 600 ms — transform et opacity uniquement (§10) :
+       0 → 400      repos, les courses à facturer visibles
+       400 → 520    appui (scale 0.97, 120 ms = --dur-fast)
+       520 → 940    la facture glisse vers le haut (420 ms = --dur-slow,
+                    --ease-out) PENDANT que le bloc facturable s'efface —
+                    cohérence d'état : les courses facturées quittent la
+                    liste des facturables
+       940 → 3140   lecture (2 200 ms)
+       3140 → 3360  fondu de sortie (220 ms = --dur-base), le bloc revient
+       3360 → 3600  ré-armement (240 ms) */
+
+  .scr-billable {
+    display: grid;
+    gap: 6px;
+    background: var(--phone-surface);
+    border: 1px solid var(--phone-border);
+    border-radius: 12px;
+    padding: 6px;
+  }
+
+  /* Deux colonnes complètes empilées (avant / après), clippées : la carte
+     sort en translateY négatif pendant que la colonne « après » remonte du
+     même delta (--ma-shift = hauteur carte − hauteur rangée) — les factures
+     00038/00037 restent en registre parfait entre les deux états, seul le
+     contenu défile. La ligne 00039 converge vers une hauteur de rangée
+     normale, 00036 se révèle en bas : l'écran reste plein (§6, §7). */
+  .ma-flow {
+    --ma-shift: 52px;
+    display: grid;
+    overflow: hidden;
+  }
+
+  .ma-flow > .ma-flow-col {
+    grid-area: 1 / 1;
+    display: grid;
+    gap: 6px;
+    align-content: start;
+    justify-content: stretch;
+    grid-template-columns: 100%;
+    min-width: 0;
+    padding: 0;
+  }
+
+  .ma-flow > .ma-out {
+    animation: ma-out 3600ms infinite, ma-flow-up 3600ms infinite;
+  }
+
+  .ma-flow > .ma-in {
+    opacity: 0;
+    animation: ma-in 3600ms infinite, ma-flow-settle 3600ms infinite;
+  }
+
+  @keyframes ma-flow-up {
+    0%, 14.4% { transform: translateY(0); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+    26.1%, 87.7% { transform: translateY(calc(-1 * var(--ma-shift))); }
+    93.3%, 100% { transform: translateY(0); }
+  }
+
+  @keyframes ma-flow-settle {
+    0%, 14.4% { transform: translateY(var(--ma-shift)); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+    26.1%, 87.7% { transform: translateY(0); }
+    93.3%, 100% { transform: translateY(var(--ma-shift)); }
+  }
+
+  /* Les deux états occupent la même cellule : la carte garde sa hauteur,
+     le contenu bascule — jamais de trou (§7). */
+  .ma-out,
+  .ma-in {
+    grid-area: 1 / 1;
+  }
+
+  .ma-out {
+    display: grid;
+    gap: 6px;
+  }
+
+  .ma-in {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px;
+    opacity: 0;
+  }
+
+  .scr-billable-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 6px;
+    padding: 2px 4px 0;
+  }
+
+  .scr-billable-title { font-weight: 700; font-size: 11px; }
+  .scr-billable-count { font-size: 9px; color: var(--phone-ink-muted); }
+
+  .scr-billable-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4px;
+  }
+
+  .scr-billable-sum {
+    font-size: 16px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .scr-cta {
+    display: grid;
+    place-items: center;
+    height: 30px;
+    border-radius: 10px;
+    background: var(--phone-indigo);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .ma-press {
+    animation: ma-press 3600ms infinite;
+    transform-origin: center;
+  }
+
+  @keyframes ma-press {
+    0%, 11.1% { transform: scale(1); }
+    12.8% { transform: scale(0.97); }
+    14.4%, 100% { transform: scale(1); }
+  }
+
+  /* Cohérence d'état + transformation (§7) : la carte des courses à facturer
+     DEVIENT la ligne de facture pendant que le PDF glisse (520 → 940 ms),
+     et redevient facturable au ré-armement. Opacity seule (§10). */
+  .ma-out { animation: ma-out 3600ms infinite; }
+  .ma-in { animation: ma-in 3600ms infinite; }
+
+  /* Relais strict (§7 règle 6) : l'état sortant s'éteint COMPLÈTEMENT
+     avant que l'entrant n'apparaisse — aucun instant où les deux textes
+     sont lisibles ensemble (le mi-fondu superposait « 4 h 02 » et
+     « 2 h 32 » en texte fantôme). Même tempo global : action 420 ms
+     coupée en deux demi-fondus, sortie 220 ms idem. */
+  @keyframes ma-out {
+    0%, 14.4% { opacity: 1; }
+    20.2%, 90.5% { opacity: 0; }
+    93.3%, 100% { opacity: 1; }
+  }
+
+  @keyframes ma-in {
+    0%, 20.2% { opacity: 0; }
+    26.1%, 87.7% { opacity: 1; }
+    90.5%, 100% { opacity: 0; }
+  }
+
+  /* Valeur qui suit la micro-action (encours, total du mois, fragment) :
+     deux états empilés en crossfade, synchronisés sur la boucle. */
+  .ma-swap { display: grid; }
+  .ma-swap-before, .ma-swap-after { grid-area: 1 / 1; }
+  .ma-swap-before { animation: ma-out 3600ms infinite; }
+  .ma-swap-after { opacity: 0; animation: ma-in 3600ms infinite; }
+
+  .frag-main .ma-swap-before,
+  .frag-main .ma-swap-after {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  /* Le PDF : aperçu sobre — blanc, encre, filets, une touche d'indigo. */
+  .ma-sheet {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 0;
+    z-index: 2;
+    background: var(--phone-surface);
+    border: 1px solid var(--phone-border);
+    border-radius: 18px 18px 0 0;
+    padding: 10px 14px 16px;
+    display: grid;
+    gap: 8px;
+    transform: translateY(108%);
+    animation: ma-sheet 3600ms infinite;
+  }
+
+  @keyframes ma-sheet {
+    /* 0 → 520 ms : hors champ. */
+    0%, 14.4% { transform: translateY(108%); opacity: 1; animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+    /* 940 ms : posée (glissement 420 ms, --ease-out). */
+    26.1% { transform: translateY(0); opacity: 1; }
+    /* 3 140 ms : fin de lecture (2 200 ms). */
+    87.2% { transform: translateY(0); opacity: 1; }
+    /* 3 360 ms : sortie en fondu (220 ms, --dur-base). */
+    93.3% { transform: translateY(0); opacity: 0; }
+    93.4% { transform: translateY(108%); opacity: 0; }
+    /* 3 600 ms : ré-armée. */
+    100% { transform: translateY(108%); opacity: 1; }
+  }
+
+  .ma-sheet-grab {
+    width: 32px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--phone-border);
+    justify-self: center;
+  }
+
+  .ma-sheet-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--phone-ink);
+  }
+
+  .ma-sheet-client { font-size: 10px; color: var(--phone-ink-muted); margin-top: -6px; }
+
+  .ma-sheet-lines { display: grid; gap: 5px; }
+
+  .ma-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-top: 1px solid var(--phone-border);
+    padding-top: 5px;
+  }
+
+  .ma-line em { font-style: normal; font-size: 10px; color: var(--phone-ink-muted); }
+  .ma-line strong { font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .ma-line-total strong { font-size: 13px; }
+
+  .ma-sheet-cta {
+    display: grid;
+    place-items: center;
+    height: 30px;
+    border-radius: 10px;
+    background: var(--phone-indigo);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  /* Reduced motion (§10, règle permanente) : plus de boucle, état FINAL —
+     la facture générée, posée. */
+  @media (prefers-reduced-motion: reduce) {
+    /* États FINAUX, aucune boucle (§7, §10) : facture émise, course posée,
+       fiche ouverte avec historique, dépense remplie, compteurs à terme. */
+    .ma-press { animation: none; }
+    .ma-sheet { animation: none; transform: translateY(0); }
+    .ma-out { animation: none; opacity: 0; }
+    .ma-in { animation: none; opacity: 1; transform: none; }
+    .ma-swap-before { animation: none; opacity: 0; }
+    .ma-swap-after { animation: none; opacity: 1; }
+    .ma-hist { animation: none; opacity: 1; }
+    .ma-step { animation: none; opacity: 0; }
+    .ma-step-4 { animation: none; opacity: 1; }
+  }
+
+  /* ------------------------------------------------ micro-actions répliquées
+     Même tempo pour toutes (§7) : repos 400 · appui 120 · action 420 ·
+     lecture 2 200 · sortie 220 · ré-armement 240 = 3 600 ms.
+     Onglet affiché 7 200 ms = deux boucles. Transform et opacity seuls. */
+
+  /* -- conteneur générique : deux états empilés, hauteur constante. -- */
+  .scr-slot,
+  .scr-clientcard,
+  .scr-scan {
+    display: grid;
+  }
+
+  .scr-slot > *,
+  .scr-clientcard > *,
+  .scr-scan > * {
+    grid-area: 1 / 1;
+  }
+
+  /* -- Agenda : le temps libre devient la course de 14:30. Forme réelle du
+     Gap de l'app (agenda.tsx:203-210) : filet vertical + libellé bold
+     ink-faint, aligné à gauche — pas une zone de dépôt. -- */
+  .scr-gap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0 10px 22px;
+    min-height: 40px;
+  }
+
+  .scr-gap-line {
+    width: 1px;
+    align-self: stretch;
+    background: var(--phone-border);
+  }
+
+  .scr-gap-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--phone-ink-faint);
+  }
+
+  .scr-course-inset { background: var(--phone-surface); }
+
+  .ma-agenda .ma-out { animation: ma-out 3600ms infinite; }
+  .ma-agenda .ma-in {
+    opacity: 0;
+    animation: ma-in 3600ms infinite, ma-drop 3600ms infinite;
+  }
+
+  /* La course SE POSE : petite translation verticale avec l'ease-out du
+     système — l'arrivée depuis le geste, pas un simple fondu. */
+  @keyframes ma-drop {
+    0%, 14.4% { transform: translateY(-10px); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+    26.1%, 100% { transform: translateY(0); }
+  }
+
+  /* -- Clients : la liste devient la fiche, l'historique se remplit. -- */
+  .scr-client-inset { background: var(--phone-surface); }
+
+  .ma-clients .ma-out {
+    display: grid;
+    gap: 6px;
+    animation: ma-out 3600ms infinite;
+  }
+
+  .ma-clients .ma-in {
+    display: grid;
+    gap: 6px;
+    align-content: start;
+    opacity: 0;
+    animation: ma-in 3600ms infinite;
+  }
+
+  .scr-fiche-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 4px;
+  }
+
+  .scr-avatar-lg { width: 32px; height: 32px; font-size: 11px; }
+
+  .scr-fiche-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .scr-fiche-stat {
+    display: grid;
+    gap: 1px;
+    background: var(--phone-surface);
+    border-radius: 12px;
+    padding: 7px 10px;
+  }
+
+  .scr-fiche-stat strong {
+    font-size: 13px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .scr-fiche-stat em {
+    font-style: normal;
+    font-size: 9px;
+    color: var(--phone-ink-muted);
+  }
+
+  /* L'historique se remplit ligne à ligne pendant la lecture —
+     stagger 60 ms (§10) après la pose de la fiche (940 ms). */
+  .ma-hist { opacity: 0; }
+  .ma-hist-0 { animation: ma-hist-0 3600ms infinite; }
+  .ma-hist-1 { animation: ma-hist-1 3600ms infinite; }
+  .ma-hist-2 { animation: ma-hist-2 3600ms infinite; }
+  .ma-hist-3 { animation: ma-hist-3 3600ms infinite; }
+  .ma-hist-4 { animation: ma-hist-4 3600ms infinite; }
+
+  @keyframes ma-hist-0 {
+    0%, 27.8% { opacity: 0; }
+    31.1%, 87.7% { opacity: 1; }
+    93.3%, 100% { opacity: 0; }
+  }
+
+  @keyframes ma-hist-1 {
+    0%, 29.4% { opacity: 0; }
+    32.8%, 87.7% { opacity: 1; }
+    93.3%, 100% { opacity: 0; }
+  }
+
+  @keyframes ma-hist-2 {
+    0%, 31.1% { opacity: 0; }
+    34.4%, 87.7% { opacity: 1; }
+    93.3%, 100% { opacity: 0; }
+  }
+
+  @keyframes ma-hist-3 {
+    0%, 32.8% { opacity: 0; }
+    36.1%, 87.7% { opacity: 1; }
+    93.3%, 100% { opacity: 0; }
+  }
+
+  @keyframes ma-hist-4 {
+    0%, 34.4% { opacity: 0; }
+    37.8%, 87.7% { opacity: 1; }
+    93.3%, 100% { opacity: 0; }
+  }
+
+  /* -- Dépenses : la ligne de saisie (chip catégorie cochée + montant +
+     Enregistrer, depense/nouvelle.tsx) devient la dépense enregistrée. -- */
+  .scr-entry {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--phone-surface);
+    border-radius: 12px;
+    padding: 7px 8px;
+    min-height: 40px;
+  }
+
+  .scr-entry-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid var(--phone-indigo);
+    background: color-mix(in srgb, var(--phone-indigo) 8%, white);
+    color: var(--phone-indigo);
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .scr-entry-check { font-size: 9px; }
+
+  .scr-entry-amount {
+    flex: 1;
+    text-align: right;
+    font-size: 12px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    padding-right: 4px;
+  }
+
+  .scr-entry-cta {
+    display: grid;
+    place-items: center;
+    height: 26px;
+    padding: 0 10px;
+    border-radius: 8px;
+    background: var(--phone-indigo);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .scr-expense-inset { background: var(--phone-surface); }
+
+  .ma-depenses .ma-out { animation: ma-out 3600ms infinite; }
+  .ma-depenses .ma-in { opacity: 0; animation: ma-in 3600ms infinite; }
+
+  /* -- Tableau de bord : compteurs à 5 pas, crossfade déterministe. -- */
+  .ma-counter { display: grid; }
+  .ma-step { grid-area: 1 / 1; opacity: 0; }
+
+  /* Chaque pas visible ~140 ms pendant la montée (520 → 1140 ms env.),
+     le dernier reste affiché toute la lecture puis la boucle repart. */
+  .ma-step-0 { animation: ma-c0 3600ms infinite; }
+  .ma-step-1 { animation: ma-c1 3600ms infinite; }
+  .ma-step-2 { animation: ma-c2 3600ms infinite; }
+  .ma-step-3 { animation: ma-c3 3600ms infinite; }
+  .ma-step-4 { animation: ma-c4 3600ms infinite; }
+
+  @keyframes ma-c0 {
+    0%, 14.4% { opacity: 1; }
+    14.5%, 100% { opacity: 0; }
+  }
+
+  @keyframes ma-c1 {
+    0%, 14.4% { opacity: 0; }
+    14.5%, 18.3% { opacity: 1; }
+    18.4%, 100% { opacity: 0; }
+  }
+
+  @keyframes ma-c2 {
+    0%, 18.4% { opacity: 0; }
+    18.5%, 22.2% { opacity: 1; }
+    22.3%, 100% { opacity: 0; }
+  }
+
+  @keyframes ma-c3 {
+    0%, 22.3% { opacity: 0; }
+    22.4%, 26.1% { opacity: 1; }
+    26.2%, 100% { opacity: 0; }
+  }
+
+  @keyframes ma-c4 {
+    0%, 26.1% { opacity: 0; }
+    26.2%, 93.3% { opacity: 1; }
+    /* Le compteur repart à zéro au ré-armement. */
+    93.4%, 100% { opacity: 0; }
+  }
+
+  /* ------------------------------------------------ fragments */
+
+  .ft-fragment {
+    position: absolute;
+    z-index: 2;
+    width: max-content;
+    /* La boîte épouse son contenu (§7 règle 6) : jamais une largeur figée
+       d'où le texte déborde. L'anti-coupure est géré par le positionnement,
+       pas par un max-width qui écrase la pastille. */
+    max-width: none;
+  }
+
+  /* Sans carte, l'ombre ne porte plus que sur les objets du fragment
+     (StatCard, avatar) : une ombre sur du texte nu le salirait. */
+  .ft-fragment :is(.statcard, .frag-avatar) {
+    filter: drop-shadow(0 12px 24px color-mix(in srgb, var(--ink) 12%, transparent));
+  }
+
+  /* Légende mobile (§7) : cachée tant que les fragments d'orbite portent
+     l'information (≥768px), affichée sous le téléphone quand ils disparaissent. */
+  .ft-legend {
+    display: none;
+    margin: 12px 0 0;
+    text-align: center;
+    font-size: var(--text-label);
+    font-weight: var(--weight-bold);
+    color: var(--ink-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ft-legend .ma-swap {
+    display: inline-grid;
+    justify-items: center;
+  }
+
+  /* Fragments ancrés sur le CADRE (le conteneur .ft-orbit épouse le
+     .ft-phone-wrap). Comme au hero : PAS de carte blanche — le texte se
+     pose nu sur la page, donc il démarre APRÈS le bord du cadre (8px) au
+     lieu de mordre le bezel : un texte nu ne peut pas chevaucher un objet
+     qui passe au-dessus de lui. Colonne alignée, même retrait pour les deux. */
+  .ft-frag-right,
+  .ft-frag-right-low {
+    left: calc(100% + 8px);
+    width: 199px;
+  }
+
+  .ft-frag-right { top: 22%; }
+  .ft-frag-right-low { top: 58%; }
+
+  .frag-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .frag-main { display: grid; gap: 2px; min-width: 0; }
+
+  .frag-main strong {
+    font-size: 14px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+
+  .frag-main em {
+    font-style: normal;
+    font-size: 11px;
+    color: var(--ink-muted);
+    /* Sur fond de page, la ligne de contexte peut passer sur deux lignes
+       plutôt que d'élargir la colonne. */
+    white-space: normal;
+  }
+
+  .frag-net { color: var(--success); }
+
+  .frag-avatar {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--r-pill);
+    background: color-mix(in srgb, var(--indigo) 12%, transparent);
+    color: var(--indigo);
+    font-weight: 800;
+    font-size: 12px;
+  }
+
+  /* ------------------------------------------------ repli mobile (étape 7)
+     Onglets en rangée à défilement horizontal avec scroll-snap, téléphone
+     en dessous, fragments réduits à un seul ou supprimés (§7).
+     Aucun scroll horizontal de PAGE : seule la tablist défile, dans son
+     propre conteneur (§12). */
+
+  @media (max-width: 1023px) {
+    .ft-panel { grid-template-columns: 1fr; }
+    .ft-stage { justify-items: center; min-height: 560px; }
+  }
+
+  /* Le téléphone étant centré dans sa colonne, la gouttière droite se
+     referme plus tôt : un seul fragment dès 1199px, sinon le second sort
+     du container. */
+  @media (max-width: 1199px) {
+    .ft-frag-right-low { display: none; }
+    .ft-frag-right { top: 20%; }
+  }
+
+  @media (max-width: 767px) {
+    .ft-tablist {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      /* Déborde du padding de page pour un défilement bord à bord,
+         sans créer de scroll horizontal de page. */
+      margin-inline: calc(-1 * var(--pad-inline));
+      padding-inline: var(--pad-inline);
+    }
+
+    .ft-tablist::-webkit-scrollbar { display: none; }
+
+    .ft-tab {
+      flex: none;
+      scroll-snap-align: start;
+    }
+
+    .ft-stage {
+      min-height: 0;
+      padding: 20px 16px;
+    }
+
+    /* Fragments supprimés sur téléphone : l'écran porte tout (§7). */
+    .ft-fragment { display: none; }
+
+    /* …mais leur information reste : le fragment principal devient une
+       ligne de légende sous le téléphone (§7) — même donnée calculée. */
+    .ft-legend { display: block; }
+  }
+
+  /* Hors écran (§7) — répété ici en FIN de cascade : les micro-actions
+     scopées (.ma-agenda .ma-out, ma-drop…) sont déclarées après le bloc
+     médian et le battaient à spécificité égale. */
+  .ft-offscreen :is(.ma-out, .ma-in, .ma-press, .ma-sheet, .ma-swap-before, .ma-swap-after, [class*='ma-hist-'], [class*='ma-step-']) {
+    animation-play-state: paused;
+  }
+
+  /* ------------------------------------------------ reduced-motion, passe
+     FINALE (§7 étape 6). Le bloc médian était battu par la cascade : les
+     sélecteurs scopés (.ma-agenda .ma-out, .ma-hist-0, .ma-step-4…) sont
+     déclarés APRÈS lui avec une spécificité égale ou supérieure. Celui-ci
+     ferme le fichier : rien ne peut plus le contredire. États FINAUX,
+     aucune boucle, nulle part. */
+  @media (prefers-reduced-motion: reduce) {
+    .ft :is(.ma-out, .ma-swap-before) { animation: none; opacity: 0; }
+    .ft :is(.ma-in, .ma-swap-after) { animation: none; opacity: 1; transform: none; }
+    .ft :is(.ma-press, .ma-sheet) { animation: none; }
+    .ft .ma-sheet { transform: translateY(0); }
+    .ft [class*='ma-hist-'] { animation: none; opacity: 1; }
+    .ft [class*='ma-step-'] { animation: none; opacity: 0; }
+    .ft .ma-step-4 { animation: none; opacity: 1; }
+  }
+</style>

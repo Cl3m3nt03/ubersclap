@@ -13,7 +13,7 @@ import {
   PlusJakartaSans_700Bold,
   PlusJakartaSans_800ExtraBold,
 } from '@expo-google-fonts/plus-jakarta-sans';
-import { light } from '@ubersclap/shared';
+import { light } from '@cadance/shared';
 
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { queryClient } from '@/lib/query-client';

@@ -1,6 +1,6 @@
 # 💳 PAYMENT_AND_BILLING.md
 
-# Uber's Clap
+# Cadance
 
 > Système de paiement et facturation SaaS
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-Uber's Clap fonctionne sur un modèle SaaS avec abonnement mensuel ou annuel.
+Cadance fonctionne sur un modèle SaaS avec abonnement mensuel ou annuel.
 
 Le système de paiement permet de gérer :
 
@@ -587,6 +587,6 @@ Services partenaires :
 
 # Conclusion
 
-Le système de paiement transforme Uber's Clap en véritable SaaS professionnel.
+Le système de paiement transforme Cadance en véritable SaaS professionnel.
 
 Stripe permet une gestion simple des abonnements tout en préparant l'évolution vers une plateforme complète pour les professionnels du transport.

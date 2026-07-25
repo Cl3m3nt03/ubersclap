@@ -1,6 +1,6 @@
 import { View, Text, Platform, type ViewProps } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { gradient, radius, type GradientName } from '@ubersclap/shared';
+import { gradient, radius, type GradientName } from '@cadance/shared';
 import type { ReactNode } from 'react';
 
 /**

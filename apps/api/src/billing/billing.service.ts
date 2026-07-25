@@ -20,7 +20,7 @@ import {
   type PlanTier,
   type StartCheckoutInput,
   type SubscriptionState,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { DATABASE } from '../database/database.module';
 import type { Database } from '../database/client';

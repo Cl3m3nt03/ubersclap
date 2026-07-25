@@ -1,0 +1,72 @@
+---
+/**
+ * ThemeToggle — web-only (DESIGN_CONTEXT.md §4, §9).
+ *
+ * Toggle explicite qui écrase la préférence système dans les deux sens
+ * (:root[data-theme]), persisté en localStorage. Le script inline de
+ * pré-hydratation vit dans le layout de page, pas ici — ce composant ne
+ * fait que basculer. Pilule 44px (cible tactile secondaire), icônes Lucide
+ * soleil/lune en SVG inline, stroke 2, currentColor (§5).
+ */
+---
+
+<button class="theme-toggle" type="button" data-theme-toggle aria-label="Basculer le thème">
+  <svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+  <svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+</button>
+
+<script>
+  for (const toggle of document.querySelectorAll('[data-theme-toggle]')) {
+    toggle.addEventListener('click', () => {
+      const root = document.documentElement;
+      const current =
+        root.dataset.theme ??
+        (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      const next = current === 'dark' ? 'light' : 'dark';
+      root.dataset.theme = next;
+      localStorage.setItem('theme', next);
+    });
+  }
+</script>
+
+<style>
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--touch-secondary);
+    height: var(--touch-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+
+  .theme-toggle:active {
+    transform: scale(0.97);
+  }
+
+  .theme-toggle:focus-visible {
+    outline: 2px solid var(--indigo);
+    outline-offset: 3px;
+  }
+
+  /* Icône selon le thème effectif : lune en clair (proposer le sombre),
+     soleil en sombre. */
+  .icon-sun { display: none; }
+  .icon-moon { display: block; }
+
+  :root[data-theme='dark'] .theme-toggle .icon-sun { display: block; }
+  :root[data-theme='dark'] .theme-toggle .icon-moon { display: none; }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) .theme-toggle .icon-sun { display: block; }
+    :root:not([data-theme='light']) .theme-toggle .icon-moon { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .theme-toggle { transition: none; }
+  }
+</style>

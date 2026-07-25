@@ -1,0 +1,116 @@
+---
+/**
+ * FinalCtaSection — web-only (DESIGN_CONTEXT.md §8 bloc 10).
+ *
+ * VRAIE BANDE CRÈME bord à bord (§8) : fond --panel pleine largeur,
+ * bordures haut/bas --panel-edge — elle referme la boucle ouverte par la
+ * bande de démonstration du milieu et donne une fin à la page. En sombre,
+ * --panel devient --surface (tokens, §4) : la bande reste lisible par ses
+ * bordures. Halo indigo diffus par-dessus (radial 6 %, pendant du hero —
+ * pas un gradient de marque, la règle §4 porte sur teal/coral/purple).
+ * TROISIÈME et dernier usage de type-impact. UN SEUL CTA, même libellé
+ * que partout (§11). Réassurance en une ligne. Centré (§9).
+ */
+interface Props {
+  ctaLabel: string;
+}
+
+const { ctaLabel } = Astro.props;
+---
+
+<section class="fcta" aria-labelledby="fcta-titre" id="essai">
+  <div class="fcta-halo" aria-hidden="true"></div>
+  <div class="fcta-inner">
+    <!-- Troisième type-impact (§3) — le dernier. -->
+    <h2 class="fcta-h2" id="fcta-titre">Reprenez le volant.</h2>
+    <p class="fcta-sub">
+      L’administratif tient dans votre poche. La route reste à vous.
+    </p>
+    <a class="fcta-cta" href="#essai">{ctaLabel}</a>
+    <p class="fcta-reassurance">Essai gratuit · Sans carte bancaire · Factures conformes</p>
+  </div>
+</section>
+
+<style>
+  .fcta {
+    position: relative;
+    overflow: hidden;
+    padding: var(--section-y) 0;
+    text-align: center;
+    /* Bande crème bord à bord (§8). */
+    background: var(--panel);
+    border-top: 1px solid var(--panel-edge);
+    border-bottom: 1px solid var(--panel-edge);
+  }
+
+  /* Halo indigo diffus — radial 6 %, comme au hero (§5). */
+  .fcta-halo {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(640px 420px at 50% 45%, color-mix(in srgb, var(--indigo) 6%, transparent), transparent);
+    pointer-events: none;
+  }
+
+  .fcta-inner {
+    position: relative;
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 0 var(--pad-inline);
+    display: grid;
+    justify-items: center;
+    gap: 24px;
+  }
+
+  .fcta-h2 {
+    font-size: var(--scale-impact);
+    font-weight: var(--weight-extra);
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+    color: var(--ink);
+  }
+
+  .fcta-sub {
+    font-size: var(--scale-body-lg);
+    line-height: 1.55;
+    color: var(--ink-muted);
+  }
+
+  .fcta-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--touch-primary);
+    padding: 0 32px;
+    border-radius: var(--r-md);
+    background: var(--indigo);
+    color: white;
+    font-size: var(--text-body);
+    font-weight: var(--weight-bold);
+    text-decoration: none;
+    box-shadow: var(--shadow-cta);
+    transition: transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
+  }
+
+  .fcta-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-cta-hover);
+  }
+
+  .fcta-cta:active { transform: scale(0.97); }
+
+  .fcta-cta:focus-visible {
+    outline: 2px solid var(--indigo);
+    outline-offset: 3px;
+  }
+
+  .fcta-reassurance {
+    font-size: var(--text-label);
+    font-weight: var(--weight-semibold);
+    color: var(--ink-faint);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fcta-cta { transition: none; }
+  }
+</style>

@@ -9,7 +9,7 @@ import {
   light,
   touch,
   type Expense,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Card } from '@/components/Card';

@@ -1,0 +1,139 @@
+---
+/**
+ * FaqSection — web-only (DESIGN_CONTEXT.md §8 bloc 9).
+ *
+ * 8 questions en <details>/<summary> (FaqItem : accordéon 0fr→1fr,
+ * chevron 180°). SectionHeader centré — un des deux seuls centrages
+ * autorisés (§9). JSON-LD FAQPage généré depuis LE MÊME tableau que le
+ * DOM — synchronisation garantie par construction.
+ *
+ * TRAÇABILITÉ des réponses :
+ *  - Conformité factures → invoices.service.ts:236-267 (numérotation),
+ *    issuer-snapshot.ts (immuable), invoice-pdf.service.ts:205-210
+ *    (mentions), identity.ts:62 (registre VTC).
+ *  - TVA/franchise → money.ts:49-71, VAT_REGIME_LABEL, art. 293 B
+ *    (invoice-pdf.service.ts:207).
+ *  - Hors-ligne → ADR-011, OfflineBanner.tsx (DESIGN_AUDIT.md), file de
+ *    mutations persistée (mutations.ts:80).
+ *  - Reprise des données → import des contacts du téléphone
+ *    (ContactPicker.tsx, expo-contacts, FEATURES.md:127-134). PAS de
+ *    promesse d'import CSV/tableur : introuvable dans le repo.
+ *  - Plusieurs chauffeurs → plans.ts (BUSINESS : multi_user,
+ *    course_dispatch, central_billing, rôles).
+ *  - Résiliation → plans.ts:20-29 (CANCELLED, subscriptionIsActive) —
+ *    l'accès dure tant que l'abonnement est actif.
+ *  - iOS/Android → app.json (ios + android), Expo/React Native.
+ *  - Export → SECURITY.md:454-460 (JSON, CSV, PDF).
+ *  - Support → aucun canal engagé dans le repo : réponse générique sans
+ *    promesse de délai (« Support prioritaire » de MONETIZATION.md:272
+ *    est un différenciateur d'offre futur, pas un engagement).
+ */
+import FaqItem from './FaqItem.astro';
+
+const faq = [
+  {
+    q: 'Les factures sont-elles conformes pour un VTC ?',
+    a: 'Oui. Numérotation continue et sans trou, mentions légales, régime de TVA, numéro d’inscription au registre VTC dans l’en-tête : chaque PDF sort avec ce que la profession exige. Une facture émise ne peut plus être modifiée.',
+  },
+  {
+    q: 'Je suis en franchise en base de TVA, ça marche pour moi ?',
+    a: 'Oui. Vous choisissez votre régime — TVA 10 % ou franchise en base — et l’application applique le bon calcul et les bonnes mentions, dont « TVA non applicable, art. 293 B du CGI ».',
+  },
+  {
+    q: 'Que se passe-t-il sans réseau, dans un parking ou un tunnel ?',
+    a: 'Vous continuez à travailler. Les données déjà chargées restent consultables, et tout ce que vous saisissez est mis en file puis envoyé automatiquement au retour du réseau. Rien n’est perdu.',
+  },
+  {
+    q: 'Comment récupérer mes clients existants ?',
+    a: 'Vous pouvez importer vos clients directement depuis les contacts de votre téléphone, sans double saisie. Le carnet se construit aussi tout seul : chaque nouvelle course crée la fiche du client au passage.',
+  },
+  {
+    q: 'On est plusieurs chauffeurs, c’est prévu ?',
+    a: 'Oui, avec l’offre Entreprise : plusieurs chauffeurs, attribution des courses, clients et historique partagés, facturation centralisée, et des rôles distincts — Administrateur, Manager, Chauffeur.',
+  },
+  {
+    q: 'Et si je veux arrêter ?',
+    a: 'Vous résiliez quand vous voulez ; l’accès reste ouvert jusqu’à la fin de la période payée. Vos données vous suivent : export en JSON, CSV ou PDF à tout moment.',
+  },
+  {
+    q: 'Sur quels téléphones ça fonctionne ?',
+    a: 'iPhone et Android, avec la même application et les mêmes fonctionnalités des deux côtés.',
+  },
+  {
+    q: 'Comment joindre le support ?',
+    a: 'Directement depuis l’application ou par e-mail. Les questions de chauffeurs sont lues par des gens qui connaissent le métier.',
+  },
+] as const;
+
+/* JSON-LD FAQPage — généré depuis le tableau ci-dessus, jamais dupliqué. */
+const jsonLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faq.map((item) => ({
+    '@type': 'Question',
+    name: item.q,
+    acceptedAnswer: { '@type': 'Answer', text: item.a },
+  })),
+});
+---
+
+<section class="faq" aria-labelledby="faq-titre" id="faq">
+  <div class="faq-inner">
+    <header class="faq-head">
+      <p class="faq-eyebrow">FAQ</p>
+      <h2 class="faq-h2" id="faq-titre">Les questions qu’on nous pose</h2>
+    </header>
+
+    <div class="faq-list">
+      {faq.map((item) => (
+        <FaqItem question={item.q}>
+          <p>{item.a}</p>
+        </FaqItem>
+      ))}
+    </div>
+  </div>
+</section>
+
+<script type="application/ld+json" set:html={jsonLd} />
+
+<style>
+  .faq { padding: var(--section-y) 0; }
+
+  .faq-inner {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 var(--pad-inline);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--block-gap);
+  }
+
+  /* Centré — un des deux seuls centrages autorisés avec le hero (§9). */
+  .faq-head {
+    display: grid;
+    gap: 12px;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .faq-eyebrow {
+    font-size: var(--text-micro);
+    font-weight: var(--weight-extra);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--indigo);
+  }
+
+  .faq-h2 {
+    font-size: var(--scale-display);
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+
+  .faq-list {
+    display: grid;
+    border-top: 1px solid var(--border);
+  }
+</style>

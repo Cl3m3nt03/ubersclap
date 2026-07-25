@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import type { Me, UpdateMeInput } from '@ubersclap/shared';
+import type { Me, UpdateMeInput } from '@cadance/shared';
 
 import { apiRequest } from '../api';
 import { queryKeys } from './keys';

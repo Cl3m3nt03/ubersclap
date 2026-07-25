@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, TextInput, Pressable, ActivityIndicator } from 'react-native';
 import { MapPin, Check } from 'lucide-react-native';
-import { light, touch, type Address, type GeoSuggestion } from '@ubersclap/shared';
+import { light, touch, type Address, type GeoSuggestion } from '@cadance/shared';
 
 import { useDebounced } from '@/lib/use-debounced';
 import { useAddressAutocomplete } from '@/lib/queries/geo';

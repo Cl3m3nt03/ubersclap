@@ -1,6 +1,6 @@
 # 🎨 DESIGN_DIRECTION.md
 
-# Uber's Clap — Direction artistique
+# Cadance — Direction artistique
 
 > Document manquant, référencé par le README sous le nom `UI_UX.md`.
 

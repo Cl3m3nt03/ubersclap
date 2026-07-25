@@ -1,6 +1,6 @@
 # 📂 PROJECT_STRUCTURE.md
 
-# Uber's Clap
+# Cadance
 
 > Organisation du projet et conventions techniques
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-Uber's Clap est composé de plusieurs applications et services.
+Cadance est composé de plusieurs applications et services.
 
 L'objectif est d'avoir une organisation claire permettant :
 
@@ -686,6 +686,6 @@ production
 
 # Conclusion
 
-Une bonne structure de projet permet à Uber's Clap de rester maintenable pendant toute son évolution.
+Une bonne structure de projet permet à Cadance de rester maintenable pendant toute son évolution.
 
 Cette organisation prépare le projet pour passer d'un développeur seul à une équipe complète.

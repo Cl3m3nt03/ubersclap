@@ -1,0 +1,171 @@
+---
+/**
+ * PricingCard — web-only (DESIGN_CONTEXT.md §8 bloc 7, §9).
+ *
+ * Carte d'offre : nom, prix, features. Carte recommandée : bordure indigo,
+ * badge, shadow-lift. Features avec check-circle-2 (Lucide inline) en
+ * success ; absentes en ink-faint avec un tiret. Le prix est un JETON
+ * Le prix est un jeton {{PRIX_*}} tant qu'il n'est pas tranché — jamais un
+ * chiffre inventé. Depuis le 2026-07-25 (00_CANON.md, ADR-015), les deux
+ * offres ont un prix réel ; PricingSection passe désormais formatEuros(),
+ * et .is-token ne s'active plus que si un jeton réapparaît.
+ * Les libellés d'offre viennent de PLAN_LABEL de @cadance/shared.
+ */
+interface Props {
+  planName: string;
+  /** Jeton visible tant que le prix n'est pas dans le repo. */
+  price: string;
+  priceNote?: string;
+  features: string[];
+  missingFeatures?: string[];
+  recommended?: boolean;
+  ctaLabel: string;
+}
+
+const {
+  planName,
+  price,
+  priceNote,
+  features,
+  missingFeatures = [],
+  recommended = false,
+  ctaLabel,
+} = Astro.props;
+
+import Button from './Button.astro';
+
+/* Un jeton {{PRIX_*}} est deux fois plus long qu'un vrai prix : à la taille
+   display il casse sur deux lignes et gonfle la carte. Il reste BIEN
+   VISIBLE (§8) mais à la taille title, sans déformer la mise en page que
+   les prix réels occuperont. */
+const isToken = price.startsWith('{{');
+---
+
+<article class={`pricing-card ${recommended ? 'is-recommended' : ''}`}>
+  {recommended ? <p class="pricing-badge">Recommandée</p> : null}
+  <h3 class="pricing-name">{planName}</h3>
+  <p class="pricing-price"><span class={`pricing-amount ${isToken ? 'is-token' : ''}`}>{price}</span>{priceNote ? <span class="pricing-note">{priceNote}</span> : null}</p>
+  <ul class="pricing-features">
+    {features.map((feature) => (
+      <li class="feature has">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+        <span>{feature}</span>
+      </li>
+    ))}
+    {missingFeatures.map((feature) => (
+      <li class="feature lacks">
+        <span class="lacks-dash" aria-hidden="true">—</span>
+        <span>{feature}</span>
+      </li>
+    ))}
+  </ul>
+  <Button label={ctaLabel} variant={recommended ? 'primary' : 'secondary'} />
+</article>
+
+<style>
+  .pricing-card {
+    position: relative;
+    display: grid;
+    gap: 20px;
+    /* Les deux cartes font la même hauteur (étirées par la grille) : le CTA
+       se cale en bas de chacune, plus de vide sous la carte la plus courte. */
+    grid-template-rows: auto auto 1fr auto;
+    align-content: stretch;
+    height: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: var(--card-pad);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .pricing-card.is-recommended {
+    border-color: var(--indigo);
+    box-shadow: var(--shadow-lift);
+  }
+
+  .pricing-badge {
+    position: absolute;
+    top: -12px;
+    left: var(--card-pad);
+    margin: 0;
+    padding: 4px 12px;
+    border-radius: var(--r-pill);
+    background: var(--indigo);
+    color: white;
+    font-size: var(--text-micro);
+    font-weight: var(--weight-extra);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  .pricing-name {
+    margin: 0;
+    font-size: var(--scale-title);
+    font-weight: var(--weight-bold);
+    line-height: 1.25;
+  }
+
+  .pricing-price {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .pricing-amount {
+    font-size: var(--scale-display);
+    font-weight: var(--weight-extra);
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    /* Un jeton {{PRIX_*}} long doit être encaissé sans déborder de la carte. */
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+
+  .pricing-note {
+    font-size: var(--text-label);
+    color: var(--ink-muted);
+  }
+
+  /* Jeton en attente du vrai prix : taille title, sur une seule ligne. */
+  .pricing-amount.is-token {
+    font-size: var(--scale-title);
+    letter-spacing: 0;
+    overflow-wrap: normal;
+  }
+
+  .pricing-features {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+  }
+
+  .feature {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: var(--text-body);
+  }
+
+  .feature.has svg {
+    flex: none;
+    color: var(--success);
+    margin-top: 2px;
+  }
+
+  .feature.lacks {
+    color: var(--ink-faint);
+  }
+
+  .lacks-dash {
+    flex: none;
+    width: 20px;
+    text-align: center;
+  }
+</style>

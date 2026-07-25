@@ -3,6 +3,10 @@ node_modules/
 dist/
 build/
 
+# Genere au build depuis packages/shared (apps/web/scripts/generate-tokens.mjs)
+apps/web/src/styles/tokens.css
+apps/web/.astro/
+
 # Expo
 .expo/
 *.tsbuildinfo
@@ -13,6 +17,7 @@ ios/
 .env
 .env.*
 !.env.example
+!.env.nas.example
 
 # OS
 .DS_Store

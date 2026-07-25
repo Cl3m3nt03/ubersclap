@@ -10,7 +10,7 @@ import {
   light,
   touch,
   type CourseWithClient,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { PageHeader } from '@/components/PageHeader';
 import { CourseRow } from '@/components/CourseRow';

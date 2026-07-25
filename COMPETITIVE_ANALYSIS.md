@@ -1,6 +1,6 @@
 # 📊 COMPETITIVE_ANALYSIS.md
 
-# Uber's Clap
+# Cadance
 
 > Analyse concurrentielle et positionnement marché
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-Uber's Clap évolue dans un marché où les chauffeurs professionnels utilisent actuellement plusieurs types d'outils :
+Cadance évolue dans un marché où les chauffeurs professionnels utilisent actuellement plusieurs types d'outils :
 
 - applications de réservation
 - agendas classiques
@@ -89,7 +89,7 @@ Chauffeur
 
 ---
 
-# Opportunité Uber's Clap
+# Opportunité Cadance
 
 Créer l'outil du chauffeur qui travaille en dehors des plateformes.
 
@@ -294,7 +294,7 @@ Dashboard financier.
 
 ---
 
-# 🏆 Positionnement Uber's Clap
+# 🏆 Positionnement Cadance
 
 ---
 
@@ -312,7 +312,7 @@ Les autres outils gèrent :
 une partie du métier
 ```
 
-Uber's Clap gère :
+Cadance gère :
 
 ```
 toute l'activité chauffeur
@@ -322,7 +322,7 @@ toute l'activité chauffeur
 
 # Tableau comparaison
 
-| Fonctionnalité    | Plateformes VTC | Agenda | Facturation | Uber's Clap |
+| Fonctionnalité    | Plateformes VTC | Agenda | Facturation | Cadance |
 | ----------------- | --------------- | ------ | ----------- | ----------- |
 | Planning courses  | 🟡              | 🟢     | ❌          | 🟢          |
 | Gestion clients   | 🔴              | 🔴     | 🟡          | 🟢          |
@@ -442,4 +442,4 @@ Devenir :
 
 Le marché possède beaucoup d'outils généralistes mais peu de solutions réellement pensées pour le quotidien d'un chauffeur VTC indépendant.
 
-Uber's Clap doit se positionner comme une plateforme métier spécialisée, simple et intelligente.
+Cadance doit se positionner comme une plateforme métier spécialisée, simple et intelligente.

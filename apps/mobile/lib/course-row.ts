@@ -1,4 +1,4 @@
-import type { CourseWithClient } from '@ubersclap/shared';
+import type { CourseWithClient } from '@cadance/shared';
 
 import type { CourseRowData } from '@/components/CourseRow';
 

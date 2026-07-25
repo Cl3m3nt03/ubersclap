@@ -1,6 +1,6 @@
 # 📱 USER_FLOW.md
 
-# Uber's Clap
+# Cadance
 
 > Parcours utilisateurs et flux fonctionnels
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-Ce document présente les principaux parcours utilisateurs d'Uber's Clap.
+Ce document présente les principaux parcours utilisateurs d'Cadance.
 
 L'objectif est de définir comment un chauffeur utilise l'application au quotidien.
 
@@ -637,6 +637,6 @@ Utilisation :
 
 # Conclusion
 
-Les parcours Uber's Clap sont conçus autour du quotidien réel d'un chauffeur VTC.
+Les parcours Cadance sont conçus autour du quotidien réel d'un chauffeur VTC.
 
 L'application doit devenir un réflexe quotidien permettant de gérer l'activité avec simplicité et efficacité.

@@ -1,6 +1,6 @@
 # 🌐 API.md
 
-# Uber's Clap
+# Cadance
 
 > Documentation API REST
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-L'API Uber's Clap permet à l'application mobile de communiquer avec le backend.
+L'API Cadance permet à l'application mobile de communiquer avec le backend.
 
 Elle gère :
 
@@ -746,4 +746,4 @@ Exemple :
 
 # Conclusion
 
-Cette API fournit toutes les fonctionnalités nécessaires au fonctionnement d'Uber's Clap et permet au mobile de gérer l'ensemble de l'activité professionnelle du chauffeur VTC.
+Cette API fournit toutes les fonctionnalités nécessaires au fonctionnement d'Cadance et permet au mobile de gérer l'ensemble de l'activité professionnelle du chauffeur VTC.

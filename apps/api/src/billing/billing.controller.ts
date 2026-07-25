@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import type { Request } from 'express';
-import { startCheckoutSchema, type StartCheckoutInput } from '@ubersclap/shared';
+import { startCheckoutSchema, type StartCheckoutInput } from '@cadance/shared';
 
 import { BillingService } from './billing.service';
 import { StripeService } from './stripe.service';

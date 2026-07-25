@@ -21,7 +21,7 @@ import {
   light,
   touch,
   type ExpenseCategory,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { Button } from '@/components/Button';
 import { DateTimeField } from '@/components/DateTimeField';

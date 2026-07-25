@@ -11,7 +11,7 @@ import {
   light,
   touch,
   type CourseWithClient,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';

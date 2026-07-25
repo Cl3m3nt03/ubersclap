@@ -1,5 +1,5 @@
 import { View, Text } from 'react-native';
-import { light } from '@ubersclap/shared';
+import { light } from '@cadance/shared';
 import type { LucideIcon } from 'lucide-react-native';
 import { Button } from './Button';
 

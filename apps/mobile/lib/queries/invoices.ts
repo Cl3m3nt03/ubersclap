@@ -4,7 +4,7 @@ import type {
   CreateInvoiceInput,
   Invoice,
   InvoiceSummary,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { apiRequest } from '../api';
 import { queryKeys } from './keys';

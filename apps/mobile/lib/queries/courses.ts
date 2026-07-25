@@ -4,7 +4,7 @@ import type {
   CourseStatus,
   CourseWithClient,
   CreateCourseInput,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { apiRequest } from '../api';
 import { mutationKeys, queryKeys } from './keys';

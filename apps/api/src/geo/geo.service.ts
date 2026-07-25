@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { GeoSuggestion, RouteResult } from '@ubersclap/shared';
+import type { GeoSuggestion, RouteResult } from '@cadance/shared';
 
 import { GEO_PROVIDER, type GeoProvider, type LatLng } from './providers/geo-provider';
 

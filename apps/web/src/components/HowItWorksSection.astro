@@ -1,0 +1,193 @@
+---
+/**
+ * HowItWorksSection — web-only (DESIGN_CONTEXT.md §8 bloc 6).
+ *
+ * 3 étapes reliées par la LIGNE DE TRAJET stylisée (départ → arrivée),
+ * seul motif métier admis (§5) et réservé à cette section. La numérotation
+ * est légitime ici : c'est une vraie séquence. Titres en 700 casse normale
+ * (type-impact interdit — 2 usages consommés, le 3e est réservé au CTA
+ * final). Étapes tracées : saisie de course (course/nouvelle.tsx),
+ * agenda/facture/tableau alimentés par la même saisie (FEATURES.md
+ * modules 3-7), facturation en deux temps (invoices.service.ts).
+ */
+---
+
+<section class="how" aria-labelledby="how-titre">
+  <div class="how-inner">
+    <header class="how-head">
+      <p class="how-eyebrow">Comment ça marche</p>
+      <h2 class="how-h2" id="how-titre">Une saisie, tout suit</h2>
+    </header>
+
+    <!-- La ligne de trajet (§5) : UNE seule ligne continue traverse les
+         trois étapes — point plein au départ de la 1re, tirets sans
+         interruption, anneau d'arrivée à la FIN de la 3e. Verticale et
+         toujours continue en pile mobile. Elle raconte une course. -->
+    <div class="how-route">
+      <div class="how-line" aria-hidden="true">
+        <span class="how-dot-start"></span>
+        <span class="how-dashes"></span>
+        <span class="how-dot-end"></span>
+      </div>
+      <ol class="how-steps">
+        <li class="how-step">
+          <h3 class="how-step-title">Saisissez la course</h3>
+          <p class="how-step-text">
+            Client, départ, arrivée : le prix se propose d’après la distance,
+            toujours modifiable. Même sans réseau, la saisie part en file.
+          </p>
+        </li>
+        <li class="how-step">
+          <h3 class="how-step-title">Tout se range tout seul</h3>
+          <p class="how-step-text">
+            L’agenda la place, le carnet retient le client, le tableau de bord
+            recalcule. Vous n’avez rien recopié nulle part.
+          </p>
+        </li>
+        <li class="how-step">
+          <h3 class="how-step-title">Facturez en fin de course</h3>
+          <p class="how-step-text">
+            Une course ou plusieurs sur la même facture : le PDF conforme est
+            prêt à partager avant que le client soit descendu de voiture.
+          </p>
+        </li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<style>
+  .how { padding: var(--section-y) 0; }
+
+  .how-inner {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 0 var(--pad-inline);
+    display: grid;
+    gap: var(--block-gap);
+  }
+
+  .how-head { display: grid; gap: 12px; justify-items: start; }
+
+  .how-eyebrow {
+    font-size: var(--text-micro);
+    font-weight: var(--weight-extra);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--indigo);
+  }
+
+  .how-h2 {
+    font-size: var(--scale-display);
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+
+  .how-route {
+    display: grid;
+    gap: 20px;
+  }
+
+  /* ---- LA ligne : un seul tracé continu, départ → arrivée (§5). ---- */
+
+  .how-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    /* Alignée sur le contenu des cartes : même retrait latéral. */
+    padding: 0 var(--card-pad);
+  }
+
+  .how-dot-start {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    background: var(--indigo);
+  }
+
+  .how-dashes {
+    flex: 1;
+    border-top: 2px dashed color-mix(in srgb, var(--indigo) 35%, transparent);
+  }
+
+  .how-dot-end {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    border: 3px solid var(--indigo);
+  }
+
+  .how-steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--grid-gap);
+    counter-reset: how;
+  }
+
+  .how-step {
+    position: relative;
+    counter-increment: how;
+    display: grid;
+    gap: 10px;
+    align-content: start;
+    padding: var(--card-pad);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-soft);
+  }
+
+  /* Numérotation — légitime ici, vraie séquence (§8). */
+  .how-step::before {
+    content: counter(how);
+    position: absolute;
+    top: var(--card-pad);
+    right: var(--card-pad);
+    font-size: var(--text-label);
+    font-weight: var(--weight-extra);
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-faint);
+  }
+
+  .how-step-title {
+    font-size: var(--scale-title);
+    font-weight: var(--weight-bold);
+    line-height: 1.25;
+    color: var(--ink);
+  }
+
+  .how-step-text {
+    font-size: var(--text-body);
+    line-height: 1.6;
+    color: var(--ink-muted);
+  }
+
+  @media (max-width: 1023px) {
+    /* Pile : la ligne devient VERTICALE, toujours continue, le long des
+       cartes — départ en haut, arrivée en bas. */
+    .how-route {
+      grid-template-columns: 14px 1fr;
+      column-gap: 16px;
+    }
+
+    .how-line {
+      flex-direction: column;
+      padding: var(--card-pad) 0;
+    }
+
+    .how-dashes {
+      flex: 1;
+      border-top: 0;
+      border-left: 2px dashed color-mix(in srgb, var(--indigo) 35%, transparent);
+    }
+
+    .how-steps { grid-template-columns: 1fr; }
+  }
+</style>

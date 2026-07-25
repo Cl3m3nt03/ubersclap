@@ -1,6 +1,6 @@
 # 🚀 MVP_SCOPE.md
 
-# Uber's Clap
+# Cadance
 
 > Définition du périmètre MVP (Version 1.0)
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-Le MVP (Minimum Viable Product) représente la première version exploitable d'Uber's Clap.
+Le MVP (Minimum Viable Product) représente la première version exploitable d'Cadance.
 
 L'objectif est de sortir rapidement une application utile aux chauffeurs VTC indépendants.
 
@@ -598,6 +598,6 @@ Objectifs :
 
 # Conclusion
 
-Le MVP Uber's Clap doit rester simple mais apporter une vraie valeur quotidienne.
+Le MVP Cadance doit rester simple mais apporter une vraie valeur quotidienne.
 
 La priorité est de créer un outil fiable que les chauffeurs ouvrent chaque jour, avant d'ajouter des fonctionnalités avancées.

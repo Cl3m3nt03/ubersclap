@@ -1,6 +1,6 @@
 # 🧪 TESTING.md
 
-# Uber's Clap
+# Cadance
 
 > Stratégie de tests et assurance qualité
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-La qualité est un élément essentiel pour Uber's Clap.
+La qualité est un élément essentiel pour Cadance.
 
 L'application étant utilisée quotidiennement par des chauffeurs professionnels, les erreurs peuvent avoir un impact direct :
 
@@ -580,6 +580,6 @@ Outils :
 
 # Conclusion
 
-La stratégie de tests d'Uber's Clap permet de construire une application fiable et professionnelle.
+La stratégie de tests d'Cadance permet de construire une application fiable et professionnelle.
 
 Les tests ne sont pas uniquement une étape finale : ils font partie du développement quotidien afin de garantir une expérience stable aux chauffeurs.

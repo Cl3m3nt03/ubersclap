@@ -1,6 +1,6 @@
 # 🗄️ DATABASE_SCHEMA.md
 
-# Uber's Clap
+# Cadance
 
 > Architecture base de données
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-La base de données Uber's Clap doit permettre de gérer l'ensemble de l'activité d'un chauffeur VTC :
+La base de données Cadance doit permettre de gérer l'ensemble de l'activité d'un chauffeur VTC :
 
 - utilisateurs
 - profils chauffeurs
@@ -824,7 +824,7 @@ Préparation future :
 
 # Conclusion
 
-Le modèle de données Uber's Clap est conçu autour de l'entité principale :
+Le modèle de données Cadance est conçu autour de l'entité principale :
 
 ```
 COURSE

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import type { GeoSuggestion, RouteResult } from '@ubersclap/shared';
+import type { GeoSuggestion, RouteResult } from '@cadance/shared';
 
 import type { GeoProvider, LatLng } from './geo-provider';
 
@@ -32,7 +32,7 @@ export class OsmGeoProvider implements GeoProvider {
     'https://router.project-osrm.org';
   // Nominatim exige un User-Agent identifiable avec un moyen de contact.
   private readonly userAgent =
-    process.env.GEO_USER_AGENT ?? "Uber's Clap/0.1 (contact@ubersclap.dev)";
+    process.env.GEO_USER_AGENT ?? "Cadance/0.1 (contact@ubersclap.dev)";
 
   /** Serialise les appels Nominatim en respectant l'intervalle minimal. */
   private nominatimGate: Promise<void> = Promise.resolve();

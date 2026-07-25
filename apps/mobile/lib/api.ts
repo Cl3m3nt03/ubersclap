@@ -1,4 +1,5 @@
 import { API_BASE_URL } from './config';
+import { DEMO_MODE, demoRequest } from './demo';
 import {
   clearTokens,
   getAccessToken,
@@ -123,6 +124,12 @@ export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
+  // Mode démonstration (EXPO_PUBLIC_DEMO_MODE=1) : les fixtures de
+  // @cadance/shared répondent à la place de l'API. Voir lib/demo.ts.
+  if (DEMO_MODE) {
+    return demoRequest<T>(path, options);
+  }
+
   const { method = 'GET', body, query, anonymous = false, signal } = options;
 
   const idempotencyKey =

@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
-import type { BillingInterval, PlanTier } from '@ubersclap/shared';
+import type { BillingInterval, PlanTier } from '@cadance/shared';
 
 /**
  * Acces au prestataire de paiement, et rien d'autre.

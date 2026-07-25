@@ -77,7 +77,8 @@ export const organizationMemberships = pgTable(
  * Abonnement d'une organisation — une organisation, un abonnement.
  *
  * Le tier pilote les fonctionnalites disponibles (voir la table de permissions
- * dans @ubersclap/shared). `tier` et `status` restent la SEULE verite lue par
+<<<<<<< HEAD
+ * dans @cadance/shared). `tier` et `status` restent la SEULE verite lue par
  * l'application : les colonnes `stripe_*` ne servent qu'a dialoguer avec le
  * prestataire de paiement. Interroger Stripe pour savoir si un ecran est
  * accessible rendrait l'app dependante d'un appel reseau externe a chaque

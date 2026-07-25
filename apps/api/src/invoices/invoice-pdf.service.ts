@@ -10,7 +10,7 @@ import {
   formatEuros,
   formatShortDate,
   VAT_REGIME_LABEL,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import type { invoices, invoiceLines } from '../database/schema';
 import { parseIssuerSnapshot } from './issuer-snapshot';
@@ -47,7 +47,7 @@ export class InvoicePdfService {
     const snapshot = parseIssuerSnapshot(invoice.issuerSnapshot);
     const pdf = await PDFDocument.create();
     pdf.setTitle(`Facture ${invoice.invoiceNumber}`);
-    pdf.setProducer("Uber's Clap");
+    pdf.setProducer("Cadance");
 
     const font = await pdf.embedFont(StandardFonts.Helvetica);
     const bold = await pdf.embedFont(StandardFonts.HelveticaBold);

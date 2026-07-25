@@ -3,7 +3,7 @@ import { and, desc, eq, gte, isNull, lte } from 'drizzle-orm';
 import type {
   CreateExpenseInput,
   UpdateExpenseInput,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { DATABASE } from '../database/database.module';
 import type { Database } from '../database/client';

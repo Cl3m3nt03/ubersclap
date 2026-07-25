@@ -1,6 +1,6 @@
 # 🔐 SECURITY.md
 
-# Uber's Clap
+# Cadance
 
 > Documentation sécurité
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-Uber's Clap manipule des données professionnelles importantes :
+Cadance manipule des données professionnelles importantes :
 
 - Informations personnelles clients
 - Numéros de téléphone
@@ -414,7 +414,7 @@ Enregistrer :
 
 # 🇪🇺 RGPD
 
-Uber's Clap doit respecter le RGPD.
+Cadance doit respecter le RGPD.
 
 ---
 
@@ -562,6 +562,6 @@ En cas de problème :
 
 # Conclusion
 
-La sécurité d'Uber's Clap doit être intégrée dès la conception.
+La sécurité d'Cadance doit être intégrée dès la conception.
 
 L'objectif est de construire une application professionnelle capable d'être utilisée quotidiennement par des chauffeurs indépendants tout en garantissant la protection complète de leurs données et celles de leurs clients.

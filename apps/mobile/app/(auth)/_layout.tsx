@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router';
-import { light } from '@ubersclap/shared';
+import { light } from '@cadance/shared';
 
 export default function AuthLayout() {
   return (

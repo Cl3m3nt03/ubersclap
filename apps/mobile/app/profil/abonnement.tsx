@@ -19,7 +19,7 @@ import {
   light,
   type BillingPlanOption,
   type SubscriptionState,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';

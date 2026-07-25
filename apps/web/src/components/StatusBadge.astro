@@ -1,0 +1,69 @@
+---
+/**
+ * StatusBadge — dérivé de apps/mobile/components/StatusBadge.tsx.
+ *
+ * Reprend : pilule radius sm, fond couleur à 12 %, texte couleur pleine,
+ * 12px 800 uppercase, libellé TOUJOURS présent — jamais la couleur seule.
+ * Les libellés viennent de COURSE_STATUS_LABEL / INVOICE_STATUS_LABEL de
+ * @cadance/shared, jamais d'une chaîne écrite sur place.
+ */
+import {
+  COURSE_STATUS_LABEL,
+  COURSE_STATUS_TONE,
+  type CourseStatus,
+  type StatusTone,
+} from '@cadance/shared';
+
+interface Props {
+  /** Statut de course typé — libellé et ton dérivés de shared. */
+  status?: CourseStatus;
+  /** Ou libellé + ton explicites (statuts de facture, chips ad hoc). */
+  label?: string;
+  tone?: StatusTone;
+}
+
+const { status, label, tone } = Astro.props;
+
+const resolvedLabel = status ? COURSE_STATUS_LABEL[status] : (label ?? '');
+const resolvedTone: StatusTone = status ? COURSE_STATUS_TONE[status] : (tone ?? 'neutral');
+---
+
+<span class={`badge tone-${resolvedTone}`}>{resolvedLabel}</span>
+
+<style>
+  .badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: var(--r-sm);
+    font-size: var(--text-micro);
+    font-weight: var(--weight-extra);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+
+  .tone-neutral {
+    background: color-mix(in srgb, var(--ink-muted) 12%, transparent);
+    color: var(--ink-muted);
+  }
+
+  .tone-info {
+    background: color-mix(in srgb, var(--indigo) 12%, transparent);
+    color: var(--indigo);
+  }
+
+  .tone-success {
+    background: color-mix(in srgb, var(--success) 12%, transparent);
+    color: var(--success);
+  }
+
+  .tone-warning {
+    background: color-mix(in srgb, var(--warning) 12%, transparent);
+    color: var(--warning);
+  }
+
+  .tone-danger {
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
+    color: var(--danger);
+  }
+</style>

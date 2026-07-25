@@ -11,7 +11,7 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { createClientSchema, type CreateClientInput } from '@ubersclap/shared';
+import { createClientSchema, type CreateClientInput } from '@cadance/shared';
 
 import { ClientsService } from './clients.service';
 import { CurrentDriverId } from '../auth/current-driver.decorator';

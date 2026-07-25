@@ -1,6 +1,6 @@
 # 🚀 FEATURES.md
 
-# Uber's Clap
+# Cadance
 
 > Documentation fonctionnelle des fonctionnalités
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-Ce document présente l'ensemble des fonctionnalités prévues pour Uber's Clap.
+Ce document présente l'ensemble des fonctionnalités prévues pour Cadance.
 
 L'application est organisée autour de plusieurs grands modules :
 
@@ -673,7 +673,7 @@ Fonctionnalités :
 
 # 🏁 Conclusion
 
-Uber's Clap doit devenir un véritable assistant professionnel permettant au chauffeur VTC de gérer :
+Cadance doit devenir un véritable assistant professionnel permettant au chauffeur VTC de gérer :
 
 - ses clients
 - ses réservations

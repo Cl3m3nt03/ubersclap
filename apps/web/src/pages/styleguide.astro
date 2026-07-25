@@ -1,0 +1,760 @@
+---
+/**
+ * /styleguide — le système, pas une mise en page marketing (phases 5-6).
+ *
+ * Présente la bibliothèque de composants de src/components/ (phase 6),
+ * la palette, l'échelle typo, le panneau crème, la grille/halo du hero,
+ * les ombres et le H1 retenu en G1. Aucune section marketing assemblée.
+ *
+ * Aucune valeur en dur : tokens.css + @cadance/shared (les hex affichés en
+ * texte ou injectés en style inline viennent du module partagé, compilés).
+ */
+import '../styles/tokens.css';
+import {
+  BRAND_NAME,
+  PLAN_LABEL,
+  light,
+  dark,
+  gradient,
+  COURSE_STATUS_LABEL,
+  formatEuros,
+  formatDuration,
+  type CourseStatus,
+} from '@cadance/shared';
+import { createLandingDemo } from '../data/demo';
+import Button from '../components/Button.astro';
+import Field from '../components/Field.astro';
+import Card from '../components/Card.astro';
+import StatusBadge from '../components/StatusBadge.astro';
+import StatCard from '../components/StatCard.astro';
+import SectionHeader from '../components/SectionHeader.astro';
+import PhoneMockup from '../components/PhoneMockup.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import PricingCard from '../components/PricingCard.astro';
+import FaqItem from '../components/FaqItem.astro';
+import ThemeToggle from '../components/ThemeToggle.astro';
+import FeatureTabs from '../components/FeatureTabs.astro';
+
+const demo = createLandingDemo();
+const agg = demo.aggregates;
+
+/** Agrégats calculés, jamais écrits. */
+const stats = {
+  teal: { label: 'Chiffre d’affaires', value: formatEuros(agg.revenueCents) },
+  coral: { label: 'Courses', value: String(agg.courseCount) },
+  purple: { label: 'Temps de conduite', value: formatDuration(agg.workedMinutes) },
+} as const;
+
+const palettes = [
+  { name: 'Thème clair', values: light },
+  { name: 'Thème sombre', values: dark },
+] as const;
+
+const gradients = Object.entries(gradient) as Array<[string, readonly [string, string]]>;
+
+const typeScale = [
+  { name: 'impact', spec: 'clamp(40 → 92px) · 800 · capitales · ls −0.02em · lh 0.95', cls: 't-impact', sample: 'Vos courses' },
+  { name: 'display', spec: 'clamp(30 → 48px) · 700 · ls −0.02em · lh 1.1 — H2 de section', cls: 't-display', sample: 'Tout votre mois, déjà rangé' },
+  { name: 'title', spec: 'clamp(20 → 28px) · 700 · lh 1.25 — H3', cls: 't-title', sample: 'La facture part avant le client' },
+  { name: 'body-lg', spec: 'clamp(17 → 20px) · 400 · lh 1.55 · ink-muted', cls: 't-body-lg', sample: 'Vous saisissez la course une fois. L’agenda, la facture et le tableau de bord suivent.' },
+  { name: 'body', spec: '16px · 400 · lh 1.6', cls: 't-body', sample: 'Le mode hors-ligne garde chaque saisie, même dans un parking souterrain.' },
+  { name: 'label', spec: '13px · 600', cls: 't-label', sample: 'Numéro de facture' },
+  { name: 'micro', spec: '12px · 800 · capitales · ls 0.12em — eyebrows', cls: 't-micro', sample: 'Pour les chauffeurs VTC indépendants' },
+] as const;
+
+const statuses = Object.keys(COURSE_STATUS_LABEL) as CourseStatus[];
+
+const shadows = [
+  { varName: '--shadow-soft', usage: 'cartes au repos' },
+  { varName: '--shadow-lift', usage: 'hover de carte' },
+  { varName: '--shadow-cta', usage: 'CTA — passe à cta-hover au survol' },
+  { varName: '--shadow-device', usage: 'cadre de téléphone' },
+] as const;
+
+/** Features des PricingCards — libellés provisoires dérivés de plans.ts (identifiants techniques). */
+const soloFeatures = ['Clients et courses illimités', 'Facturation PDF conforme', 'Dépenses et statistiques', 'Agenda et mode hors-ligne'];
+const businessFeatures = [...soloFeatures, 'Plusieurs chauffeurs', 'Attribution des courses', 'Facturation centralisée'];
+---
+
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{BRAND_NAME} — Styleguide</title>
+    <link rel="preload" href="/fonts/plus-jakarta-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <script is:inline>
+      // Pré-hydratation du thème : préférence système par défaut, choix
+      // explicite persisté qui écrase dans les deux sens (§4).
+      (() => {
+        const saved = localStorage.getItem('theme');
+        if (saved === 'dark' || saved === 'light') {
+          document.documentElement.dataset.theme = saved;
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="page-head">
+      <p class="t-micro eyebrow">Système — phases 5-6</p>
+      <h1 class="t-display">Styleguide</h1>
+      <div class="page-head-toggle"><ThemeToggle /></div>
+    </header>
+
+    <!-- ============================================= 1. Palette -->
+    <section class="block" aria-labelledby="titre-palette">
+      <h2 id="titre-palette" class="t-title">Palette — deux thèmes</h2>
+      <div class="palette-grid">
+        {palettes.map((palette) => (
+          <div>
+            <h3 class="t-label">{palette.name}</h3>
+            <ul class="swatches">
+              {Object.entries(palette.values).map(([name, value]) => (
+                <li class="swatch">
+                  <span class="swatch-chip" style={`background: ${value};`}></span>
+                  <span class="swatch-name">{name}</span>
+                  <code class="swatch-value">{value}</code>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+      <h3 class="t-label sub">Les trois gradients — confinés aux écrans d’app</h3>
+      <div class="gradient-row">
+        {gradients.map(([name, [from, to]]) => (
+          <div class="gradient-chip" style={`background: linear-gradient(135deg, ${from}, ${to});`}>
+            <span class="gradient-name">{name}</span>
+            <code class="gradient-stops">{from} → {to}</code>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- ============================================= 2. Typographie -->
+    <section class="block" aria-labelledby="titre-typo">
+      <h2 id="titre-typo" class="t-title">Échelle typographique — Plus Jakarta Sans, famille unique</h2>
+      <ul class="type-list">
+        {typeScale.map((step) => (
+          <li class="type-row">
+            <div class="type-meta">
+              <code class="type-name">{step.name}</code>
+              <span class="type-spec">{step.spec}</span>
+            </div>
+            <p class={`type-sample ${step.cls}`}>{step.sample}</p>
+          </li>
+        ))}
+      </ul>
+      <p class="t-body note">
+        <strong>type-impact</strong> : trois usages maximum dans la page marketing.
+        Chiffres toujours en <span class="tabular">tabular-nums : {formatEuros(agg.revenueCents)}</span>.
+      </p>
+    </section>
+
+    <!-- ============================================= 3. Button -->
+    <section class="block" aria-labelledby="titre-boutons">
+      <h2 id="titre-boutons" class="t-title">Button — 5 variantes × 6 états</h2>
+      <p class="t-body note">Composant src/components/Button.astro — filiation Button.tsx. 56px primaire, 44px secondaire. Gradient réservé aux écrans d’app reconstruits.</p>
+      <div class="btn-table">
+        <div class="btn-grid-head">
+          <span class="t-label">variante</span>
+          <span class="t-label">repos</span><span class="t-label">hover</span><span class="t-label">active</span><span class="t-label">focus</span><span class="t-label">disabled</span><span class="t-label">loading</span>
+        </div>
+        {(['primary', 'secondary', 'ghost', 'danger', 'gradient'] as const).map((variant) => (
+          <div class="btn-grid-row">
+            <span class="t-label">{variant}</span>
+            <span><Button label="Créer la course" variant={variant} /></span>
+            <span><Button label="Créer la course" variant={variant} demoState="hover" /></span>
+            <span><Button label="Créer la course" variant={variant} demoState="active" /></span>
+            <span><Button label="Créer la course" variant={variant} demoState="focus" /></span>
+            <span><Button label="Créer la course" variant={variant} disabled /></span>
+            <span><Button label="Créer la course" variant={variant} loading /></span>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- ============================================= 4. Field, Card, StatusBadge -->
+    <section class="block" aria-labelledby="titre-champs">
+      <h2 id="titre-champs" class="t-title">Field · Card · StatusBadge</h2>
+      <p class="t-body note">Field — filiation TextField.tsx. Card — filiation Card.tsx. StatusBadge — filiation StatusBadge.tsx, libellés depuis shared.</p>
+      <div class="trio">
+        <div class="trio-col">
+          <h3 class="t-label">Field — repos, focus, erreur, hint</h3>
+          <Field id="sg-repos" label="Nom du client" placeholder="Karim Belkacem" />
+          <Field id="sg-focus" label="Adresse de départ" value="Place de la République, 75003 Paris" demoFocus />
+          <Field id="sg-erreur" label="Téléphone" value="06 12" error="Numéro de téléphone trop court" />
+          <Field id="sg-hint" label="Email" placeholder="k.belkacem@exemple.fr" hint="Pour l’envoi des factures." />
+        </div>
+        <div class="trio-col">
+          <h3 class="t-label">Card — repos et hover</h3>
+          <Card>
+            <p class="t-label">Course de 14:30</p>
+            <p class="t-body">République → Bastille</p>
+          </Card>
+          <Card demoHover>
+            <p class="t-label">Au survol</p>
+            <p class="t-body">translateY(−4px) + shadow-lift + bordure indigo-soft 30 %</p>
+          </Card>
+        </div>
+        <div class="trio-col">
+          <h3 class="t-label">StatusBadge — toujours un mot</h3>
+          <div class="badge-row">
+            {statuses.map((status) => <StatusBadge status={status} />)}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================= 5. StatCard — deux emplacements -->
+    <section class="block" aria-labelledby="titre-statcards">
+      <h2 id="titre-statcards" class="t-title">StatCard — la règle dépend de l’emplacement</h2>
+      <div class="statcard-compare">
+        <div>
+          <h3 class="t-label">Dans un cadre de téléphone — reproduction fidèle</h3>
+          <p class="t-body note">Label 12px comme dans l’app. Contenu aria-hidden : WCAG ne s’applique pas, la fidélité prime.</p>
+          <div class="statcard-mockup-demo">
+            <StatCard placement="mockup" tone="teal" label={stats.teal.label} value={stats.teal.value} />
+            <div class="statcard-mockup-halfrow">
+              <StatCard placement="mockup" tone="coral" label={stats.coral.label} value={stats.coral.value} />
+              <StatCard placement="mockup" tone="purple" label={stats.purple.label} value={stats.purple.value} />
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3 class="t-label">En fragment d’orbite — vrai contenu de page</h3>
+          <p class="t-body note">Pas de label : valeur seule en 800, ≥28px. WCAG grand texte 3:1 tenu (3,21 · 3,29 · 3,77 mesurés).</p>
+          <div class="statcard-orbit-demo">
+            <StatCard placement="orbit" tone="teal" value={stats.teal.value} />
+            <StatCard placement="orbit" tone="coral" value={stats.coral.value} />
+            <StatCard placement="orbit" tone="purple" value={stats.purple.value} />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================= 6. SectionHeader -->
+    <section class="block" aria-labelledby="titre-sectionheader">
+      <h2 id="titre-sectionheader" class="t-title">SectionHeader — filiation PageHeader.tsx</h2>
+      <div class="sh-demo">
+        <SectionHeader eyebrow="Facturation" title="La facture part avant le client" subtitle="Course terminée, deux appuis, PDF conforme envoyé. La numérotation suit toute seule." />
+        <SectionHeader eyebrow="Centré — hero et FAQ uniquement" title="Questions fréquentes" tone="indigo" centered />
+      </div>
+    </section>
+
+    <!-- ============================================= 7. Panneau crème + PhoneMockup -->
+    <section class="block" aria-labelledby="titre-panneau">
+      <h2 id="titre-panneau" class="t-title">Panneau crème · PhoneMockup (web-only)</h2>
+      <p class="t-body note">L’écran reste en thème clair dans les deux thèmes (§4) : l’app est le seul objet vivant. En page sombre, halo lumineux à la place de l’ombre.</p>
+      <div class="panel">
+        <PhoneMockup />
+      </div>
+    </section>
+
+    <!-- ============================================= 8. Navbar -->
+    <section class="block" aria-labelledby="titre-navbar">
+      <h2 id="titre-navbar" class="t-title">Navbar — glassmorphism 1/3, menu mobile piégé</h2>
+      <div class="navbar-demo">
+        <Navbar />
+        <div class="navbar-demo-fill t-body">Contenu de démonstration sous la barre sticky — le flou se voit au défilement.</div>
+      </div>
+    </section>
+
+    <!-- ============================================= 9. PricingCard -->
+    <section class="block" aria-labelledby="titre-pricing">
+      <h2 id="titre-pricing" class="t-title">PricingCard — prix en jetons tant qu’ils ne sont pas dans plans.ts</h2>
+      <div class="pricing-demo">
+        <PricingCard planName={PLAN_LABEL.SOLO} price="{{PRIX_SOLO}}" priceNote="par mois" features={soloFeatures} missingFeatures={['Plusieurs chauffeurs']} ctaLabel="Essayer gratuitement" />
+        <PricingCard planName={PLAN_LABEL.BUSINESS} price="{{PRIX_ENTREPRISE}}" priceNote="par mois" features={businessFeatures} recommended ctaLabel="Essayer gratuitement" />
+      </div>
+    </section>
+
+    <!-- ============================================= 10. FaqItem -->
+    <section class="block" aria-labelledby="titre-faq">
+      <h2 id="titre-faq" class="t-title">FaqItem — details/summary, accordéon 0fr → 1fr</h2>
+      <div class="faq-demo">
+        <FaqItem question="L’application fonctionne-t-elle sans réseau ?">
+          <p>Oui. Vous saisissez vos courses, clients et dépenses même hors connexion : tout est enregistré sur le téléphone et synchronisé au retour du réseau.</p>
+        </FaqItem>
+        <FaqItem question="Les factures sont-elles conformes ?">
+          <p>La numérotation est continue et chronologique, les mentions obligatoires sont générées depuis votre profil professionnel.</p>
+        </FaqItem>
+      </div>
+    </section>
+
+    <!-- ============================================= 11. Grille + halo -->
+    <section class="block" aria-labelledby="titre-fond">
+      <h2 id="titre-fond" class="t-title">Grille de fond du hero · halo indigo</h2>
+      <div class="hero-bg-demo">
+        <div class="hero-grid" aria-hidden="true"></div>
+        <div class="hero-halo" aria-hidden="true"></div>
+        <p class="t-body hero-bg-note">Grille 1px border à 40 %, masquée en radial. Un seul halo indigo à 6 %. Hero uniquement.</p>
+      </div>
+    </section>
+
+    <!-- ============================================= 12. Ombres -->
+    <section class="block" aria-labelledby="titre-ombres">
+      <h2 id="titre-ombres" class="t-title">Les quatre ombres</h2>
+      <div class="shadow-row">
+        {shadows.map((shadow) => (
+          <div class="shadow-demo" style={`box-shadow: var(${shadow.varName});`}>
+            <code class="t-label">{shadow.varName}</code>
+            <p class="t-body">{shadow.usage}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- ============================================= 13. H1 retenu -->
+    <section class="block" aria-labelledby="titre-h1">
+      <h2 id="titre-h1" class="t-title">H1 du hero — « Le contour », retenu en G1</h2>
+      <p class="t-body note">Ligne en contour rendue en SVG (stroke + paint-order) : text-stroke CSS laissait l’auto-intersection du N visible. Tracking +0,01em. Repli &lt;640px : aplat ink-faint.</p>
+      <div class="h1-frame">
+        <p class="t-impact h1-c" role="presentation">
+          <span class="h1-c-outline-wrap">
+            <span class="visually-hidden">Conduisez.</span>
+            <svg class="h1-c-outline-svg" viewBox="-4 -4 654 88" aria-hidden="true" focusable="false">
+              <text x="0" y="76" class="h1-svg-text">CONDUISEZ.</text>
+            </svg>
+            <span class="h1-c-outline-fallback" aria-hidden="true">Conduisez.</span>
+          </span>
+          <span class="h1-c-solid">On tient le reste.</span>
+        </p>
+      </div>
+    </section>
+
+    <!-- ============================================= 14. Footer -->
+    <section class="block" aria-labelledby="titre-footer">
+      <h2 id="titre-footer" class="t-title">Footer — 4 colonnes, année dynamique</h2>
+      <div class="footer-demo">
+        <Footer />
+      </div>
+    </section>
+
+    <!-- ============================================= 15. FeatureTabs — phase 7, étapes 1-3 -->
+    <section class="block" aria-labelledby="titre-featuretabs">
+      <h2 id="titre-featuretabs" class="t-title">FeatureTabs — section signature, étapes 1-3</h2>
+      <p class="t-body note">Structure statique : cinq panneaux dans le DOM, ARIA complet (flèches, Home/End), écrans reconstruits depuis ref/, fragments en orbite. Micro-actions et enchaînement : étapes 4-5, à valider ensemble.</p>
+      <FeatureTabs />
+    </section>
+  </body>
+</html>
+
+<style>
+  @font-face {
+    font-family: 'PlusJakartaSans';
+    src: url('/fonts/plus-jakarta-sans-latin.woff2') format('woff2');
+    font-weight: 200 800;
+    font-display: swap;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-family);
+    font-size: var(--text-body);
+    line-height: 1.6;
+  }
+
+  body {
+    margin: 0 auto;
+    max-width: var(--container);
+    padding: var(--space-section) var(--pad-inline) 120px;
+  }
+
+  p { margin: 0; max-width: 62ch; }
+  h1, h2, h3 { margin: 0; }
+  code { font-family: inherit; }
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  .page-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 16px;
+  }
+
+  .page-head-toggle { margin-left: auto; }
+
+  .block { margin-top: var(--space-section); }
+  .block > .t-title { margin-bottom: var(--block-gap); }
+
+  .note { color: var(--ink-muted); margin-bottom: 24px; }
+  .sub { display: block; margin: 32px 0 16px; }
+  .eyebrow { color: var(--indigo); }
+
+  /* ------------------------------------------------ échelle typo */
+
+  .t-impact {
+    font-size: var(--scale-impact);
+    font-weight: var(--weight-extra);
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+  }
+
+  .t-display {
+    font-size: var(--scale-display);
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .t-title {
+    font-size: var(--scale-title);
+    font-weight: var(--weight-bold);
+    line-height: 1.25;
+  }
+
+  .t-body-lg {
+    font-size: var(--scale-body-lg);
+    line-height: 1.55;
+    color: var(--ink-muted);
+  }
+
+  .t-body { font-size: var(--text-body); }
+  .t-label { font-size: var(--text-label); font-weight: var(--weight-semibold); }
+
+  .t-micro {
+    font-size: var(--text-micro);
+    font-weight: var(--weight-extra);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  .type-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 28px;
+  }
+
+  .type-row {
+    display: grid;
+    gap: 6px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+  }
+
+  .type-meta { display: flex; gap: 16px; align-items: baseline; }
+  .type-name { font-weight: var(--weight-extra); font-size: var(--text-label); color: var(--indigo); }
+  .type-spec { font-size: var(--text-label); color: var(--ink-faint); }
+
+  /* ------------------------------------------------ palette */
+
+  .palette-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--grid-gap);
+  }
+
+  .swatches {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+  }
+
+  .swatch {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: 8px 12px;
+  }
+
+  .swatch-chip {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--border);
+    flex: none;
+  }
+
+  .swatch-name { font-weight: var(--weight-semibold); font-size: var(--text-label); }
+  .swatch-value { margin-left: auto; color: var(--ink-faint); font-size: var(--text-micro); }
+
+  .gradient-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--grid-gap);
+  }
+
+  .gradient-chip {
+    border-radius: var(--r-lg);
+    padding: var(--card-pad);
+    color: white;
+    display: grid;
+    gap: 4px;
+  }
+
+  .gradient-name {
+    font-weight: var(--weight-extra);
+    text-transform: uppercase;
+    font-size: var(--text-micro);
+    letter-spacing: 0.12em;
+  }
+
+  .gradient-stops { font-size: var(--text-micro); opacity: 0.85; }
+
+  /* ------------------------------------------------ boutons */
+
+  .btn-table {
+    display: grid;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 16px;
+    /* Débordement VISIBLEMENT scrollable : ombres de bord qui signalent la
+       suite, plus une barre de défilement toujours affichée. */
+    background:
+      linear-gradient(90deg, var(--bg) 30%, transparent),
+      linear-gradient(270deg, var(--bg) 30%, transparent) 100% 0,
+      radial-gradient(farthest-side at 0 50%, color-mix(in srgb, var(--ink) 14%, transparent), transparent),
+      radial-gradient(farthest-side at 100% 50%, color-mix(in srgb, var(--ink) 14%, transparent), transparent) 100% 0;
+    background-repeat: no-repeat;
+    background-size: 48px 100%, 48px 100%, 16px 100%, 16px 100%;
+    background-attachment: local, local, scroll, scroll;
+    scrollbar-width: thin;
+  }
+
+  .btn-grid-head,
+  .btn-grid-row {
+    display: grid;
+    grid-template-columns: 90px repeat(6, minmax(170px, 1fr));
+    gap: 12px;
+    align-items: center;
+  }
+
+  .btn-grid-head .t-label { color: var(--ink-faint); }
+
+  .btn-grid-row :global(.btn) {
+    width: 100%;
+    padding: 0 12px;
+    font-size: var(--text-label);
+  }
+
+  /* ------------------------------------------------ trio */
+
+  .trio {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--block-gap);
+  }
+
+  .trio-col { display: grid; gap: 20px; align-content: start; }
+  .trio-col > .t-label { color: var(--ink-faint); }
+
+  .badge-row { display: flex; flex-wrap: wrap; gap: 10px; }
+
+  /* ------------------------------------------------ statcards */
+
+  .statcard-compare {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+    gap: var(--block-gap);
+  }
+
+  .statcard-compare > div > .t-label { display: block; margin-bottom: 8px; color: var(--ink-faint); }
+
+  .statcard-mockup-demo {
+    display: grid;
+    gap: var(--space-grid);
+    max-width: 360px;
+  }
+
+  .statcard-mockup-halfrow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-grid);
+  }
+
+  .statcard-orbit-demo {
+    display: grid;
+    gap: var(--grid-gap);
+    max-width: 300px;
+  }
+
+  /* ------------------------------------------------ section header demo */
+
+  .sh-demo { display: grid; gap: var(--block-gap); }
+
+  /* ------------------------------------------------ panneau + phone */
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: var(--r-xl);
+    padding: clamp(32px, 6vw, 80px);
+    display: grid;
+    place-items: center;
+  }
+
+  /* ------------------------------------------------ navbar / footer demo */
+
+  .navbar-demo {
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    max-height: 260px;
+    overflow-y: auto;
+  }
+
+  .navbar-demo-fill {
+    padding: 40px var(--pad-inline) 240px;
+    color: var(--ink-muted);
+  }
+
+  .footer-demo {
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+  }
+
+  /* ------------------------------------------------ pricing / faq demo */
+
+  .pricing-demo {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--grid-gap);
+    align-items: start;
+    padding-top: 12px;
+  }
+
+  .faq-demo {
+    max-width: 640px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ------------------------------------------------ grille + halo */
+
+  .hero-bg-demo {
+    position: relative;
+    border-radius: var(--r-xl);
+    border: 1px solid var(--border);
+    min-height: 320px;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+  }
+
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.4;
+    mask-image: radial-gradient(ellipse 70% 70% at 50% 45%, black, transparent);
+  }
+
+  .hero-halo {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(480px 320px at 50% 40%, color-mix(in srgb, var(--indigo) 6%, transparent), transparent);
+  }
+
+  .hero-bg-note { position: relative; text-align: center; color: var(--ink-muted); }
+
+  /* ------------------------------------------------ ombres */
+
+  .shadow-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--block-gap);
+  }
+
+  .shadow-demo {
+    background: var(--surface);
+    border-radius: var(--r-lg);
+    padding: var(--card-pad);
+    display: grid;
+    gap: 6px;
+  }
+
+  :root[data-theme='dark'] .shadow-demo { border: 1px solid var(--border); }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) .shadow-demo { border: 1px solid var(--border); }
+  }
+
+  /* ------------------------------------------------ H1 « Le contour » */
+
+  .h1-frame {
+    margin-top: 24px;
+    padding: clamp(32px, 5vw, 72px) 0;
+  }
+
+  .h1-c {
+    display: grid;
+    gap: 8px;
+    max-width: none;
+  }
+
+  /* Ligne en contour : SVG (§8). text-stroke CSS laisse l'auto-intersection
+     des glyphes visible (le trait du N traverse la contreforme) parce que le
+     remplissage est transparent. En SVG : paint-order stroke, puis un FILL
+     OPAQUE couleur de fond par-dessus — il recouvre le trait à l'intérieur
+     du glyphe. Le texte réel reste lisible (visually-hidden). */
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .h1-c-outline-wrap {
+    display: block;
+    line-height: 0;
+  }
+
+  .h1-c-outline-svg {
+    display: block;
+    /* Texte tracé à 100 unités dans le viewBox : cap ≈ 72 u. Rendu à
+       l'échelle de --scale-impact pour s'aligner sur la ligne pleine. */
+    width: calc(var(--scale-impact) * 6.54);
+    max-width: 100%;
+    height: auto;
+  }
+
+  .h1-svg-text {
+    font-family: var(--font-family);
+    font-size: 100px;
+    font-weight: var(--weight-extra);
+    /* Tracking POSITIF propre au contour (§8) : le creux a besoin d'air. */
+    letter-spacing: 0.01em;
+    fill: var(--bg);
+    stroke: var(--ink);
+    stroke-width: 2.2;
+    paint-order: stroke;
+  }
+
+  .h1-c-outline-fallback {
+    display: none;
+  }
+
+  .h1-c-solid { color: var(--indigo); }
+
+  /* Repli <640px (§8) : le trait devient illisible en petit — aplat ink-faint,
+     même hiérarchie, le voile puis le plein. */
+  @media (max-width: 640px) {
+    .h1-c-outline-svg { display: none; }
+    .h1-c-outline-wrap { line-height: 0.95; }
+    .h1-c-outline-fallback {
+      display: inline;
+      color: var(--ink-faint);
+    }
+  }
+</style>

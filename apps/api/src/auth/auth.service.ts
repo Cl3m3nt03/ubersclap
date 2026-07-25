@@ -19,7 +19,7 @@ import type {
   RegisterInput,
   AccessTokenPayload,
   UpdateMeInput,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { DATABASE } from '../database/database.module';
 import type { Database } from '../database/client';

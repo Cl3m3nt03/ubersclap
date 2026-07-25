@@ -1,0 +1,167 @@
+---
+/**
+ * PricingSection — web-only (DESIGN_CONTEXT.md §8 bloc 7).
+ *
+ * Offres et libellés depuis plans.ts (PLAN_LABEL, PLAN_FEATURES_BY_TIER) —
+ * jamais de libellé marketing inventé pour une feature absente du code.
+ * PRIX : tranchés le 2026-07-25 (00_CANON.md, ADR-015 pricing) — Solo
+ * 9,99 €/mois, Entreprise 39,99 €/mois. Le montant réel côté paiement
+ * vient de Stripe à l'exécution (packages/shared/src/billing.ts) ; ces
+ * deux valeurs sont la référence de communication tant que les jetons
+ * PRIX_* n'ont plus lieu d'être (§8, §15).
+ * Pas de toggle mensuel/annuel : il n'existe aucune donnée de prix à
+ * basculer ; le toggle viendra avec les prix réels.
+ * Carte recommandée : bordure indigo, badge, shadow-lift (PricingCard).
+ * Un seul libellé de CTA primaire (§11) — passé en prop.
+ *
+ * Traçabilité des features affichées (plans.ts:55-93) :
+ *  Solo : clients, courses, invoicing, expenses, stats, pdf_export, agenda
+ *  Entreprise : + multi_user, course_dispatch, shared_clients,
+ *    shared_history, central_billing, role_permissions
+ *  Rôles Administrateur / Manager / Chauffeur : MEMBERSHIP_ROLE_LABEL
+ *  Essai gratuit : SUBSCRIPTION_STATUSES 'TRIALING' (plans.ts:20).
+ */
+import { PLAN_LABEL, formatEuros } from '@cadance/shared';
+import PricingCard from './PricingCard.astro';
+
+interface Props {
+  ctaLabel: string;
+}
+
+const { ctaLabel } = Astro.props;
+
+/* Prix tranchés (00_CANON.md, ADR-015 pricing, 2026-07-25). */
+const SOLO_PRICE_CENTS = 999;
+const BUSINESS_PRICE_CENTS = 3999;
+
+/* Libellés FR des features de plans.ts — reformulation directe des
+   identifiants techniques, pas d'invention. */
+const soloFeatures = [
+  'Clients et courses illimités',        // clients, courses
+  'Agenda et mode hors-ligne',           // agenda (+ offline ADR-011)
+  'Facturation et export PDF',           // invoicing, pdf_export
+  'Dépenses et statistiques',            // expenses, stats
+];
+
+const businessFeatures = [
+  ...soloFeatures,
+  'Plusieurs chauffeurs',                // multi_user
+  'Attribution des courses',             // course_dispatch
+  'Clients et historique partagés',      // shared_clients, shared_history
+  'Facturation centralisée',             // central_billing
+  'Rôles Administrateur / Manager / Chauffeur', // role_permissions
+];
+---
+
+<section class="pricing" aria-labelledby="pricing-titre" id="tarifs">
+  <div class="pricing-inner">
+    <header class="pricing-head">
+      <p class="pricing-eyebrow">Tarifs</p>
+      <h2 class="pricing-h2" id="pricing-titre">Deux offres, zéro commission</h2>
+      <p class="pricing-sub">
+        Un abonnement, c’est tout. {''}
+        Vos courses restent à vous, du premier au dernier euro.
+      </p>
+    </header>
+
+    <div class="pricing-grid">
+      <PricingCard
+        planName={PLAN_LABEL.SOLO}
+        price={formatEuros(SOLO_PRICE_CENTS)}
+        priceNote="par mois"
+        features={soloFeatures}
+        missingFeatures={['Plusieurs chauffeurs', 'Facturation centralisée']}
+        recommended={true}
+        ctaLabel={ctaLabel}
+      />
+      <PricingCard
+        planName={PLAN_LABEL.BUSINESS}
+        price={formatEuros(BUSINESS_PRICE_CENTS)}
+        priceNote="par mois"
+        features={businessFeatures}
+        ctaLabel={ctaLabel}
+      />
+    </div>
+
+    <!-- Remontées de la réassurance (§8) : c'est ICI que le visiteur se
+         pose ces questions. Tracées : aucune commission → MONETIZATION.md:15
+         (modèle abonnement) ; export → SECURITY.md:454-460 (JSON, CSV, PDF). -->
+    <ul class="pricing-notes">
+      <li>Essai gratuit sur les deux offres, sans carte bancaire.</li>
+      <li>Aucune commission sur les courses : ce que vous facturez vous appartient en entier.</li>
+      <li>Export de vos données à tout moment — JSON, CSV ou PDF.</li>
+    </ul>
+  </div>
+</section>
+
+<style>
+  .pricing { padding: var(--section-y) 0; }
+
+  .pricing-inner {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 0 var(--pad-inline);
+    display: grid;
+    /* Sans colonne explicite, la colonne implicite s'aligne sur le
+       max-content de la grille auto-fit et déborde à 390px. */
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  .pricing-head { display: grid; gap: 12px; justify-items: start; }
+
+  .pricing-eyebrow {
+    font-size: var(--text-micro);
+    font-weight: var(--weight-extra);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--indigo);
+  }
+
+  .pricing-h2 {
+    font-size: var(--scale-display);
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+
+  .pricing-sub {
+    font-size: var(--scale-body-lg);
+    line-height: 1.55;
+    color: var(--ink-muted);
+    max-width: 52ch;
+  }
+
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+    gap: var(--grid-gap);
+    /* Les cartes s'étirent à la même hauteur : le CTA de Solo n'est plus
+       suivi de 178px de vide. */
+    align-items: stretch;
+    max-width: 880px;
+    min-width: 0;
+  }
+
+  .pricing-notes {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    /* Une seule ligne quand la place le permet : trois lignes empilées
+       ajoutaient 74px de hauteur pour trois informations courtes. */
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 24px;
+    row-gap: 6px;
+    font-size: var(--text-label);
+    font-weight: var(--weight-semibold);
+    color: var(--ink-muted);
+  }
+
+  .pricing-notes li::before {
+    content: '· ';
+    color: var(--indigo);
+    font-weight: var(--weight-extra);
+  }
+</style>

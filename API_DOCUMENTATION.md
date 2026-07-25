@@ -1,6 +1,6 @@
 # 🌐 API_DOCUMENTATION.md
 
-# Uber's Clap
+# Cadance
 
 > Documentation API Backend
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-L'API Uber's Clap permet de connecter :
+L'API Cadance permet de connecter :
 
 - l'application mobile
 - les services backend
@@ -856,4 +856,4 @@ Possibilités :
 
 # Conclusion
 
-L'API Uber's Clap est conçue comme une base solide permettant de supporter l'application mobile actuelle et les futures évolutions SaaS.
+L'API Cadance est conçue comme une base solide permettant de supporter l'application mobile actuelle et les futures évolutions SaaS.

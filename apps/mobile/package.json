@@ -1,5 +1,5 @@
 {
-  "name": "@ubersclap/mobile",
+  "name": "@cadance/mobile",
   "version": "0.1.0",
   "private": true,
   "main": "expo-router/entry",
@@ -17,7 +17,7 @@
     "@react-native-community/netinfo": "11.4.1",
     "@tanstack/react-query": "^5.101.4",
     "@tanstack/react-query-persist-client": "^5.101.4",
-    "@ubersclap/shared": "workspace:*",
+    "@cadance/shared": "workspace:*",
     "expo": "~54.0.36",
     "expo-constants": "~18.0.13",
     "expo-contacts": "~15.0.11",

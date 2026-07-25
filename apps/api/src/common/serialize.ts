@@ -5,7 +5,7 @@ import type {
   Expense,
   Invoice,
   InvoiceSummary,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { clients, courses, expenses, invoices, invoiceLines } from '../database/schema';
 
@@ -21,7 +21,7 @@ type InvoiceLineRow = typeof invoiceLines.$inferSelect;
  * Renvoyer la ligne Drizzle telle quelle serait plus court, mais exposerait le
  * schema physique : `pickup_label` a plat, `deleted_at` visible, et des dates
  * serialisees au bon vouloir de `JSON.stringify`. Le contrat de
- * `@ubersclap/shared` deviendrait faux au premier renommage de colonne.
+ * `@cadance/shared` deviendrait faux au premier renommage de colonne.
  */
 
 export function serializeClient(row: ClientRow): ClientRecord {

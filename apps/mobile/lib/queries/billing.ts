@@ -4,7 +4,7 @@ import type {
   HostedBillingSession,
   StartCheckoutInput,
   SubscriptionState,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { apiRequest } from '../api';
 import { queryKeys } from './keys';

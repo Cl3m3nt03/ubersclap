@@ -5,7 +5,7 @@ import {
   light,
   type CourseStatus,
   type StatusTone,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 const TONE_STYLE: Record<StatusTone, { bg: string; fg: string }> = {
   neutral: { bg: '#F3F4F6', fg: light.inkMuted },
@@ -18,7 +18,7 @@ const TONE_STYLE: Record<StatusTone, { bg: string; fg: string }> = {
 /**
  * Badge de statut.
  *
- * Le libelle vient de @ubersclap/shared, jamais d'une chaine ecrite sur place :
+ * Le libelle vient de @cadance/shared, jamais d'une chaine ecrite sur place :
  * une course "Confirmée" doit s'appeler pareil sur les cinq ecrans. C'est ce
  * qui rend l'interface apprenable.
  */

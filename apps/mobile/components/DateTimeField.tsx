@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, Pressable, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { CalendarDays, Clock } from 'lucide-react-native';
-import { formatLongDate, formatTime, light, touch } from '@ubersclap/shared';
+import { formatLongDate, formatTime, light, touch } from '@cadance/shared';
 
 /**
  * Date et heure d'une course.

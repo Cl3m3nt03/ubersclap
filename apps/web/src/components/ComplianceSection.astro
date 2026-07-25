@@ -1,0 +1,286 @@
+---
+/**
+ * ComplianceSection — web-only (DESIGN_CONTEXT.md §8 bloc 5).
+ *
+ * L'aperçu du PDF est SOBRE : fond blanc, encre ink, filets fins, UNE seule
+ * touche d'indigo (le numéro), aucun gradient. Cette sobriété est l'argument.
+ * L'aperçu reproduit invoice-pdf.service.ts (en-tête FACTURE + numéro,
+ * émetteur avec mention « VTC n° » :79-80, totaux, mentions légales :205-210).
+ *
+ * TRAÇABILITÉ (§11 — toute affirmation non traçable est RETIRÉE) :
+ *  - Numérotation continue, sans trou → invoices.service.ts:236-267
+ *    (compteur verrouillé FOR UPDATE, ADR-012)
+ *  - Facture émise immuable → schema/invoicing.ts:50, issuer-snapshot.ts:8
+ *  - TVA 10 % ou franchise en base → shared/money.ts:49-71, auth.ts:61-62 ;
+ *    mention « TVA non applicable, art. 293 B du CGI » →
+ *    invoice-pdf.service.ts:207
+ *  - N° d'inscription au registre VTC sur la facture →
+ *    schema/identity.ts:62, invoice-pdf.service.ts:79-80
+ *  - XML Factur-X EMBARQUÉ dans le PDF → invoice-pdf.service.ts:227
+ *    (pdf.attach(..., AFRelationship.Alternative)) + :238 (useObjectStreams
+ *    false pour que la pièce jointe reste lisible). Vérifié : le XML est
+ *    bien attaché au conteneur, pas produit à côté. CE QUI MANQUE : la
+ *    conformité PDF/A-3 du conteneur (profil ICC, XMP —
+ *    invoice-pdf.service.ts:235-237) et les profils au-delà de MINIMUM
+ *    (factur-x.ts:10-16). FORMULATION (§15) : « embarque un XML Factur-X
+ *    (profil minimum) » est exact ; « PDF/A-3 » ou « conforme Factur-X »
+ *    seraient faux — ne jamais les écrire.
+ */
+import { light, formatEuros, breakdownFromInclTax, VAT_REGIME_LABEL } from '@cadance/shared';
+import { createLandingDemo } from '../data/demo';
+
+const demo = createLandingDemo();
+
+/* La dernière facture émise du jeu de démonstration — HT/TVA/TTC recalculés
+   par le helper de shared, jamais écrits. */
+const invoice = [...demo.display.invoices].reverse()[0]!;
+const breakdown = breakdownFromInclTax(invoice.totalInclTaxCents, 'NORMAL');
+
+/* En page sombre le PDF reste un document CLAIR — comme l'écran du
+   téléphone (§4) : c'est un objet, pas une surface d'interface. Tokens
+   light figés à la compilation, même mécanique que PhoneMockup. */
+const pdfVars = [
+  `--pdf-surface: ${light.surface}`,
+  `--pdf-border: ${light.border}`,
+  `--pdf-ink: ${light.ink}`,
+  `--pdf-ink-muted: ${light.inkMuted}`,
+  `--pdf-indigo: ${light.indigo}`,
+].join('; ');
+---
+
+<section class="comp" aria-labelledby="comp-titre">
+  <div class="comp-inner">
+    <header class="comp-head">
+      <p class="comp-eyebrow">Conformité et facturation</p>
+      <h2 class="comp-h2" id="comp-titre">Des factures qui tiennent la route</h2>
+      <p class="comp-sub">
+        Une facture de VTC n’est pas un ticket : c’est une pièce comptable.
+        Chaque PDF sort avec les mentions attendues, sans que vous y pensiez.
+      </p>
+    </header>
+
+    <div class="comp-panel">
+      <!-- Aperçu du PDF — reproduction d'invoice-pdf.service.ts. -->
+      <figure class="comp-pdf" aria-hidden="true" style={pdfVars}>
+        <div class="comp-pdf-head">
+          <span class="comp-pdf-title">FACTURE</span>
+          <span class="comp-pdf-number">{invoice.invoiceNumber}</span>
+        </div>
+        <!-- Émetteur fictif : numéros visiblement factices (zéros), comme
+             le SIRET — on ne fabrique pas un numéro de registre plausible. -->
+        <div class="comp-pdf-issuer">
+          <span>Julien Moreau — VTC n° EVTC000000000</span>
+          <span>SIRET 000 000 000 00000</span>
+        </div>
+        <hr class="comp-rule" />
+        <div class="comp-pdf-lines">
+          <span class="comp-line"><em>Total HT</em><strong>{formatEuros(breakdown.exclTax)}</strong></span>
+          <span class="comp-line"><em>TVA 10 %</em><strong>{formatEuros(breakdown.tax)}</strong></span>
+          <span class="comp-line comp-line-total"><em>Total TTC</em><strong>{formatEuros(breakdown.inclTax)}</strong></span>
+        </div>
+        <hr class="comp-rule" />
+        <div class="comp-pdf-mentions">
+          <span>Régime de TVA : {VAT_REGIME_LABEL.NORMAL}</span>
+          <span>Paiement à réception, sauf mention contraire.</span>
+          <span>Pièce jointe : factur-x.xml</span>
+        </div>
+      </figure>
+
+      <ul class="comp-args">
+        <li>
+          <strong>Numérotation continue, sans trou</strong>
+          <span>Le compteur annuel est verrouillé à chaque émission : deux factures ne peuvent pas se disputer un numéro, et il ne manque jamais un maillon dans la série.</span>
+        </li>
+        <li>
+          <strong>Une facture émise ne bouge plus</strong>
+          <span>Montants et coordonnées sont figés au moment de l’émission. Changez de raison sociale : vos anciennes factures restent exactes.</span>
+        </li>
+        <li>
+          <strong>TVA 10 % ou franchise en base</strong>
+          <span>Le régime pilote le calcul et les mentions — dont « TVA non applicable, art. 293 B du CGI » pour la franchise.</span>
+        </li>
+        <li>
+          <strong>Registre VTC sur chaque facture</strong>
+          <span>Votre numéro d’inscription apparaît dans l’en-tête, comme l’exige la profession.</span>
+        </li>
+        <li>
+          <strong>Lisible par les machines</strong>
+          <span>Chaque PDF embarque un XML Factur-X en pièce jointe (profil minimum) : numéro, dates, émetteur, montants lisibles par une machine.</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .comp { padding: var(--section-y) 0; }
+
+  .comp-inner {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 0 var(--pad-inline);
+    display: grid;
+    gap: var(--block-gap);
+  }
+
+  .comp-head { display: grid; gap: 12px; justify-items: start; }
+
+  .comp-eyebrow {
+    font-size: var(--text-micro);
+    font-weight: var(--weight-extra);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--indigo);
+  }
+
+  .comp-h2 {
+    font-size: var(--scale-display);
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+
+  .comp-sub {
+    font-size: var(--scale-body-lg);
+    line-height: 1.55;
+    color: var(--ink-muted);
+    max-width: 56ch;
+  }
+
+  /* Panneau crème — section de démonstration produit (§4). */
+  .comp-panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: var(--r-xl);
+    padding: clamp(24px, 4vw, 56px);
+    display: grid;
+    grid-template-columns: minmax(320px, 6fr) 6fr;
+    gap: var(--block-gap);
+    /* Le panneau épouse son contenu (§5) : la colonne courte se centre,
+       le vide ne s'accumule pas en bas. */
+    align-items: center;
+  }
+
+  /* ---- L'aperçu du PDF : blanc, encre, filets, UNE touche d'indigo. ---- */
+
+  /* Document CLAIR dans les deux thèmes : tokens --pdf-* figés (§4).
+     PIÈCE MAÎTRESSE de la section (§5) : proportion A4, dimensionnée
+     comme une page, pas comme une vignette. */
+  .comp-pdf {
+    margin: 0;
+    background: var(--pdf-surface);
+    border: 1px solid var(--pdf-border);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-lift);
+    padding: clamp(28px, 3.4vw, 48px);
+    display: grid;
+    gap: 22px;
+    font-variant-numeric: tabular-nums;
+    aspect-ratio: 210 / 260;
+    align-content: start;
+    max-width: 540px;
+    width: 100%;
+    justify-self: center;
+  }
+
+  .comp-pdf-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .comp-pdf-title {
+    font-size: var(--text-body);
+    font-weight: var(--weight-extra);
+    letter-spacing: 0.12em;
+    color: var(--pdf-ink);
+  }
+
+  /* LA touche d'indigo — la seule (§8). */
+  .comp-pdf-number {
+    font-size: var(--scale-title);
+    font-weight: var(--weight-extra);
+    color: var(--pdf-indigo);
+  }
+
+  .comp-pdf-issuer,
+  .comp-pdf-mentions {
+    display: grid;
+    gap: 5px;
+    font-size: var(--text-label);
+    color: var(--pdf-ink-muted);
+  }
+
+  .comp-rule {
+    width: 100%;
+    border: 0;
+    border-top: 1px solid var(--pdf-border);
+    margin: 0;
+  }
+
+  .comp-pdf-lines { display: grid; gap: 12px; }
+
+  .comp-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: var(--text-body);
+    color: var(--pdf-ink-muted);
+  }
+
+  .comp-line strong { color: var(--pdf-ink); font-weight: var(--weight-bold); }
+  .comp-line em { font-style: normal; }
+  .comp-line-total { font-size: var(--text-title); }
+  .comp-line-total strong { font-weight: var(--weight-extra); }
+
+  /* ---- Les arguments tracés. ---- */
+
+  .comp-args {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 20px;
+  }
+
+  .comp-args li {
+    display: grid;
+    gap: 4px;
+    padding-left: 32px;
+    position: relative;
+  }
+
+  /* check-circle-2 Lucide en success (§5), dessiné en pseudo via masque
+     interdit — on inline le SVG en background composable ? Non : simple
+     pastille + trait, currentColor impossible en ::before. On garde une
+     puce indigo sobre. */
+  .comp-args li::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 6px;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    border: 2px solid var(--success);
+  }
+
+  .comp-args strong {
+    font-size: var(--text-body);
+    font-weight: var(--weight-bold);
+    color: var(--ink);
+  }
+
+  .comp-args span {
+    font-size: var(--text-body);
+    line-height: 1.55;
+    color: var(--ink-muted);
+    max-width: 58ch;
+  }
+
+  @media (max-width: 1023px) {
+    .comp-panel { grid-template-columns: 1fr; }
+  }
+</style>

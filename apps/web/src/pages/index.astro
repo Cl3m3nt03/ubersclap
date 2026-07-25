@@ -1,0 +1,57 @@
+---
+/**
+ * Page marketing — assemblage phase 8, par groupes (§8, 11 blocs).
+ *
+ * GROUPE 1 (posé) : Navigation sticky + Hero.
+ * Groupes 2-4 : hors-ligne/conformité, comment-ça-marche/tarifs/réassurance,
+ * FAQ/CTA final/footer — chacun après validation du précédent.
+ *
+ * UN SEUL libellé de CTA primaire dans toute la page (§11) : CTA_PRIMAIRE,
+ * partagé par la nav, le hero, et plus tard le CTA final.
+ * type-impact : 3 usages exactement — h1 hero (posé), hors-ligne (groupe 2),
+ * CTA final (groupe 4). La section témoignages n'est PAS montée.
+ */
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Hero from '../components/Hero.astro';
+import FeatureTabs from '../components/FeatureTabs.astro';
+import OfflineSection from '../components/OfflineSection.astro';
+import ComplianceSection from '../components/ComplianceSection.astro';
+import HowItWorksSection from '../components/HowItWorksSection.astro';
+import PricingSection from '../components/PricingSection.astro';
+import ReassuranceSection from '../components/ReassuranceSection.astro';
+import FaqSection from '../components/FaqSection.astro';
+import FinalCtaSection from '../components/FinalCtaSection.astro';
+import Footer from '../components/Footer.astro';
+
+/** §11 : un seul libellé, mémorisation par répétition. */
+const CTA_PRIMAIRE = 'Essayer gratuitement';
+---
+
+<Layout>
+  <Navbar ctaLabel={CTA_PRIMAIRE} />
+  <main id="contenu">
+    <Hero ctaLabel={CTA_PRIMAIRE} />
+    <div id="fonctionnalites" class="section-shell">
+      <FeatureTabs />
+    </div>
+    <OfflineSection />
+    <ComplianceSection />
+    <HowItWorksSection />
+    <PricingSection ctaLabel={CTA_PRIMAIRE} />
+    <ReassuranceSection />
+    <FaqSection />
+    <FinalCtaSection ctaLabel={CTA_PRIMAIRE} />
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  /* FeatureTabs vit dans le rythme du container (§5) — sur /styleguide ce
+     rôle est tenu par le body de la page système. */
+  .section-shell {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: var(--section-y) var(--pad-inline);
+  }
+</style>

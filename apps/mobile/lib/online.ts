@@ -3,6 +3,8 @@ import type { AppStateStatus } from 'react-native';
 import { AppState, Platform } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 
+import { DEMO_MODE } from './demo';
+
 /**
  * Branche TanStack Query sur l'etat reseau et l'etat de l'app.
  *
@@ -14,6 +16,14 @@ import NetInfo from '@react-native-community/netinfo';
  * A appeler une seule fois, au demarrage.
  */
 export function wireOnlineManager(): void {
+  // Mode démo sur web : les captures de référence (SETUP_PLAN.md, phase 3)
+  // doivent pouvoir forcer l'état hors-ligne sans dépendre du relais NetInfo,
+  // dont la sonde web est trop lente pour un script de capture.
+  if (DEMO_MODE && Platform.OS === 'web') {
+    (globalThis as Record<string, unknown>).__demoSetOnline = (value: boolean) =>
+      onlineManager.setOnline(value);
+  }
+
   onlineManager.setEventListener((setOnline) => {
     const subscription = NetInfo.addEventListener((state) => {
       // `isInternetReachable` peut rester `null` le temps de la premiere sonde :

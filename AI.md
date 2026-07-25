@@ -1,6 +1,6 @@
 # 🤖 AI.md
 
-# Uber's Clap
+# Cadance
 
 > Documentation Intelligence Artificielle
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-L'intelligence artificielle est un élément différenciant d'Uber's Clap.
+L'intelligence artificielle est un élément différenciant d'Cadance.
 
 L'objectif n'est pas de remplacer le chauffeur, mais de devenir un assistant métier capable de réduire les tâches administratives.
 
@@ -491,7 +491,7 @@ Un véritable copilote du chauffeur.
 
 # Conclusion
 
-L'IA dans Uber's Clap doit devenir un véritable assistant professionnel.
+L'IA dans Cadance doit devenir un véritable assistant professionnel.
 
 Elle ne remplace pas le chauffeur.
 

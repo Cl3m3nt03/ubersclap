@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { light, loginSchema } from '@ubersclap/shared';
+import { light, loginSchema } from '@cadance/shared';
 
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';

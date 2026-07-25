@@ -1,4 +1,4 @@
-import type { GeoSuggestion, RouteResult } from '@ubersclap/shared';
+import type { GeoSuggestion, RouteResult } from '@cadance/shared';
 
 export interface LatLng {
   latitude: number;

@@ -37,7 +37,7 @@ import {
   type Address,
   type CourseType,
   type RouteResult,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { Button } from '@/components/Button';
 import { ContactPicker, type PickedContact } from '@/components/ContactPicker';

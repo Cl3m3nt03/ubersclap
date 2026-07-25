@@ -18,7 +18,7 @@ import type {
  * tronquer silencieusement la file de mutations.
  */
 
-const DATABASE = 'ubersclap.db';
+const DATABASE = 'cadance.db';
 const KEY = 'reactQuery';
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;

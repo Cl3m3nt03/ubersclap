@@ -1,6 +1,6 @@
 # 🗄️ DATABASE.md
 
-# Uber's Clap
+# Cadance
 
 > Documentation base de données
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-Uber's Clap utilise PostgreSQL comme base de données principale.
+Cadance utilise PostgreSQL comme base de données principale.
 
 Le modèle est conçu pour représenter l'activité complète d'un chauffeur VTC :
 

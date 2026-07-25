@@ -1,5 +1,5 @@
 import { Text, type TextProps } from 'react-native';
-import { formatEuros, type Cents } from '@ubersclap/shared';
+import { formatEuros, type Cents } from '@cadance/shared';
 
 type Props = Omit<TextProps, 'children'> & {
   cents: Cents;

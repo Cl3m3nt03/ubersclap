@@ -1,0 +1,148 @@
+---
+/**
+ * Button — dérivé de apps/mobile/components/Button.tsx (+ GradientButton).
+ *
+ * Reprend : 56px pour toute action primaire / 44px secondaire (l'app est
+ * utilisée dans une voiture, à une main), radius md, graisse 700, gap 8px,
+ * press scale(0.97) 120ms, disabled opacity .5, loading aria-busy.
+ * Ajouts web : hover translateY(-1px) + shadow-cta-hover 160ms,
+ * focus-visible anneau 2px indigo offset 3px (DESIGN_CONTEXT.md §9).
+ * La variante gradient est réservée aux écrans d'app reconstruits.
+ */
+interface Props {
+  label: string;
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'gradient';
+  href?: string;
+  disabled?: boolean;
+  loading?: boolean;
+  /** Force un état pour la démonstration du styleguide. */
+  demoState?: 'hover' | 'active' | 'focus';
+  gradientTone?: 'teal' | 'coral' | 'purple';
+}
+
+const {
+  label,
+  variant = 'primary',
+  href,
+  disabled = false,
+  loading = false,
+  demoState,
+  gradientTone = 'teal',
+} = Astro.props;
+
+const Tag = href && !disabled ? 'a' : 'button';
+const classes = [
+  'btn',
+  `btn-${variant}`,
+  variant === 'gradient' ? `btn-gradient-${gradientTone}` : '',
+  demoState ? `st-${demoState}` : '',
+]
+  .filter(Boolean)
+  .join(' ');
+---
+
+<Tag
+  class={classes}
+  href={href}
+  disabled={Tag === 'button' && disabled ? true : undefined}
+  aria-busy={loading ? 'true' : undefined}
+  type={Tag === 'button' ? 'button' : undefined}
+>
+  {loading ? <span class="spinner" aria-hidden="true"></span> : null}
+  {label}
+</Tag>
+
+<style>
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: var(--touch-primary);
+    padding: 0 24px;
+    border: none;
+    border-radius: var(--r-md);
+    font: inherit;
+    font-weight: var(--weight-bold);
+    font-size: var(--text-body);
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      transform 160ms var(--ease-out),
+      box-shadow 160ms var(--ease-out);
+  }
+
+  .btn-primary {
+    background: var(--indigo);
+    color: white;
+    box-shadow: var(--shadow-cta);
+  }
+
+  .btn-secondary {
+    height: var(--touch-secondary);
+    background: transparent;
+    color: var(--indigo);
+    border: 1px solid var(--indigo);
+  }
+
+  .btn-ghost {
+    height: var(--touch-secondary);
+    background: transparent;
+    color: var(--indigo);
+  }
+
+  .btn-danger {
+    background: var(--danger);
+    color: white;
+  }
+
+  .btn-gradient-teal { background: var(--gradient-teal); color: white; }
+  .btn-gradient-coral { background: var(--gradient-coral); color: white; }
+  .btn-gradient-purple { background: var(--gradient-purple); color: white; }
+
+  .btn:hover,
+  .btn.st-hover {
+    transform: translateY(-1px);
+  }
+
+  .btn-primary:hover,
+  .btn-primary.st-hover {
+    box-shadow: var(--shadow-cta-hover);
+  }
+
+  .btn:active,
+  .btn.st-active {
+    transform: scale(0.97);
+    transition-duration: var(--dur-fast);
+  }
+
+  .btn:focus-visible,
+  .btn.st-focus {
+    outline: 2px solid var(--indigo);
+    outline-offset: 3px;
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border-radius: var(--r-pill);
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn { transition: none; }
+    .spinner { animation: none; }
+  }
+</style>

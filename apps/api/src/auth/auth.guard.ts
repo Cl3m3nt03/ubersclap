@@ -8,7 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import type { Request } from 'express';
-import type { AccessTokenPayload } from '@ubersclap/shared';
+import type { AccessTokenPayload } from '@cadance/shared';
 import { IS_PUBLIC } from './public.decorator';
 
 declare module 'express' {

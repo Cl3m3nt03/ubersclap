@@ -6,7 +6,7 @@ import {
   touch,
   type CourseStatus,
   type Cents,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 import { MoneyText, NumericText } from './MoneyText';
 import { StatusBadge } from './StatusBadge';
 

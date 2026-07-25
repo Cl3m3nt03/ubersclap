@@ -1,5 +1,5 @@
 {
-  "name": "@ubersclap/api",
+  "name": "@cadance/api",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -20,7 +20,7 @@
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/throttler": "^6.5.0",
     "@node-rs/argon2": "^2.0.2",
-    "@ubersclap/shared": "workspace:*",
+    "@cadance/shared": "workspace:*",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.38.0",
     "pdf-lib": "^1.17.1",

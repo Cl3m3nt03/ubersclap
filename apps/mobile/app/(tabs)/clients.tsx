@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { Search, UserPlus, Users, Plus } from 'lucide-react-native';
-import { initials, light, touch } from '@ubersclap/shared';
+import { initials, light, touch } from '@cadance/shared';
 
 import { PageHeader } from '@/components/PageHeader';
 import { Card } from '@/components/Card';

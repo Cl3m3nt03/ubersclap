@@ -1,6 +1,6 @@
 # 🖥️ BACKEND_ARCHITECTURE.md
 
-# Uber's Clap
+# Cadance
 
 > Architecture Backend
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-Le backend Uber's Clap est le cœur métier de l'application.
+Le backend Cadance est le cœur métier de l'application.
 
 Il gère :
 
@@ -912,6 +912,6 @@ Kubernetes
 
 # Conclusion
 
-L'architecture backend Uber's Clap privilégie une approche modulaire.
+L'architecture backend Cadance privilégie une approche modulaire.
 
 Le choix NestJS permet de construire rapidement un backend professionnel tout en conservant une capacité d'évolution vers une architecture SaaS à grande échelle.

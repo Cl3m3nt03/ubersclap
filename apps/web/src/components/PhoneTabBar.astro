@@ -1,0 +1,94 @@
+---
+/**
+ * PhoneTabBar — dérivé de apps/mobile/app/(tabs)/_layout.tsx.
+ *
+ * Barre d'onglets du bas des mockups. Les CINQ icônes sont celles de l'app,
+ * tracées jusqu'au layout des tabs (lucide-react-native) :
+ *  - Tableau  → LayoutDashboard  (_layout.tsx:52)
+ *  - Agenda   → Calendar         (_layout.tsx:59)
+ *  - Clients  → Users            (_layout.tsx:66)
+ *  - Factures → FileText         (_layout.tsx:73)
+ *  - Profil   → Settings         (_layout.tsx:80)
+ *
+ * SVG Lucide inline (§5) : stroke 2, currentColor, aucun remplissage.
+ * Remplace le placeholder ::before (carré arrondi vide) qui n'avait jamais
+ * été remplacé par les vraies icônes.
+ */
+interface Props {
+  /** Onglet actif : tableau | agenda | clients | facturation | profil. */
+  active: string;
+}
+
+const { active } = Astro.props;
+
+/* paths Lucide officiels, stroke géré par l'attribut du <svg>. */
+const ICONS: Record<string, string> = {
+  tableau:
+    '<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
+  agenda:
+    '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+  clients:
+    '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  facturation:
+    '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+  profil:
+    '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+};
+
+const ITEMS = [
+  { key: 'tableau', label: 'Tableau' },
+  { key: 'agenda', label: 'Agenda' },
+  { key: 'clients', label: 'Clients' },
+  { key: 'facturation', label: 'Factures' },
+  { key: 'profil', label: 'Profil' },
+] as const;
+---
+
+<div class="ptb" aria-hidden="true">
+  {ITEMS.map((item) => (
+    <span class={`ptb-tab ${item.key === active ? 'is-active' : ''}`}>
+      <svg
+        width="15"
+        height="15"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        set:html={ICONS[item.key]}
+      />
+      {item.label}
+    </span>
+  ))}
+</div>
+
+<style>
+  .ptb {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 6px 12px;
+    border-top: 1px solid var(--phone-border);
+    background: var(--phone-screen-bg);
+  }
+
+  .ptb-tab {
+    flex: 1;
+    text-align: center;
+    font-size: 8px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--phone-ink-faint);
+    display: grid;
+    justify-items: center;
+    gap: 3px;
+  }
+
+  .ptb-tab svg { display: block; }
+
+  .ptb-tab.is-active { color: var(--phone-indigo); }
+</style>

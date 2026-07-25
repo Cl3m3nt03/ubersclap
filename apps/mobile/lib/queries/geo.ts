@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import type { GeoSuggestion, RouteResult } from '@ubersclap/shared';
+import type { GeoSuggestion, RouteResult } from '@cadance/shared';
 
 import { apiRequest } from '../api';
 import { queryKeys } from './keys';

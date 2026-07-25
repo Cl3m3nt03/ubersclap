@@ -6,7 +6,7 @@ import Animated, {
   ReduceMotion,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { touch } from '@ubersclap/shared';
+import { touch } from '@cadance/shared';
 import type { ReactNode } from 'react';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);

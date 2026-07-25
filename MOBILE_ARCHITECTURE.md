@@ -1,6 +1,6 @@
 # 📱 MOBILE_ARCHITECTURE.md
 
-# Uber's Clap
+# Cadance
 
 > Architecture application mobile
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-Uber's Clap est une application mobile destinée aux chauffeurs VTC.
+Cadance est une application mobile destinée aux chauffeurs VTC.
 
 L'application doit être :
 
@@ -781,6 +781,6 @@ Support :
 
 # Conclusion
 
-L'architecture mobile Uber's Clap est pensée pour une application professionnelle utilisée quotidiennement par des chauffeurs.
+L'architecture mobile Cadance est pensée pour une application professionnelle utilisée quotidiennement par des chauffeurs.
 
 Le choix React Native + Expo permet un développement rapide tout en gardant une base solide capable d'évoluer vers une plateforme complète.

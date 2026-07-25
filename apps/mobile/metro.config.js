@@ -8,7 +8,7 @@ const workspaceRoot = path.resolve(projectRoot, '../..');
 const config = getDefaultConfig(projectRoot);
 
 // Monorepo : Metro doit surveiller la racine du workspace pour recompiler
-// quand @ubersclap/shared change.
+// quand @cadance/shared change.
 //
 // On AJOUTE aux valeurs par defaut d'Expo au lieu de les remplacer : Expo
 // detecte deja le monorepo et renseigne ses propres entrees. Les ecraser fait

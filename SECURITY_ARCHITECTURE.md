@@ -1,6 +1,6 @@
 # 🔐 SECURITY_ARCHITECTURE.md
 
-# Uber's Clap
+# Cadance
 
 > Architecture sécurité de l'application
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-Uber's Clap manipule des données sensibles :
+Cadance manipule des données sensibles :
 
 - informations personnelles clients
 - informations professionnelles chauffeurs
@@ -532,7 +532,7 @@ Stripe gère :
 
 ---
 
-Uber's Clap ne stocke jamais :
+Cadance ne stocke jamais :
 
 ❌ Numéro carte
 
@@ -549,7 +549,7 @@ Stocker uniquement :
 
 # 🇪🇺 RGPD
 
-Uber's Clap doit respecter :
+Cadance doit respecter :
 
 ---
 
@@ -779,6 +779,6 @@ IA pour détecter :
 
 # Conclusion
 
-La sécurité d'Uber's Clap doit être pensée dès la conception.
+La sécurité d'Cadance doit être pensée dès la conception.
 
 L'objectif est de fournir aux chauffeurs une plateforme professionnelle capable de protéger leurs données, celles de leurs clients et leur activité commerciale.

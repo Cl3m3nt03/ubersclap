@@ -14,7 +14,7 @@ import {
   createInvoiceSchema,
   type CreateInvoiceInput,
   type InvoiceStatus,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { InvoicesService } from './invoices.service';
 import { InvoicePdfService } from './invoice-pdf.service';

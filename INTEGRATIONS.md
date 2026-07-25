@@ -1,6 +1,6 @@
 # 🔌 INTEGRATIONS.md
 
-# Uber's Clap
+# Cadance
 
 > Documentation des intégrations externes
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-Uber's Clap doit être une application connectée à son environnement.
+Cadance doit être une application connectée à son environnement.
 
 Un chauffeur VTC utilise déjà plusieurs services au quotidien :
 
@@ -43,7 +43,7 @@ Les intégrations doivent permettre :
 ```mermaid
 flowchart TB
 
-A[Uber's Clap Mobile]
+A[Cadance Mobile]
 
 B[Backend API]
 
@@ -263,13 +263,13 @@ Deux sens possibles :
 
 ## MVP
 
-Uber's Clap → Calendrier
+Cadance → Calendrier
 
 ---
 
 ## Future
 
-Calendrier → Uber's Clap
+Calendrier → Cadance
 
 ---
 
@@ -601,7 +601,7 @@ API Connector
 
 ↓
 
-Uber's Clap
+Cadance
 
 ```
 
@@ -746,6 +746,6 @@ Ajouter :
 
 # Conclusion
 
-Les intégrations transforment Uber's Clap d'une simple application mobile en véritable écosystème professionnel.
+Les intégrations transforment Cadance d'une simple application mobile en véritable écosystème professionnel.
 
 L'objectif n'est pas de remplacer tous les outils du chauffeur, mais de les connecter dans une seule expérience fluide.
