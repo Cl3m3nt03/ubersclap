@@ -124,7 +124,16 @@ export class CoursesService {
         durationMinutes: input.durationMinutes,
         notes: input.notes,
       })
+      .onConflictDoNothing({ target: courses.id })
       .returning();
+
+    // Meme creation rejouee avec une autre cle d'idempotence (file offline
+    // rejouee apres reinstallation) : on renvoie la course existante plutot
+    // qu'une violation de cle primaire remontee en 500. Voir le commentaire
+    // detaille dans ClientsService.create.
+    if (!created) {
+      return serializeCourse(await this.findRow(driverId, input.id));
+    }
 
     return serializeCourse(created);
   }
