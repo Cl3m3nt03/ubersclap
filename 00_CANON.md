@@ -531,8 +531,9 @@ la signature, alors que beaucoup la choisiront pour la facture.
 
 # ADR-015 — Tarification
 
-**Statut :** Proposé — décision business à confirmer
-**Contradictoire avec :** MONETIZATION.md et PAYMENT_AND_BILLING.md (9,99 €)
+**Statut :** ✅ **Tranché le 2026-07-25** — Solo 9,99 € / Entreprise 39,89 €
+**Ne contredit plus** MONETIZATION.md ni PAYMENT_AND_BILLING.md : la décision
+retient bien 9,99 €, le prix de ces deux documents.
 
 ## Le SMS est abandonné au profit de l'email
 
@@ -565,23 +566,30 @@ le free s'épuise en 4 jours, avant que l'habitude ne se crée.
 convertit pas mieux — il signale un outil amateur. Les concurrents cités dans
 COMPETITIVE_ANALYSIS.md (Indy, Henrri) sont plus chers.
 
-## Proposition
+## Décision
 
-| Plan     | Prix         | Contenu                                                   |
-| -------- | ------------ | --------------------------------------------------------- |
-| Free     | 0 €          | Clients + courses + planning **illimités**, **3 factures/mois** |
-| Pro      | 16,99 €/mois | Tout illimité, dépenses, dashboard, emails automatiques    |
-| Business | 39,99 €/mois | Multi-chauffeurs, planning partagé, stats équipe           |
+| Plan       | Tier en base | Prix         | Contenu                                          |
+| ---------- | ------------ | ------------ | ------------------------------------------------ |
+| Solo       | `SOLO`       | 9,99 €/mois  | Clients, courses, planning, dépenses, facturation |
+| Entreprise | `BUSINESS`   | 39,89 €/mois | + multi-chauffeurs, planning partagé, stats équipe |
 
 Annuel : 2 mois offerts.
 
-**Pourquoi ce découpage :** le mur est sur la **facture**, pas sur la course.
-Le chauffeur utilise l'app gratuitement tous les jours, prend l'habitude, puis
-se heurte à la limite au moment exact où il perçoit la valeur — quand il doit
-facturer. C'est le meilleur moment de conversion possible.
+**Pas de plan gratuit.** Les deux tiers du code (`PLAN_TIERS`, l'enum Postgres
+`plan_tier`, la table de permissions) ne connaissent que SOLO et BUSINESS. Un
+plan Free demanderait un troisième tier, des compteurs d'usage et un mur de
+conversion — c'est une décision à part entière, pas une variante de prix.
 
-Sans SMS, le seul coût variable qui reste est l'IA, plafonnable par crédits.
-La marge devient prévisible sans imposer de quota sur l'usage quotidien.
+**Écart assumé avec l'analyse ci-dessus :** elle défendait 16,99 € en jugeant
+9,99 € sous-positionné face à Indy et Henrri. La décision retient 9,99 €. Le
+risque reste celui décrit — un prix bas signale un outil amateur sur un marché
+B2B — et il est pris en connaissance de cause. Le prix vivant dans Stripe, le
+corriger ne demande ni déploiement de l'API ni mise à jour de l'app.
+
+**Les montants ne sont écrits nulle part dans le code.** Ils existent dans le
+tableau de bord Stripe ; le serveur ne connaît que des identifiants de tarif
+lus dans l'environnement (`STRIPE_PRICE_<TIER>_<INTERVAL>`). Voir
+STRIPE_SETUP.md.
 
 ---
 

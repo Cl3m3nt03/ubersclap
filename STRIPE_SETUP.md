@@ -6,10 +6,9 @@ Le code est en place et tourne **sans** compte Stripe : tant que
 checklist à dérouler le jour où le compte existe. Aucun changement de code n'est
 nécessaire.
 
-> ⚠️ Prérequis produit non tranché : **ADR-015** (tarification) est encore au
-> statut « proposé » et **ADR-016** (le nom du produit) est ouvert. Les montants
-> vivent dans Stripe, donc créer les tarifs ne fige rien côté code — mais le nom
-> affiché sur les reçus Stripe, lui, sera vu par les clients.
+> ⚠️ **ADR-016** (le nom du produit) est toujours ouvert. Le nom saisi dans
+> Stripe apparaît sur les reçus et les factures d'abonnement envoyés aux
+> chauffeurs : il est modifiable, mais pas sur les documents déjà émis.
 
 ---
 
@@ -31,14 +30,18 @@ traverse notre serveur ni l'app.
 
 ## 2. Produits et tarifs
 
-Créer **un produit par offre**, puis un tarif récurrent par périodicité :
+Créer **un produit par offre**, puis un tarif récurrent par périodicité. Prix
+tranchés le 2026-07-25 (ADR-015), annuel = 2 mois offerts :
 
-| Produit                 | Périodicité | Variable d'environnement        |
-| ----------------------- | ----------- | ------------------------------- |
-| Uber's Clap Solo        | mensuel     | `STRIPE_PRICE_SOLO_MONTHLY`     |
-| Uber's Clap Solo        | annuel      | `STRIPE_PRICE_SOLO_YEARLY`      |
-| Uber's Clap Entreprise  | mensuel     | `STRIPE_PRICE_BUSINESS_MONTHLY` |
-| Uber's Clap Entreprise  | annuel      | `STRIPE_PRICE_BUSINESS_YEARLY`  |
+| Produit    | Périodicité | Montant TTC | Variable d'environnement        |
+| ---------- | ----------- | ----------- | ------------------------------- |
+| Solo       | mensuel     | 9,99 €      | `STRIPE_PRICE_SOLO_MONTHLY`     |
+| Solo       | annuel      | 99,90 €     | `STRIPE_PRICE_SOLO_YEARLY`      |
+| Entreprise | mensuel     | 39,89 €     | `STRIPE_PRICE_BUSINESS_MONTHLY` |
+| Entreprise | annuel      | 398,90 €    | `STRIPE_PRICE_BUSINESS_YEARLY`  |
+
+Le nom du produit est celui que verra le chauffeur sur son reçu — il dépend
+donc d'ADR-016, encore ouvert.
 
 Coller les identifiants `price_...` dans l'environnement. Seuls les tarifs
 configurés sont proposés : une offre sans identifiant remonte
