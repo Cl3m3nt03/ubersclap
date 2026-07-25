@@ -14,17 +14,22 @@
       "android": { "buildType": "apk" },
       "ios": { "simulator": false },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://REMPLACER-par-URL-API-publique/v1"
+        "EXPO_PUBLIC_API_URL": "https://cadance.micdev.fr/v1"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://REMPLACER-par-URL-API-publique/v1"
+        "EXPO_PUBLIC_API_URL": "https://cadance.micdev.fr/v1"
       }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "ascAppId": "6794410771",
+        "appleTeamId": "UA9AKL6F38"
+      }
+    }
   }
 }
