@@ -15,6 +15,8 @@ export const queryKeys = {
   invoices: () => ['invoices'] as const,
   billableCourses: () => ['invoices', 'billable-courses'] as const,
   me: () => ['me'] as const,
+  subscription: () => ['billing', 'subscription'] as const,
+  billingPlans: () => ['billing', 'plans'] as const,
   expenses: (filters?: { from?: string; to?: string }) =>
     ['expenses', filters ?? {}] as const,
 };

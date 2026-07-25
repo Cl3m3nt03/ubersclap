@@ -24,6 +24,19 @@ export const SUBSCRIPTION_STATUSES = [
 ] as const;
 export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
 
+/**
+ * Libelles vus par le chauffeur.
+ *
+ * « Impaye » et non « Past due » : c'est un message qui touche a son argent, il
+ * doit se comprendre sans traduction mentale.
+ */
+export const SUBSCRIPTION_STATUS_LABEL: Record<SubscriptionStatus, string> = {
+  TRIALING: 'Période d’essai',
+  ACTIVE: 'Actif',
+  PAST_DUE: 'Impayé',
+  CANCELLED: 'Résilié',
+};
+
 /** Un abonnement donne acces tant qu'il n'est ni impaye ni resilie. */
 export function subscriptionIsActive(status: SubscriptionStatus): boolean {
   return status === 'ACTIVE' || status === 'TRIALING';
