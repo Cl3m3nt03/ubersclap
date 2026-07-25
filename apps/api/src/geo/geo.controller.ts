@@ -6,7 +6,7 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import type { GeoSuggestion, RouteResult } from '@ubersclap/shared';
+import type { GeoSuggestion, RouteResult } from '@cadance/shared';
 
 import { GeoService } from './geo.service';
 import type { LatLng } from './providers/geo-provider';

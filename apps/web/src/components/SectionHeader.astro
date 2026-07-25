@@ -1,0 +1,70 @@
+---
+/**
+ * SectionHeader — dérivé de apps/mobile/components/PageHeader.tsx.
+ *
+ * Reprend l'esprit : eyebrow (greeting) + titre fort. Arbitrage mobile
+ * conservé : jamais de titre en gradient, aplat ink ou indigo (§3).
+ * Structure web : eyebrow 12px 800 uppercase indigo + H2 display + sous-titre
+ * body-lg. Aligné à gauche par défaut ; centré uniquement hero et FAQ (§9).
+ */
+interface Props {
+  eyebrow?: string;
+  title: string;
+  subtitle?: string;
+  centered?: boolean;
+  /** Aplat du titre : ink (défaut) ou indigo. Jamais de gradient. */
+  tone?: 'ink' | 'indigo';
+  /** id pour aria-labelledby de la section parente. */
+  id?: string;
+}
+
+const { eyebrow, title, subtitle, centered = false, tone = 'ink', id } = Astro.props;
+---
+
+<header class={`section-header ${centered ? 'is-centered' : ''}`}>
+  {eyebrow ? <p class="eyebrow">{eyebrow}</p> : null}
+  <h2 class={`title tone-${tone}`} id={id}>{title}</h2>
+  {subtitle ? <p class="subtitle">{subtitle}</p> : null}
+</header>
+
+<style>
+  .section-header {
+    display: grid;
+    gap: 12px;
+    justify-items: start;
+    text-align: left;
+  }
+
+  .section-header.is-centered {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .eyebrow {
+    margin: 0;
+    font-size: var(--text-micro);
+    font-weight: var(--weight-extra);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--indigo);
+  }
+
+  .title {
+    margin: 0;
+    font-size: var(--scale-display);
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .tone-ink { color: var(--ink); }
+  .tone-indigo { color: var(--indigo); }
+
+  .subtitle {
+    margin: 0;
+    max-width: 62ch;
+    font-size: var(--scale-body-lg);
+    line-height: 1.55;
+    color: var(--ink-muted);
+  }
+</style>

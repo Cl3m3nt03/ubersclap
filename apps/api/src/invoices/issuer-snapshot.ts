@@ -1,4 +1,4 @@
-import type { VatRegime } from '@ubersclap/shared';
+import type { VatRegime } from '@cadance/shared';
 
 import type { users, driverProfiles, clients } from '../database/schema';
 

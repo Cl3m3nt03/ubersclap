@@ -1,6 +1,6 @@
 # 📊 ANALYTICS_SYSTEM.md
 
-# Uber's Clap
+# Cadance
 
 > Système d'analytics et de statistiques
 
@@ -546,6 +546,6 @@ L'analytics pourra alimenter :
 
 # Conclusion
 
-Le système analytics permet de transformer Uber's Clap en une plateforme pilotée par la donnée.
+Le système analytics permet de transformer Cadance en une plateforme pilotée par la donnée.
 
 Les statistiques ne servent pas uniquement à mesurer l'activité, mais à aider le chauffeur à prendre de meilleures décisions et à améliorer continuellement l'application.

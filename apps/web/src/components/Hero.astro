@@ -1,0 +1,714 @@
+---
+/**
+ * Hero — web-only (DESIGN_CONTEXT.md §8 bloc 2). Premier des TROIS usages
+ * de type-impact.
+ *
+ * H1 « Le contour » (retenu en G1, §8) : « Conduisez. » en creux — SVG
+ * stroke + paint-order, tracking POSITIF +0,01em propre au contour —
+ * « On tient le reste. » en aplat indigo. Repli <640px : aplat ink-faint.
+ * Le texte réel du h1 reste lisible (visually-hidden).
+ *
+ * Fond : grille 1px border à 40 % masquée en radial + UN halo indigo 6 %
+ * (§5 — hero uniquement). Cascade §10 : eyebrow → h1 → sous-titre → CTA →
+ * mockup, stagger 60ms, aucune translation > 24px, désactivée en
+ * prefers-reduced-motion.
+ *
+ * Mockup : l'écran FACTURES (reconstruction, données demo.ts). Il sert la
+ * promesse du h1 — « on tient le reste », c'est l'administratif, pas le
+ * planning — et évite de doubler l'écran Agenda du premier onglet de la
+ * section interactive adjacente. PAS le tableau de bord : les trois
+ * gradients ensemble n'apparaissent QUE dans la section interactive (§7).
+ *
+ * Fragments (§7, règle 5) : hors de la section interactive, un fragment
+ * doit être AUTO-PORTEUR — le hero ne fournit pas le sens d'une valeur nue.
+ *  - StatCard teal (CA du mois, absent de l'écran Factures) + ligne de
+ *    contexte HORS gradient, encre de page sur surface — contraste 4,5:1 ;
+ *  - la course de 14:30 (CourseRow, §5) : se lit toute seule — heure,
+ *    client, trajet, prix, statut — et l'écran Factures ne la montre pas.
+ */
+import {
+  light,
+  formatEuros,
+  formatTime,
+  COURSE_STATUS_LABEL,
+  COURSE_STATUS_TONE,
+  INVOICE_STATUS_LABEL,
+} from '@cadance/shared';
+import { createLandingDemo } from '../data/demo';
+import PhoneMockup from './PhoneMockup.astro';
+import PhoneTabBar from './PhoneTabBar.astro';
+import StatCard from './StatCard.astro';
+
+interface Props {
+  /** Un seul libellé de CTA primaire dans toute la page (§11). */
+  ctaLabel: string;
+}
+
+const { ctaLabel } = Astro.props;
+
+const demo = createLandingDemo();
+const agg = demo.aggregates;
+
+/* Écran Factures en état POST-micro-action (§8) : la facture 2026-00039
+   vient d'être émise — l'onglet Facturation de la section interactive
+   garde l'état « à facturer ». Même écran, deux moments : pas de redite.
+   Mêmes règles de calcul que FeatureTabs. */
+/* 6 lignes au total (00039 émise + 5 antérieures) : l'écran reste PLEIN
+   (§6) — la carte « à facturer », partie avec la micro-action, libérait
+   un tiers de la liste. */
+const invoices = [...demo.display.invoices].reverse().slice(0, 5);
+const billingClient = demo.clients[0]!;
+const billableCourses = demo.month.courses
+  .filter((c) => c.client.id === billingClient.id && c.status === 'COMPLETED')
+  .slice(-6);
+const billableTotal = billableCourses.reduce((sum, c) => sum + c.priceCents, 0);
+// Numéro suivant de la série (continuité ADR-012) et encours après émission.
+const emittedInvoiceNumber = (() => {
+  const [year, seq] = demo.month.invoices.at(-1)!.invoiceNumber.split('-');
+  return `${year}-${String(Number(seq) + 1).padStart(5, '0')}`;
+})();
+const outstandingAfter = agg.outstandingCents + billableTotal;
+
+/* Fragment 2 : la course de 14:30 — l'ancre du jeu de données. */
+const anchorCourse = demo.display.todayCourses.find(
+  (c) => c.scheduledAt.getHours() === 14 && c.scheduledAt.getMinutes() === 30,
+)!;
+
+/* Tokens sémantiques de l'écran CLAIR, figés à la compilation (§4) —
+   même mécanique que FeatureTabs. */
+const screenStatusVars = [
+  `--phone-success: ${light.success}`,
+  `--phone-warning: ${light.warning}`,
+  `--phone-danger: ${light.danger}`,
+].join('; ');
+
+const invoiceToneVar: Record<string, string> = {
+  PAID: 'var(--phone-success)',
+  SENT: 'var(--phone-warning)',
+  OVERDUE: 'var(--phone-danger)',
+  DRAFT: 'var(--phone-ink-muted)',
+  CANCELLED: 'var(--phone-danger)',
+};
+
+/* Le fragment course vit HORS du cadre : tokens de PAGE, qui suivent le
+   thème — pas les tokens figés de l'écran. */
+const pageToneVar: Record<string, string> = {
+  neutral: 'var(--ink-muted)',
+  info: 'var(--indigo)',
+  success: 'var(--success)',
+  warning: 'var(--warning)',
+  danger: 'var(--danger)',
+};
+---
+
+<section class="hero" aria-labelledby="hero-titre" style={screenStatusVars}>
+  <div class="hero-bg" aria-hidden="true">
+    <div class="hero-grid"></div>
+    <div class="hero-halo"></div>
+  </div>
+
+  <div class="hero-inner">
+    <div class="hero-copy">
+      <p class="hero-eyebrow cascade" style="--step: 0">Pour les chauffeurs VTC indépendants</p>
+
+      <h1 class="hero-h1 cascade" style="--step: 1" id="hero-titre">
+        <span class="visually-hidden">Conduisez. On tient le reste.</span>
+        <span class="hero-h1-visual" aria-hidden="true">
+          <span class="h1-outline-wrap">
+            <svg class="h1-outline-svg" viewBox="-4 -4 654 88" focusable="false">
+              <text x="0" y="76" class="h1-svg-text">CONDUISEZ.</text>
+            </svg>
+            <span class="h1-outline-fallback">Conduisez.</span>
+          </span>
+          <span class="h1-solid">On tient le reste.</span>
+        </span>
+      </h1>
+
+      <p class="hero-sub cascade" style="--step: 2">
+        WhatsApp, l’agenda, le tableur, le logiciel de facturation, l’app Notes…
+        L’administratif d’un chauffeur tient désormais dans une seule application.
+      </p>
+
+      <div class="hero-ctas cascade" style="--step: 3">
+        <a class="hero-cta-primary" href="#essai">{ctaLabel}</a>
+        <a class="hero-cta-secondary" href="#fonctionnalites">Voir les fonctionnalités</a>
+      </div>
+
+      <p class="hero-reassurance cascade" style="--step: 3">
+        Essai gratuit · Sans carte bancaire · Factures conformes
+      </p>
+    </div>
+
+    <div class="hero-stage cascade" style="--step: 4">
+      <div class="hero-phone-wrap">
+      <PhoneMockup width="min(280px, 68vw)">
+        <div class="hscr" aria-hidden="true">
+          <p class="hscr-eyebrow">Suivi des paiements</p>
+          <p class="hscr-title">Factures</p>
+          <div class="hscr-total">
+            <span class="hscr-total-label">Encours à recouvrer</span>
+            <span class="hscr-total-value">{formatEuros(outstandingAfter)}</span>
+          </div>
+          <div class="hscr-list">
+            <!-- État POST-micro-action : 00039 en tête, ENVOYÉE. -->
+            <div class="hscr-invoice">
+              <span class="hscr-main">
+                <strong>{emittedInvoiceNumber}</strong>
+                <em>{billingClient.firstName} {billingClient.lastName} · {billableCourses.length} courses</em>
+              </span>
+              <span class="hscr-right">
+                <strong>{formatEuros(billableTotal)}</strong>
+                <i style={`color: ${invoiceToneVar.SENT};`}>{INVOICE_STATUS_LABEL.SENT}</i>
+              </span>
+            </div>
+            {invoices.map((invoice) => (
+              <div class="hscr-invoice">
+                <span class="hscr-main">
+                  <strong>{invoice.invoiceNumber}</strong>
+                  <em>{invoice.clientName}</em>
+                </span>
+                <span class="hscr-right">
+                  <strong>{formatEuros(invoice.totalInclTaxCents)}</strong>
+                  <i style={`color: ${invoiceToneVar[invoice.status]};`}>{INVOICE_STATUS_LABEL[invoice.status]}</i>
+                </span>
+              </div>
+            ))}
+          </div>
+          <PhoneTabBar active="facturation" />
+        </div>
+      </PhoneMockup>
+
+      <div class="hero-orbit" aria-hidden="true">
+        <!-- Fragment 1 (§7 règle 5) : CA du mois, absent de l'écran
+             Factures. Auto-porteur : la valeur vit sur le gradient (3:1
+             grand texte), la ligne de contexte vit HORS gradient — encre
+             de page sur surface, 4,5:1. -->
+        <div class="hero-fragment hero-frag-high">
+          <div class="hero-frag-stat">
+            <StatCard placement="orbit" tone="teal" value={formatEuros(agg.revenueCents)} />
+            <span class="hero-frag-caption">de chiffre d’affaires ce mois-ci</span>
+          </div>
+        </div>
+        <!-- Fragment 2 : la course de 14:30 (CourseRow, §5) — se lit toute
+             seule, et l'écran Factures ne la montre pas. -->
+        <div class="hero-fragment hero-frag-low">
+          <div class="hero-frag-course">
+            <span class="hero-frag-course-time">{formatTime(anchorCourse.scheduledAt)}</span>
+            <span class="hero-frag-course-main">
+              <strong>{anchorCourse.client.firstName} {anchorCourse.client.lastName}</strong>
+              <em>{anchorCourse.pickup.split(',')[0]} → {anchorCourse.destination.split(',')[0]}</em>
+            </span>
+            <span class="hero-frag-course-right">
+              <strong>{formatEuros(anchorCourse.priceCents)}</strong>
+              <i style={`color: ${pageToneVar[COURSE_STATUS_TONE[anchorCourse.status]]};`}>{COURSE_STATUS_LABEL[anchorCourse.status]}</i>
+            </span>
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .hero {
+    position: relative;
+    overflow: hidden;
+    padding: var(--section-y) 0;
+  }
+
+  /* ---- Fond : grille + halo, hero uniquement (§5). ---- */
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.4;
+    mask-image: radial-gradient(ellipse 70% 70% at 50% 40%, black, transparent);
+  }
+
+  .hero-halo {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(640px 420px at 60% 35%, color-mix(in srgb, var(--indigo) 6%, transparent), transparent);
+  }
+
+  .hero-inner {
+    position: relative;
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 0 var(--pad-inline);
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(280px, 5fr);
+    gap: var(--block-gap);
+    align-items: center;
+  }
+
+  /* ---- Colonne texte. ---- */
+
+  .hero-copy {
+    display: grid;
+    gap: 24px;
+    justify-items: start;
+  }
+
+  .hero-eyebrow {
+    font-size: var(--text-micro);
+    font-weight: var(--weight-extra);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--indigo);
+  }
+
+  /* ---- H1 « Le contour » — premier type-impact (§3, §8). ---- */
+
+  .hero-h1 {
+    font-size: var(--scale-impact);
+    font-weight: var(--weight-extra);
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+  }
+
+  .hero-h1-visual {
+    display: grid;
+    gap: 8px;
+  }
+
+  .h1-outline-wrap {
+    display: block;
+    line-height: 0;
+  }
+
+  .h1-outline-svg {
+    display: block;
+    width: calc(var(--scale-impact) * 6.54);
+    max-width: 100%;
+    height: auto;
+  }
+
+  .h1-svg-text {
+    font-family: var(--font-family);
+    font-size: 100px;
+    font-weight: var(--weight-extra);
+    /* Tracking POSITIF propre au contour (§8) : le creux a besoin d'air. */
+    letter-spacing: 0.01em;
+    fill: var(--bg);
+    stroke: var(--ink);
+    stroke-width: 2.2;
+    paint-order: stroke;
+  }
+
+  .h1-outline-fallback { display: none; }
+
+  .h1-solid { color: var(--indigo); }
+
+  /* Repli <640px (§8) : le trait devient illisible — aplat ink-faint,
+     même hiérarchie, le voile puis le plein. */
+  @media (max-width: 640px) {
+    .h1-outline-svg { display: none; }
+    .h1-outline-wrap { line-height: 0.95; }
+    .h1-outline-fallback {
+      display: inline;
+      color: var(--ink-faint);
+    }
+  }
+
+  .hero-sub {
+    font-size: var(--scale-body-lg);
+    line-height: 1.55;
+    color: var(--ink-muted);
+    max-width: 46ch;
+  }
+
+  /* ---- CTA : primaire 56px + secondaire (§9, §12). ---- */
+
+  .hero-ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .hero-cta-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--touch-primary);
+    padding: 0 28px;
+    border-radius: var(--r-md);
+    background: var(--indigo);
+    color: white;
+    font-size: var(--text-body);
+    font-weight: var(--weight-bold);
+    text-decoration: none;
+    box-shadow: var(--shadow-cta);
+    transition: transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
+  }
+
+  .hero-cta-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-cta-hover);
+  }
+
+  .hero-cta-primary:active { transform: scale(0.97); }
+
+  .hero-cta-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--touch-primary);
+    padding: 0 24px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: var(--text-body);
+    font-weight: var(--weight-bold);
+    text-decoration: none;
+    transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out);
+  }
+
+  .hero-cta-secondary:hover {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--indigo-soft) 30%, var(--border));
+  }
+
+  .hero-cta-secondary:active { transform: scale(0.97); }
+
+  .hero-cta-primary:focus-visible,
+  .hero-cta-secondary:focus-visible {
+    outline: 2px solid var(--indigo);
+    outline-offset: 3px;
+  }
+
+  .hero-reassurance {
+    font-size: var(--text-label);
+    font-weight: var(--weight-semibold);
+    color: var(--ink-faint);
+  }
+
+  /* ---- Scène : mockup + 2 fragments qui GRAVITENT (§8). ---- */
+
+  /* Le cadre se cale à GAUCHE de sa colonne : la place à droite appartient
+     au fragment, qui reste donc dans la grille de 1200px au lieu de la
+     déborder (§7 — ne pas chercher à remplir la largeur avec le téléphone). */
+  .hero-stage {
+    justify-self: start;
+  }
+
+  /* L'orbite s'ancre sur le CADRE lui-même (comme .ft-phone-wrap dans la
+     section interactive) : les fragments mordent le bezel, jamais la
+     colonne de texte, jamais coupés par le conteneur. */
+  .hero-phone-wrap {
+    position: relative;
+    width: fit-content;
+  }
+
+  .hero-orbit {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .hero-fragment {
+    position: absolute;
+    width: max-content;
+  }
+
+  /* Sans carte blanche, plus rien n'arrête le texte : les fragments
+     démarrent APRÈS le bord droit du cadre (aucun chevauchement du bezel,
+     sinon la légende passerait sous le téléphone qui est au-dessus). */
+  .hero-frag-high,
+  .hero-frag-low { left: calc(100% + 8px); }
+
+  /* L'ombre ne porte plus que sur la StatCard (le seul objet du fragment) :
+     sans carte blanche, une ombre sur du texte nu le salirait. */
+  .hero-frag-stat :global(.statcard) {
+    filter: drop-shadow(0 12px 24px color-mix(in srgb, var(--ink) 12%, transparent));
+  }
+
+  /* Collés au cadre (§8) : ils mordent le bezel (10px) et rien d'autre —
+     jamais le contenu de l'écran, jamais la colonne de texte, jamais
+     coupés par le conteneur. Les deux sortent du MÊME côté (droite) : une
+     seule diagonale de lecture titre → écran → fragments, au lieu de deux
+     directions opposées qui tirent l'œil hors du cadre. */
+  .hero-frag-high { top: 12%; }
+
+  .hero-frag-low { bottom: 12%; }
+
+  /* Le CourseRow est large : dans l'orbite il se compacte pour tenir dans
+     la gouttière (le trajet complet reste lisible dans l'écran de l'app). */
+  /* Dans la gouttière (210px, largeur de la StatCard au-dessus), le
+     CourseRow se recompose en deux lignes plutôt que de tronquer un
+     libellé : heure + prix, puis client + statut. Toutes les données
+     restent lisibles (§7 — la boîte épouse son contenu). */
+  .hero-frag-low .hero-frag-course {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: baseline;
+    column-gap: 10px;
+    row-gap: 2px;
+    width: 199px;
+  }
+
+  .hero-frag-low .hero-frag-course-main { grid-column: 1 / -1; order: 2; }
+  .hero-frag-low .hero-frag-course-time { order: 0; }
+  .hero-frag-low .hero-frag-course-right {
+    order: 1;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .hero-frag-low .hero-frag-course em { display: none; }
+
+  /* Sous 1200px la gouttière droite ne suffit plus : les fragments
+     s'empilent au-dessus et au-dessous du cadre, centrés, mordant le
+     bezel — jamais coupés, jamais sur le texte. */
+  @media (max-width: 1199px) {
+    .hero-stage { justify-self: center; }
+
+    /* Empilés hors du cadre, avec un écart franc : sans carte, un texte
+       qui mord le bezel passerait sous le téléphone. */
+    .hero-frag-high {
+      left: 50%;
+      top: 0;
+      transform: translate(-50%, calc(-100% - 16px));
+    }
+
+    .hero-frag-low {
+      left: 50%;
+      bottom: 0;
+      transform: translate(-50%, calc(100% + 16px));
+    }
+
+    .hero-frag-low .hero-frag-course em { display: block; }
+  }
+
+  /* Fragment 1 : StatCard + légende HORS gradient (§7 règle 5) — la valeur
+     tient le 3:1 grand texte sur le gradient, le contexte tient le 4,5:1
+     en encre de page. PAS de carte blanche autour : la StatCard est déjà
+     un objet, une seconde boîte doublait le contenant. La légende se pose
+     nue sur le fond de page. */
+  .hero-frag-stat {
+    display: grid;
+    gap: 10px;
+    /* 199px = largeur intrinsèque de la StatCard d'orbite (valeur 28px
+       minimum, §9) : c'est elle qui fixe la colonne, le CourseRow s'aligne
+       dessus. La réduire couperait le montant. */
+    width: 199px;
+  }
+
+  .hero-frag-caption {
+    font-size: var(--text-label);
+    font-weight: var(--weight-semibold);
+    color: var(--ink-muted);
+  }
+
+  /* Fragment 2 : CourseRow auto-porteur — heure, client, prix, statut,
+     posé nu lui aussi. Tokens de page (il vit hors du cadre). */
+  .hero-frag-course {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hero-frag-course-time {
+    font-size: var(--text-label);
+    font-weight: var(--weight-extra);
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    flex: none;
+  }
+
+  .hero-frag-course-main,
+  .hero-frag-course-right {
+    display: grid;
+    gap: 2px;
+  }
+
+  .hero-frag-course-main { min-width: 0; flex: 1; }
+  .hero-frag-course-right { justify-items: end; flex: none; }
+
+  .hero-frag-course strong {
+    font-size: var(--text-label);
+    font-weight: var(--weight-bold);
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+
+  .hero-frag-course em {
+    font-style: normal;
+    font-size: var(--text-micro);
+    color: var(--ink-muted);
+  }
+
+  .hero-frag-course i {
+    font-style: normal;
+    font-size: 10px;
+    font-weight: var(--weight-extra);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ---- Écran Factures reconstruit (données demo.ts). ---- */
+
+  .hscr {
+    height: 100%;
+    padding: 6px 12px 0;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--phone-ink);
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    overflow: hidden;
+  }
+
+  .hscr p { margin: 0; max-width: none; }
+
+  .hscr-eyebrow { color: var(--phone-ink-faint); font-weight: 500; font-size: 11px; }
+
+  .hscr-title {
+    color: var(--phone-indigo);
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-top: -5px;
+  }
+
+  .hscr-list { display: grid; gap: 6px; }
+
+  .hscr-total {
+    display: grid;
+    gap: 2px;
+    background: var(--phone-surface);
+    border-radius: 12px;
+    padding: 9px 12px;
+  }
+
+  .hscr-total-label {
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--phone-ink-faint);
+  }
+
+  .hscr-total-value {
+    font-size: 18px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .hscr-invoice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: var(--phone-surface);
+    border-radius: 12px;
+    padding: 7px 10px;
+  }
+
+  .hscr-main {
+    display: grid;
+    gap: 1px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .hscr strong { font-weight: 700; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .hscr em {
+    font-style: normal;
+    color: var(--phone-ink-muted);
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .hscr-right {
+    display: grid;
+    gap: 2px;
+    justify-items: end;
+    flex: none;
+  }
+
+  .hscr-right strong {
+    font-variant-numeric: tabular-nums;
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .hscr i {
+    font-style: normal;
+    font-weight: 800;
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ---- Cascade (§10) : stagger 60ms, translation ≤ 24px, ease-out. ---- */
+
+  .cascade {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: hero-cascade var(--dur-slow) var(--ease-out) forwards;
+    animation-delay: calc(var(--step) * 60ms);
+  }
+
+  @keyframes hero-cascade {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cascade {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* ---- Responsive. ---- */
+
+  @media (max-width: 1023px) {
+    .hero-inner {
+      grid-template-columns: 1fr;
+    }
+
+    .hero-stage { margin-top: 16px; }
+  }
+
+  @media (max-width: 767px) {
+    /* Fragments cachés sur téléphone — cohérent avec la section
+       interactive (§7) : l'écran porte tout. */
+    .hero-fragment { display: none; }
+  }
+</style>

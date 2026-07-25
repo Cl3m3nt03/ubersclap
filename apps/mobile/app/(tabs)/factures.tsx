@@ -10,7 +10,7 @@ import {
   sumCents,
   type InvoiceStatus,
   type InvoiceSummary,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { PageHeader } from '@/components/PageHeader';
 import { Card } from '@/components/Card';

@@ -1,0 +1,247 @@
+---
+/**
+ * Footer — web-only (DESIGN_CONTEXT.md §8 bloc 11).
+ *
+ * 4 colonnes Produit / Ressources / Entreprise / Légal, logo + tagline,
+ * badges App Store et Google Play (placeholders texte tant que les apps ne
+ * sont pas publiées — jamais un faux badge officiel), réseaux en icônes
+ * Lucide inline, année dynamique. BRAND_NAME jamais en dur.
+ *
+ * LIENS LÉGAUX : les pages CGU, CGV, Confidentialité, Mentions légales et
+ * Cookies n'existent pas encore — jetons {{PAGE_*}} VISIBLES plutôt que
+ * des liens morts (même règle que {{PRIX_*}}, §15). À remplacer quand les
+ * pages seront rédigées et validées juridiquement.
+ */
+import { BRAND_NAME } from '@cadance/shared';
+
+const year = new Date().getFullYear();
+
+/** Jeton visible : la page n'existe pas, le lien serait mort. */
+const pending = (token: string) => ({ label: token, href: null });
+
+const columns = [
+  {
+    title: 'Produit',
+    links: [
+      { label: 'Fonctionnalités', href: '#fonctionnalites' },
+      { label: 'Tarifs', href: '#tarifs' },
+      { label: 'FAQ', href: '#faq' },
+    ],
+  },
+  {
+    title: 'Ressources',
+    links: [
+      pending('{{PAGE_SUPPORT}}'),
+      pending('{{PAGE_GUIDE}}'),
+    ],
+  },
+  {
+    title: 'Entreprise',
+    links: [
+      pending('{{PAGE_CONTACT}}'),
+    ],
+  },
+  {
+    title: 'Légal',
+    links: [
+      pending('{{PAGE_MENTIONS_LEGALES}}'),
+      pending('{{PAGE_CONFIDENTIALITE}}'),
+      pending('{{PAGE_CGU}}'),
+      pending('{{PAGE_CGV}}'),
+      pending('{{PAGE_COOKIES}}'),
+    ],
+  },
+];
+---
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <p class="footer-logo">{BRAND_NAME}</p>
+      <p class="footer-tagline">L’application des chauffeurs VTC indépendants.</p>
+      <div class="footer-stores">
+        <a class="store-badge" href="#appstore">App Store</a>
+        <a class="store-badge" href="#playstore">Google Play</a>
+      </div>
+    </div>
+
+    {columns.map((column) => (
+      <nav class="footer-col" aria-label={column.title}>
+        <p class="footer-col-title">{column.title}</p>
+        <ul>
+          {column.links.map((link) => (
+            <li>
+              {link.href
+                ? <a href={link.href}>{link.label}</a>
+                : <span class="footer-pending">{link.label}</span>}
+            </li>
+          ))}
+        </ul>
+      </nav>
+    ))}
+  </div>
+
+  <div class="footer-bottom">
+    <p>© {year} {BRAND_NAME}. Tous droits réservés.</p>
+    <div class="footer-social">
+      <a href="#x" aria-label="X (Twitter)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+      </a>
+      <a href="#linkedin" aria-label="LinkedIn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
+      </a>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .footer-inner {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: var(--block-gap) var(--pad-inline);
+    display: grid;
+    grid-template-columns: 2fr repeat(4, 1fr);
+    gap: var(--grid-gap);
+  }
+
+  .footer-logo {
+    margin: 0 0 8px;
+    font-size: var(--text-title);
+    font-weight: var(--weight-extra);
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+
+  .footer-tagline {
+    margin: 0 0 20px;
+    font-size: var(--text-label);
+    color: var(--ink-muted);
+    max-width: 28ch;
+  }
+
+  .footer-stores {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .store-badge {
+    display: inline-flex;
+    align-items: center;
+    height: var(--touch-secondary);
+    padding: 0 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: var(--text-label);
+    font-weight: var(--weight-bold);
+    text-decoration: none;
+  }
+
+  .footer-col-title {
+    margin: 0 0 12px;
+    font-size: var(--text-micro);
+    font-weight: var(--weight-extra);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-faint);
+  }
+
+  .footer-col ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 4px;
+  }
+
+  .footer-col a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    color: var(--ink-muted);
+    font-size: var(--text-label);
+    font-weight: var(--weight-medium);
+    text-decoration: none;
+  }
+
+  .footer-col a:hover {
+    color: var(--ink);
+    text-decoration: underline;
+  }
+
+  /* Jeton de page manquante — visible, non cliquable (§15). */
+  .footer-pending {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    color: var(--ink-faint);
+    font-size: var(--text-label);
+    font-weight: var(--weight-medium);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .footer-col a:focus-visible,
+  .store-badge:focus-visible,
+  .footer-social a:focus-visible {
+    outline: 2px solid var(--indigo);
+    outline-offset: 3px;
+  }
+
+  .footer-bottom {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 20px var(--pad-inline);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .footer-bottom p {
+    margin: 0;
+    font-size: var(--text-label);
+    color: var(--ink-faint);
+  }
+
+  .footer-social {
+    display: flex;
+    gap: 8px;
+  }
+
+  .footer-social a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--touch-secondary);
+    height: var(--touch-secondary);
+    border-radius: var(--r-pill);
+    color: var(--ink-muted);
+  }
+
+  .footer-social a:hover {
+    color: var(--ink);
+    background: color-mix(in srgb, var(--ink-muted) 8%, transparent);
+  }
+
+  @media (max-width: 1023px) {
+    .footer-inner {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .footer-brand {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 479px) {
+    .footer-inner { grid-template-columns: minmax(0, 1fr); }
+    .footer-stores { flex-direction: column; align-items: stretch; }
+  }
+</style>

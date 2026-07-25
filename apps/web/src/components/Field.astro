@@ -1,0 +1,100 @@
+---
+/**
+ * Field — dérivé de apps/mobile/components/TextField.tsx.
+ *
+ * Reprend : hauteur 56px (saisie debout ou en voiture), radius md, fond
+ * surface, bordure 1px border, label 12px 800 uppercase ls 0.12em ink-faint
+ * au-dessus, erreur SOUS le champ (jamais une alerte) en danger 13px bold,
+ * hint 13px ink-faint. Ajout web : focus bordure indigo + anneau 3px à 12 %
+ * (DESIGN_CONTEXT.md §9).
+ */
+interface Props {
+  label: string;
+  id: string;
+  type?: 'text' | 'email' | 'tel' | 'password' | 'search' | 'url' | 'number';
+  placeholder?: string;
+  value?: string;
+  error?: string;
+  hint?: string;
+  /** Force l'état focus pour la démonstration du styleguide. */
+  demoFocus?: boolean;
+}
+
+const { label, id, type = 'text', placeholder, value, error, hint, demoFocus = false } = Astro.props;
+const describedBy = error ? `${id}-erreur` : hint ? `${id}-hint` : undefined;
+---
+
+<div class="field">
+  <label class="field-label" for={id}>{label}</label>
+  <input
+    class={`field-input ${error ? 'st-error' : ''} ${demoFocus ? 'st-focus' : ''}`}
+    id={id}
+    type={type}
+    placeholder={placeholder}
+    value={value}
+    aria-invalid={error ? 'true' : undefined}
+    aria-describedby={describedBy}
+  />
+  {error ? (
+    <p class="field-error" id={`${id}-erreur`}>{error}</p>
+  ) : hint ? (
+    <p class="field-hint" id={`${id}-hint`}>{hint}</p>
+  ) : null}
+</div>
+
+<style>
+  .field {
+    display: grid;
+    gap: 8px;
+  }
+
+  .field-label {
+    font-size: var(--text-micro);
+    font-weight: var(--weight-extra);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-faint);
+  }
+
+  .field-input {
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--touch-primary);
+    padding: 0 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-weight: var(--weight-medium);
+  }
+
+  .field-input::placeholder {
+    color: var(--ink-faint);
+  }
+
+  .field-input:focus-visible,
+  .field-input.st-focus {
+    outline: none;
+    border-color: var(--indigo);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--indigo) 12%, transparent);
+  }
+
+  .field-input.st-error {
+    border-color: var(--danger);
+  }
+
+  .field-error {
+    margin: 0;
+    font-size: var(--text-label);
+    font-weight: var(--weight-bold);
+    color: var(--danger);
+  }
+
+  .field-hint {
+    margin: 0;
+    font-size: var(--text-label);
+    font-weight: var(--weight-medium);
+    color: var(--ink-faint);
+  }
+</style>

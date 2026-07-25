@@ -1,6 +1,6 @@
 # 📐 00_CANON.md
 
-# Uber's Clap — Source unique de vérité
+# Cadance — Source unique de vérité
 
 > Ce document **prime sur tous les autres**.
 > En cas de contradiction avec un autre `.md`, c'est celui-ci qui gagne.
@@ -587,21 +587,23 @@ La marge devient prévisible sans imposer de quota sur l'usage quotidien.
 
 # ADR-016 — Le nom du produit
 
-**Statut :** ⚠️ **Ouvert — à trancher avant tout investissement en identité**
+**Statut :** ✅ **Tranché — le produit s'appelle Cadance**
 
-« Uber's Clap » contient « Uber », marque déposée et activement défendue, sur un
-produit qui cible explicitement les chauffeurs Uber, destiné à l'App Store et au
-Play Store.
+Le nom d'origine, « Uber's Clap », contenait « Uber », marque déposée et
+activement défendue, sur un produit qui cible explicitement les chauffeurs
+Uber, destiné à l'App Store et au Play Store. Le produit a été renommé
+**Cadance** (constante `BRAND_NAME` dans `packages/shared/src/brand.ts`).
 
-**Risques :** retrait par Apple ou Google au moment de la revue, mise en demeure,
-perte du nom de domaine et de toute l'identité visuelle construite dessus.
+**Risques évités :** retrait par Apple ou Google au moment de la revue, mise en
+demeure, perte du nom de domaine et de toute l'identité visuelle construite dessus.
+
+**Reste à faire :** vérifier la disponibilité du domaine et l'orthographe
+définitive (voir DESIGN_CONTEXT.md §15), migrer les identifiants techniques
+(`dev.ubersclap.app`, slug Expo, base de données) — voir la note de migration.
 
 **Pourquoi c'est ici et pas en note de bas de page :** le coût de ce changement
 croît très vite. Aujourd'hui il est nul. Après le logo, la DA, le domaine, les
 comptes stores et les premiers utilisateurs, il est très élevé.
-
-**Action recommandée :** trancher le nom **avant** de commander la direction
-artistique.
 
 ---
 

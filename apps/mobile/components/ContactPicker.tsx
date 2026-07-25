@@ -13,7 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Contacts from 'expo-contacts';
 import { Search, X, User } from 'lucide-react-native';
-import { initials, light, touch } from '@ubersclap/shared';
+import { initials, light, touch } from '@cadance/shared';
 
 import { useDebounced } from '@/lib/use-debounced';
 

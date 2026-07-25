@@ -1,6 +1,6 @@
 # 🗺️ BACKLOG.md
 
-# Uber's Clap — Ce qu'il reste à faire
+# Cadance — Ce qu'il reste à faire
 
 Version : 1.0.0 — 2026-07-22
 
@@ -39,16 +39,14 @@ Aucune ligne de code ne les résoudra.
 
 ## 1. Le nom du produit — ADR-016
 
-« Uber's Clap » contient une marque déposée activement défendue, sur un produit
-qui cible les chauffeurs Uber et vise l'App Store.
+**Tranché : le produit s'appelle Cadance** (`BRAND_NAME` dans
+`packages/shared/src/brand.ts`). L'ancien nom contenait une marque déposée
+activement défendue, sur un produit qui cible les chauffeurs Uber et vise
+l'App Store.
 
-**Bloque :** l'identité visuelle, le nom de domaine, les comptes développeur,
-la communication.
-
-**Coût si tranché maintenant :** zéro.
-**Coût après logo, DA, domaine et premiers utilisateurs :** très élevé.
-
-→ Décision produit, pas technique. À prendre cette semaine.
+**Reste :** disponibilité du domaine, orthographe définitive, migration des
+identifiants techniques (bundle id `dev.ubersclap.app`, slug Expo, base de
+données) — voir la note de migration dans MIGRATION_RENAME.md.
 
 ## 2. Validation comptable — ADR-012
 
@@ -202,6 +200,7 @@ Tout est documenté, rien n'est caché.
 | Tests | **Aucun** | Dès le backend |
 | `.gitattributes` | Absent, conversions CRLF | Avant un 2ᵉ contributeur |
 | 4 écrans sur 5 | Jamais vus tourner | Prochaine session |
+| Contraste StatCard mobile | Labels 12px blancs à 80 % sur gradients : sous 4,5:1 WCAG partout (mesuré côté web, `apps/web/scripts/check-gradient-contrast.mjs` — même le point le plus sombre du teal ne donne que 3,74:1). Remontée depuis le chantier landing, app **non modifiée** | Avec un passage accessibilité mobile — pistes : label ≥19px, ou libellé hors gradient |
 
 ## Deux leçons de la mise en route
 

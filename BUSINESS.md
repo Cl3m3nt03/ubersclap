@@ -1,6 +1,6 @@
 # 💼 BUSINESS.md
 
-# Uber's Clap
+# Cadance
 
 > Business Documentation
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Présentation
 
-Uber's Clap est une plateforme mobile destinée aux chauffeurs VTC indépendants.
+Cadance est une plateforme mobile destinée aux chauffeurs VTC indépendants.
 
 Son objectif est simple :
 
@@ -30,7 +30,7 @@ Exemple d'une journée classique :
 
 Ce fonctionnement entraîne une perte de temps importante et augmente le risque d'erreurs.
 
-Uber's Clap a pour objectif de remplacer cette multitude d'outils par une seule plateforme intuitive.
+Cadance a pour objectif de remplacer cette multitude d'outils par une seule plateforme intuitive.
 
 ---
 
@@ -54,7 +54,7 @@ Notre mission est de simplifier :
 
 Devenir la référence mondiale des logiciels de gestion pour chauffeurs VTC indépendants.
 
-À terme, Uber's Clap devra accompagner le chauffeur durant toute sa journée.
+À terme, Cadance devra accompagner le chauffeur durant toute sa journée.
 
 Avant la course.
 
@@ -329,7 +329,7 @@ Le chauffeur :
 
 # 🧩 Philosophie Produit
 
-Uber's Clap ne cherche pas à remplacer Uber ou Bolt.
+Cadance ne cherche pas à remplacer Uber ou Bolt.
 
 L'application accompagne le chauffeur indépendamment de la plateforme sur laquelle il travaille.
 
@@ -388,6 +388,6 @@ CRM avancé.
 
 # 🏁 Conclusion
 
-Uber's Clap a pour ambition de devenir l'outil indispensable de tous les chauffeurs VTC indépendants.
+Cadance a pour ambition de devenir l'outil indispensable de tous les chauffeurs VTC indépendants.
 
 Plus qu'une application de réservation, il s'agit d'un véritable assistant métier permettant de gérer une activité professionnelle complète depuis un smartphone.

@@ -1,6 +1,6 @@
 # 🛣️ ROADMAP.md
 
-# Uber's Clap
+# Cadance
 
 > Plan de développement du projet
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-Cette roadmap définit les différentes étapes nécessaires pour construire Uber's Clap.
+Cette roadmap définit les différentes étapes nécessaires pour construire Cadance.
 
 L'objectif est de commencer par un MVP simple mais utilisable, puis d'ajouter progressivement des fonctionnalités avancées.
 

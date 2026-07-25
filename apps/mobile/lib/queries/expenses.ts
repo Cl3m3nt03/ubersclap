@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import type { CreateExpenseInput, Expense } from '@ubersclap/shared';
+import type { CreateExpenseInput, Expense } from '@cadance/shared';
 
 import { apiRequest } from '../api';
 import { mutationKeys, queryKeys } from './keys';

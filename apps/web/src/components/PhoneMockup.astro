@@ -1,0 +1,140 @@
+---
+/**
+ * PhoneMockup — web-only (DESIGN_CONTEXT.md §6, §9).
+ *
+ * Cadre neutre sans marque : radius 44px, bezel 10px ink du thème clair,
+ * écran radius 36px, overflow hidden, shadow-device. Encoche
+ * stylisée, barre d'état simulée 9:41, réseau plein, batterie pleine.
+ *
+ * L'ÉCRAN RESTE EN THÈME CLAIR dans les deux thèmes de page (§4) : le thème
+ * sombre de l'app n'existe pas encore, et un écran allumé sur une page sombre
+ * est exactement ce qu'on voit dans la vraie vie. En page sombre, l'ombre
+ * portée est remplacée par un halo lumineux diffus. Le contenu de l'écran est
+ * du DOM (slot), jamais une image.
+ */
+import { light } from '@cadance/shared';
+
+interface Props {
+  /** Largeur CSS du cadre. Le hero utilise ~300-390px. */
+  width?: string;
+  class?: string;
+}
+
+const { width = 'min(300px, 76vw)', class: extra = '' } = Astro.props;
+
+/* Tokens du thème CLAIR figés à la compilation : l'écran ne suit pas le
+   thème de la page. */
+const screenVars = [
+  `--phone-bezel: ${light.ink}`,
+  `--phone-screen-bg: ${light.bg}`,
+  `--phone-surface: ${light.surface}`,
+  `--phone-border: ${light.border}`,
+  `--phone-ink: ${light.ink}`,
+  `--phone-ink-muted: ${light.inkMuted}`,
+  `--phone-ink-faint: ${light.inkFaint}`,
+  `--phone-indigo: ${light.indigo}`,
+  `width: ${width}`,
+].join('; ');
+---
+
+<figure class={`phone ${extra}`} style={screenVars}>
+  <div class="phone-screen">
+    <div class="phone-statusbar" aria-hidden="true">
+      <span class="phone-time">9:41</span>
+      <span class="phone-status-icons">
+        <span class="ico-signal"></span>
+        <span class="ico-battery"></span>
+      </span>
+    </div>
+    <div class="phone-notch" aria-hidden="true"></div>
+    <div class="phone-content">
+      <slot />
+    </div>
+  </div>
+</figure>
+
+<style>
+  .phone {
+    margin: 0;
+    aspect-ratio: 300 / 620;
+    background: var(--phone-bezel);
+    border-radius: 44px;
+    padding: 10px;
+    box-shadow: var(--shadow-device);
+  }
+
+  /* Page sombre : halo lumineux diffus à la place de l'ombre (§4). */
+  :root[data-theme='dark'] .phone {
+    box-shadow: 0 0 80px color-mix(in srgb, var(--indigo-soft) 18%, transparent);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) .phone {
+      box-shadow: 0 0 80px color-mix(in srgb, var(--indigo-soft) 18%, transparent);
+    }
+  }
+
+  .phone-screen {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: var(--phone-screen-bg);
+    border-radius: 36px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .phone-notch {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 38%;
+    height: 22px;
+    background: var(--phone-bezel);
+    border-radius: var(--r-pill);
+  }
+
+  .phone-statusbar {
+    flex: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 22px 6px;
+    color: var(--phone-ink);
+    font-size: var(--text-label);
+    font-weight: var(--weight-bold);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .phone-status-icons {
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
+  }
+
+  .ico-signal,
+  .ico-battery {
+    display: inline-block;
+    background: var(--phone-ink);
+  }
+
+  .ico-signal {
+    width: 14px;
+    height: 9px;
+    clip-path: polygon(0 100%, 100% 0, 100% 100%);
+  }
+
+  .ico-battery {
+    width: 20px;
+    height: 9px;
+    border-radius: 2px;
+  }
+
+  .phone-content {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+</style>

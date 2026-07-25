@@ -1,0 +1,519 @@
+---
+/**
+ * OfflineSection — web-only (DESIGN_CONTEXT.md §8 bloc 4). DEUXIÈME des
+ * trois usages de type-impact.
+ *
+ * ARGUMENT : le hors-ligne n'est pas une fonctionnalité parmi d'autres,
+ * c'est une décision d'architecture (ADR-011 « Offline-first, pas
+ * offline-bonus » : IDs UUID v7 générés côté mobile, file de mutations
+ * persistée en SQLite, rejeu à la reconnexion). Aucun concurrent ne
+ * rattrape ça sans réécrire sa couche données — c'est le différenciateur
+ * technique de la page, et il ne peut pas être un onglet (§7).
+ *
+ * ÉCRAN MONTRÉ : l'AGENDA, et une course qui se crée sans réseau. ADR-011
+ * point 4 énumère ce qui marche hors-ligne au MVP — « consulter le
+ * planning, consulter les clients, créer/modifier une course, terminer une
+ * course » — la création de course est donc l'exemple le plus juste ET le
+ * plus démonstratif. La liste de dépenses figée ne montrait rien.
+ *
+ * SÉQUENCE : les TROIS états réels d'OfflineBanner.tsx, libellés exacts de
+ * DESIGN_AUDIT.md, synchronisés avec ce qui se passe dans la liste :
+ *  1. !online && pending === 0 → warning · cloud-off ·
+ *     « Hors ligne — données du dernier chargement » · liste au repos
+ *  2. !online && pending > 0  → warning · cloud-off ·
+ *     « 1 modification en attente d'envoi » · la course APPARAÎT, en attente
+ *  3. online && pending > 0   → indigo · refresh-cw ·
+ *     « Synchronisation de 1 modification… » · la course est toujours là
+ *  4. Le quatrième temps est la DISPARITION du bandeau (online &&
+ *     pending === 0 → null, OfflineBanner.tsx:29) — jamais un état inventé.
+ *     La course reste, CONFIRMÉE : c'est la preuve que rien n'est perdu.
+ *
+ * Le texte ne DÉCRIT plus la séquence (quatre puces qui doublaient
+ * l'animation) : une légende unique change avec l'état, comme les fragments
+ * de la section interactive. Deux fois moins haut, l'argument intact.
+ *
+ * Bandeau : glassmorphism usage 2/3 (§5), texte 13px semibold blanc,
+ * contenu centré gap 8px, fidèle à l'app. CONTRASTE à taille réelle :
+ * blanc sur le token warning clair mesuré à 3,19:1, sous le seuil 4,5:1 —
+ * même arbitrage que les labels StatCard 12px : reproduction aria-hidden
+ * dans un cadre, la fidélité prime (§9) ; consigné au backlog produit.
+ * Boucle 7 200 ms, opacity seule. Reduced-motion : état final, bandeau
+ * absent, course confirmée.
+ */
+import {
+  light,
+  formatEuros,
+  formatTime,
+  COURSE_STATUS_LABEL,
+} from '@cadance/shared';
+import { createLandingDemo } from '../data/demo';
+import PhoneMockup from './PhoneMockup.astro';
+
+const demo = createLandingDemo();
+
+/* L'agenda du jour, et l'ancre de 14:30 : c'est ELLE qui se crée hors
+   réseau dans la séquence — les courses du matin sont déjà là. */
+/* 7 courses : quand la liste remonte au temps 4, la dernière prend la place
+   libérée par le bandeau — l'écran reste plein (§6). */
+const todayCourses = demo.display.todayCourses.slice(0, 7);
+const anchor = demo.display.todayCourses.find(
+  (c) => c.scheduledAt.getHours() === 14 && c.scheduledAt.getMinutes() === 30,
+)!;
+const coursesBefore = todayCourses.filter((c) => c.scheduledAt < anchor.scheduledAt);
+const coursesAfter = todayCourses.filter((c) => c.scheduledAt > anchor.scheduledAt);
+
+const screenVars = [
+  `--phone-warning: ${light.warning}`,
+  `--phone-success: ${light.success}`,
+].join('; ');
+---
+
+<section class="offline" aria-labelledby="offline-titre" style={screenVars}>
+  <div class="offline-inner">
+    <header class="offline-head">
+      <p class="offline-eyebrow">Mode hors-ligne</p>
+      <!-- Deuxième type-impact (§3) : la déclaration forte de la section. -->
+      <h2 class="offline-h2" id="offline-titre">Rien n’est perdu.</h2>
+      <p class="offline-sub">
+        Un parking souterrain, un tunnel, une zone blanche : vous saisissez
+        quand même. La course part toute seule dès que le réseau revient.
+      </p>
+    </header>
+
+    <div class="offline-panel">
+      <div class="offline-stage">
+        <!-- Écran AGENDA (ADR-011 point 4 : créer une course est ce qui
+             marche vraiment hors réseau). Le bandeau vit dans le cadre
+             (§6), et la course de 14:30 apparaît au temps 2. -->
+        <PhoneMockup width="min(250px, 66vw)">
+          <div class="oscr" aria-hidden="true">
+            <div class="oscr-banners">
+              <span class="ob ob-1 ob-banner ob-warning">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 2 20 20"/><path d="M5.782 5.782A7 7 0 0 0 9 19h8.5a4.5 4.5 0 0 0 1.307-.193"/><path d="M21.532 16.5A4.5 4.5 0 0 0 17.5 10h-1.79A7.008 7.008 0 0 0 10 5.07"/></svg>
+                Hors ligne — données du dernier chargement
+              </span>
+              <span class="ob ob-2 ob-banner ob-warning">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 2 20 20"/><path d="M5.782 5.782A7 7 0 0 0 9 19h8.5a4.5 4.5 0 0 0 1.307-.193"/><path d="M21.532 16.5A4.5 4.5 0 0 0 17.5 10h-1.79A7.008 7.008 0 0 0 10 5.07"/></svg>
+                1 modification en attente d’envoi
+              </span>
+              <span class="ob ob-3 ob-banner ob-indigo">
+                <svg class="ob-spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+                Synchronisation de 1 modification…
+              </span>
+            </div>
+            <div class="oscr-body">
+            <p class="oscr-eyebrow">Aujourd’hui</p>
+            <p class="oscr-title">Agenda</p>
+            <div class="oscr-list">
+              {coursesBefore.map((course) => (
+                <div class="oscr-course">
+                  <span class="oscr-time">{formatTime(course.scheduledAt)}</span>
+                  <span class="oscr-sep"></span>
+                  <span class="oscr-main">
+                    <strong>{course.client.firstName} {course.client.lastName}</strong>
+                    <em>{course.pickup.split(',')[0]} → {course.destination.split(',')[0]}</em>
+                  </span>
+                  <span class="oscr-right">
+                    <strong>{formatEuros(course.priceCents)}</strong>
+                    <i style={`color: var(--phone-success);`}>{COURSE_STATUS_LABEL[course.status]}</i>
+                  </span>
+                </div>
+              ))}
+
+              <!-- LA course saisie hors réseau : absente au temps 1, elle
+                   apparaît au temps 2 et ne repart jamais. Le conteneur
+                   se replie quand elle n'existe pas : pas de trou blanc. -->
+              <div class="oscr-course oscr-new">
+                <span class="oscr-time">{formatTime(anchor.scheduledAt)}</span>
+                <span class="oscr-sep"></span>
+                <span class="oscr-main">
+                  <strong>{anchor.client.firstName} {anchor.client.lastName}</strong>
+                  <em>{anchor.pickup.split(',')[0]} → {anchor.destination.split(',')[0]}</em>
+                </span>
+                <span class="oscr-right">
+                  <strong>{formatEuros(anchor.priceCents)}</strong>
+                  <!-- Le statut suit l'état réel : en attente d'envoi tant que
+                       le réseau manque, confirmée une fois la file rejouée. -->
+                  <i class="oscr-status">
+                    <span class="ob ob-pending">EN ATTENTE</span>
+                    <span class="ob ob-sent">{COURSE_STATUS_LABEL[anchor.status]}</span>
+                  </i>
+                </span>
+              </div>
+
+              <div class="oscr-after">
+              {coursesAfter.map((course) => (
+                <div class="oscr-course">
+                  <span class="oscr-time">{formatTime(course.scheduledAt)}</span>
+                  <span class="oscr-sep"></span>
+                  <span class="oscr-main">
+                    <strong>{course.client.firstName} {course.client.lastName}</strong>
+                    <em>{course.pickup.split(',')[0]} → {course.destination.split(',')[0]}</em>
+                  </span>
+                  <span class="oscr-right">
+                    <strong>{formatEuros(course.priceCents)}</strong>
+                    <i style={`color: var(--phone-indigo);`}>{COURSE_STATUS_LABEL[course.status]}</i>
+                  </span>
+                </div>
+              ))}
+              </div>
+            </div>
+            </div>
+          </div>
+        </PhoneMockup>
+      </div>
+
+      <!-- UNE légende, qui change avec l'état — plus quatre puces qui
+           racontaient ce que l'écran montre déjà. -->
+      <p class="offline-legend" aria-hidden="true">
+        <span class="ob ob-1">Le réseau tombe. L’app continue.</span>
+        <span class="ob ob-2">Vous saisissez la course. Elle part en file.</span>
+        <span class="ob ob-3">Le réseau revient. L’envoi repart tout seul.</span>
+        <span class="ob ob-4">La course est là. Comme si de rien n’était.</span>
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .offline {
+    padding: var(--section-y) 0;
+  }
+
+  .offline-inner {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 0 var(--pad-inline);
+    display: grid;
+    gap: var(--block-gap);
+  }
+
+  .offline-head {
+    display: grid;
+    gap: 12px;
+    justify-items: start;
+  }
+
+  .offline-eyebrow {
+    font-size: var(--text-micro);
+    font-weight: var(--weight-extra);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--indigo);
+  }
+
+  /* Deuxième type-impact — aplat ink, jamais de gradient (§3). */
+  .offline-h2 {
+    font-size: var(--scale-impact);
+    font-weight: var(--weight-extra);
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+    color: var(--ink);
+  }
+
+  .offline-sub {
+    font-size: var(--scale-body-lg);
+    line-height: 1.55;
+    color: var(--ink-muted);
+    max-width: 52ch;
+  }
+
+  /* Panneau crème — section de démonstration produit (§4). */
+  .offline-panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: var(--r-xl);
+    padding: clamp(24px, 3vw, 40px);
+    display: grid;
+    /* Une seule colonne : le téléphone porte la démonstration, la légende
+       se pose dessous. Le texte ne double plus l'animation. */
+    justify-items: center;
+    gap: 24px;
+    /* Le panneau épouse son contenu (§5) : il ne s'étire pas sur toute la
+       largeur du container pour un objet de 250px. */
+    width: fit-content;
+    justify-self: center;
+  }
+
+  /* ---- La scène : téléphone seul. ---- */
+
+  .offline-stage {
+    display: grid;
+    justify-items: center;
+  }
+
+  /* ---- L'écran Agenda (reconstruction, tokens phone). ---- */
+
+  .oscr {
+    position: relative;
+    height: 100%;
+    padding: 6px 12px 0;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--phone-ink);
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    overflow: hidden;
+  }
+
+  .oscr p { margin: 0; max-width: none; }
+
+  /* Le bandeau flotte au-dessus de la liste mais ne recouvre JAMAIS le
+     titre (§7 règle 3) : le contenu démarre sous sa zone. */
+  .oscr-eyebrow {
+    color: var(--phone-ink-faint);
+    font-weight: 500;
+    font-size: 11px;
+    padding-top: 74px;
+  }
+
+  /* Au temps 4 le bandeau a disparu : le contenu remonte prendre sa place
+     en TRANSFORM (§10 — jamais padding ni height en boucle), et la liste
+     plus longue continue de remplir le bas du cadre (§6). */
+  .oscr-body {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    animation: ob-shift 7200ms infinite;
+  }
+
+  @keyframes ob-shift {
+    0%, 72% { transform: translateY(0); }
+    75%, 100% { transform: translateY(-68px); }
+  }
+
+  .oscr-title {
+    color: var(--phone-indigo);
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-top: -5px;
+  }
+
+  /* La liste est clippée par l'écran : quand les courses de l'après-midi
+     remontent, rien ne dépasse du cadre. */
+  .oscr-list { display: grid; gap: 6px; }
+  .oscr-after { display: grid; gap: 6px; }
+
+  .oscr-course {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--phone-surface);
+    border-radius: 12px;
+    padding: 7px 10px;
+  }
+
+  .oscr-time {
+    font-weight: 800;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    flex: none;
+  }
+
+  .oscr-sep { width: 1px; align-self: stretch; background: var(--phone-border); flex: none; }
+
+  .oscr-main { display: grid; gap: 1px; min-width: 0; flex: 1; }
+
+  .oscr-right { display: grid; gap: 2px; justify-items: end; flex: none; }
+
+  .oscr-right strong { font-variant-numeric: tabular-nums; font-size: 11px; font-weight: 800; }
+
+  .oscr i {
+    font-style: normal;
+    font-weight: 800;
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* Le statut de la course saisie : deux états empilés qui se relaient. */
+  .oscr-status { display: grid; }
+  .oscr-status .ob { grid-area: 1 / 1; justify-self: end; white-space: nowrap; }
+  .ob-pending { color: var(--phone-warning); }
+  .ob-sent { color: var(--phone-indigo); }
+
+  .oscr strong { font-weight: 700; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .oscr em {
+    font-style: normal;
+    color: var(--phone-ink-muted);
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ---- Le bandeau : flottant en haut de l'écran, comme dans l'app. ---- */
+
+  .oscr-banners {
+    position: absolute;
+    top: 34px;
+    left: 8px;
+    right: 8px;
+    z-index: 2;
+    display: grid;
+  }
+
+  .ob { grid-area: 1 / 1; opacity: 0; }
+
+  .oscr-banners .ob { grid-area: 1 / 1; }
+
+  .ob-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: var(--r-sm);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    /* Pas de nowrap : à 320px le cadre est plus étroit que le libellé le
+       plus long — le texte passe sur deux lignes, comme dans l'app. */
+    text-align: center;
+  }
+
+  /* Glassmorphism usage 2/3 (§5) : bandeau flottant de statut. Custom
+     property + déclaration standard SEULE — voir Navbar.astro : le
+     minifieur colle blur()saturate() et fusionne les préfixes écrits
+     à la main. */
+  @supports (backdrop-filter: blur(1px)) {
+    .ob-banner {
+      --glass-filter: blur(20px) saturate(180%);
+      backdrop-filter: var(--glass-filter);
+    }
+  }
+
+  .ob-warning { background: color-mix(in srgb, var(--phone-warning) 88%, transparent); }
+  .ob-indigo { background: color-mix(in srgb, var(--phone-indigo) 88%, transparent); }
+
+  /* ---- La légende : UNE ligne qui change avec l'état. ---- */
+
+  .offline-legend {
+    display: grid;
+    justify-items: center;
+    text-align: center;
+    min-height: 1.6em;
+    max-width: none;
+    font-size: var(--scale-body-lg);
+    font-weight: var(--weight-semibold);
+    color: var(--ink);
+  }
+
+  /* Largeur figée : la légende la plus longue fixe la boîte, aucun saut de
+     mise en page entre les quatre états. min() pour ne jamais dépasser la
+     largeur disponible en mobile. */
+  .offline-legend .ob { grid-area: 1 / 1; width: min(34ch, 100%); }
+
+  /* La course saisie hors réseau : absente au temps 1, elle APPARAÎT au
+     temps 2 et reste ensuite. Opacity + translation ≤ 24px (§10). */
+  /* Au temps 1 elle n'existe pas : au lieu d'un trou blanc, les courses
+     suivantes remontent COMBLER la place (translation, §10) — l'écran est
+     plein à chaque instant (§6). Le créneau, lui, reste dans le flux et
+     n'est révélé qu'à partir du temps 2. */
+  .oscr-after {
+    animation: ob-after 7200ms infinite;
+  }
+
+  @keyframes ob-after {
+    0%, 22% { transform: translateY(-51px); }
+    25%, 97% { transform: translateY(0); }
+    100% { transform: translateY(-51px); }
+  }
+
+  .oscr-new {
+    opacity: 0;
+    animation: ob-course 7200ms infinite;
+  }
+
+  @keyframes ob-course {
+    0%, 22% { opacity: 0; }
+    25%, 97% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  /* Le statut : « en attente » pendant que le réseau manque (temps 2),
+     puis le statut réel de la course une fois la file rejouée. */
+  .ob-pending { animation: ob-pending 7200ms infinite; }
+  .ob-sent { animation: ob-sent 7200ms infinite; }
+
+  @keyframes ob-pending {
+    0%, 22% { opacity: 0; }
+    25%, 47% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+
+  @keyframes ob-sent {
+    0%, 47% { opacity: 0; }
+    50%, 97% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  /* 7 200 ms : état 1 (0-1800) → 2 (1800-3600) → 3 (3600-5400) → 4. */
+  .ob-1 { animation: ob-1 7200ms infinite; }
+  .ob-2 { animation: ob-2 7200ms infinite; }
+  .ob-3 { animation: ob-3 7200ms infinite; }
+  .ob-4 { animation: ob-4 7200ms infinite; }
+
+  @keyframes ob-1 {
+    0%, 22% { opacity: 1; }
+    25%, 100% { opacity: 0; }
+  }
+
+  @keyframes ob-2 {
+    0%, 22% { opacity: 0; }
+    25%, 47% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+
+  @keyframes ob-3 {
+    0%, 47% { opacity: 0; }
+    50%, 72% { opacity: 1; }
+    75%, 100% { opacity: 0; }
+  }
+
+  @keyframes ob-4 {
+    0%, 72% { opacity: 0; }
+    75%, 97% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  .ob-spin { animation: ob-spin 1200ms linear infinite; }
+
+  @keyframes ob-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* ---- Les 4 temps en texte (vrai contenu accessible). ---- */
+
+  .offline-steps {
+    margin: 0;
+    padding: 0 0 0 20px;
+    display: grid;
+    gap: 12px;
+    font-size: var(--text-body);
+    color: var(--ink-muted);
+  }
+
+  .offline-steps li::marker {
+    color: var(--indigo);
+    font-weight: var(--weight-extra);
+  }
+
+  /* Reduced-motion (§10) : état FINAL — bandeau absent, conclusion posée. */
+  @media (prefers-reduced-motion: reduce) {
+    /* État FINAL (§10) : bandeau absent, course saisie présente et
+       confirmée, légende de conclusion. */
+    .ob-1, .ob-2, .ob-3, .ob-pending { animation: none; opacity: 0; }
+    .ob-4, .ob-sent { animation: none; opacity: 1; }
+    .oscr-new { animation: none; opacity: 1; }
+    .oscr-after { animation: none; transform: none; }
+    .oscr-body { animation: none; transform: translateY(-68px); }
+    .ob-spin { animation: none; }
+  }
+
+</style>

@@ -8,7 +8,7 @@ import type { ZodSchema } from 'zod';
 /**
  * Valide un corps de requete contre un schema Zod partage.
  *
- * Le schema vient de @ubersclap/shared, donc l'API et le mobile valident
+ * Le schema vient de @cadance/shared, donc l'API et le mobile valident
  * exactement les memes regles. Une divergence entre les deux devient
  * impossible : c'est le seul vrai gain d'un stack TypeScript de bout en bout.
  */

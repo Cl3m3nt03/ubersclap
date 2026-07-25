@@ -18,7 +18,7 @@ import {
   light,
   touch,
   type ClientCategory,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';

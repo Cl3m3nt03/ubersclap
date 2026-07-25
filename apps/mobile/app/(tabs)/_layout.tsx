@@ -7,7 +7,7 @@ import {
   FileText,
   Settings,
 } from 'lucide-react-native';
-import { light, touch } from '@ubersclap/shared';
+import { light, touch } from '@cadance/shared';
 
 /**
  * Navigation principale — 5 onglets.

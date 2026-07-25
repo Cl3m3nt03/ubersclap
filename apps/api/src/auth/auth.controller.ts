@@ -15,7 +15,7 @@ import {
   type LoginInput,
   type RegisterInput,
   type UpdateMeInput,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { AuthService } from './auth.service';
 import { Public } from './public.decorator';

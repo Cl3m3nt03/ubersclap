@@ -18,7 +18,7 @@ import {
   type CourseStatus,
   type CreateCourseInput,
   type UpdateCourseInput,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { CoursesService } from './courses.service';
 import { CurrentDriverId } from '../auth/current-driver.decorator';

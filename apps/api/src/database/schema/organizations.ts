@@ -76,7 +76,7 @@ export const organizationMemberships = pgTable(
  * Abonnement d'une organisation — une organisation, un abonnement.
  *
  * Le tier pilote les fonctionnalites disponibles (voir la table de permissions
- * dans @ubersclap/shared). Les champs de facturation externe (Stripe & co.) ne
+ * dans @cadance/shared). Les champs de facturation externe (Stripe & co.) ne
  * sont pas ici : ils viendront quand le paiement sera branche. Ce qu'on fige
  * maintenant, c'est le tier et l'etat, sur lesquels tout le reste s'appuiera.
  */

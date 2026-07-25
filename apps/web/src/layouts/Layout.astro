@@ -1,0 +1,104 @@
+---
+/**
+ * Layout — web-only (phase 8). Chrome commun de la page marketing.
+ *
+ * Porte : tokens, @font-face + preload (400/700/800 dans le même woff2
+ * variable), pré-hydratation du thème (§4), lien « Aller au contenu »
+ * premier focusable (§13), styles de base (bg, ink, famille, 62ch).
+ * Aucune section : elles arrivent par groupes en phase 8.
+ */
+import '../styles/tokens.css';
+import { BRAND_NAME } from '@cadance/shared';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = `${BRAND_NAME} — l’application des chauffeurs VTC indépendants`,
+  description = `Carnet clients, agenda de courses, facturation PDF conforme, dépenses et mode hors-ligne complet : ${BRAND_NAME} réunit l’administratif du chauffeur VTC dans une seule application mobile.`,
+} = Astro.props;
+---
+
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="preload" href="/fonts/plus-jakarta-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <title>{title}</title>
+    <script is:inline>
+      // Pré-hydratation du thème : préférence système par défaut, choix
+      // explicite persisté qui écrase dans les deux sens (§4).
+      (() => {
+        const saved = localStorage.getItem('theme');
+        if (saved === 'dark' || saved === 'light') {
+          document.documentElement.dataset.theme = saved;
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#contenu">Aller au contenu</a>
+    <slot />
+  </body>
+</html>
+
+<style is:global>
+  @font-face {
+    font-family: 'PlusJakartaSans';
+    src: url('/fonts/plus-jakarta-sans-latin.woff2') format('woff2');
+    font-weight: 200 800;
+    font-display: swap;
+  }
+
+  * { box-sizing: border-box; }
+
+  html {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-family);
+    font-size: var(--text-body);
+    line-height: 1.6;
+    scroll-behavior: smooth;
+  }
+
+  /* La nav sticky (~70px) recouvre le haut de la cible d'une ancre :
+     toute cible de saut réserve sa hauteur + une respiration. */
+  [id] {
+    scroll-margin-top: 96px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+
+  body { margin: 0; }
+
+  p { margin: 0; max-width: 62ch; }
+  h1, h2, h3 { margin: 0; }
+
+  .skip-link {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 100;
+    padding: 12px 20px;
+    border-radius: var(--r-md);
+    background: var(--indigo);
+    color: white;
+    font-weight: var(--weight-bold);
+    text-decoration: none;
+    transform: translateY(-200%);
+  }
+
+  .skip-link:focus-visible {
+    transform: none;
+    outline: 2px solid var(--indigo);
+    outline-offset: 3px;
+  }
+</style>

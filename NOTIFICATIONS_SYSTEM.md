@@ -1,6 +1,6 @@
 # 🔔 NOTIFICATIONS_SYSTEM.md
 
-# Uber's Clap
+# Cadance
 
 > Système de notifications et automatisations
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-Les notifications sont un élément essentiel d'Uber's Clap.
+Les notifications sont un élément essentiel d'Cadance.
 
 Un chauffeur VTC doit gérer de nombreux événements :
 
@@ -77,7 +77,7 @@ A --> F
 
 # 📱 Types de notifications
 
-Uber's Clap utilise plusieurs canaux :
+Cadance utilise plusieurs canaux :
 
 ---
 
@@ -249,7 +249,7 @@ Votre réservation est confirmée.
 
 Votre chauffeur sera présent demain à 15h.
 
-Uber's Clap
+Cadance
 ```
 
 ---
@@ -574,6 +574,6 @@ Ajouter :
 
 # Conclusion
 
-Le système de notifications transforme Uber's Clap d'un simple outil de gestion en véritable assistant quotidien.
+Le système de notifications transforme Cadance d'un simple outil de gestion en véritable assistant quotidien.
 
 L'objectif est que le chauffeur n'ait plus besoin de penser à tout : l'application l'accompagne automatiquement.

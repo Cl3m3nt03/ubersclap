@@ -1,0 +1,35 @@
+{
+  "name": "@cadance/web",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "tokens": "node scripts/generate-tokens.mjs",
+    "dev": "pnpm tokens && astro dev",
+    "build": "pnpm tokens && astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "typecheck": "astro check",
+    "capture:ref": "node scripts/capture-ref.mjs",
+    "verify:tokens": "node scripts/check-hardcoded-values.mjs",
+    "verify:a11y": "playwright test tests/a11y.spec.ts",
+    "verify:visual": "playwright test tests/visual.spec.ts",
+    "verify:perf": "node scripts/verify-perf.mjs",
+    "verify": "pnpm verify:tokens && pnpm verify:a11y && pnpm verify:visual && pnpm verify:perf"
+  },
+  "//": "Dependance directe 'cookie@2' : node-linker=hoisted (requis par Metro) hoiste cookie@0.7 d'express a la racine, or le prerenderer d'Astro a besoin de cookie@2. La dependance directe force la bonne version dans apps/web/node_modules.",
+  "dependencies": {
+    "@cadance/shared": "workspace:*",
+    "astro": "^7.1.3",
+    "cookie": "^2.0.1"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "@axe-core/playwright": "^4.10.2",
+    "@lhci/cli": "^0.15.1",
+    "@playwright/test": "^1.58.2",
+    "axe-core": "^4.10.3",
+    "playwright": "^1.58.2",
+    "typescript": "~5.9.3"
+  }
+}

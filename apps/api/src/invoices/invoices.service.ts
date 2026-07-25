@@ -15,7 +15,7 @@ import {
   type Invoice,
   type InvoiceStatus,
   type InvoiceSummary,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { DATABASE } from '../database/database.module';
 import type { Database } from '../database/client';

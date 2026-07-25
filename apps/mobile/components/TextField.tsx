@@ -1,6 +1,6 @@
 import { forwardRef } from 'react';
 import { View, Text, TextInput } from 'react-native';
-import { light, touch } from '@ubersclap/shared';
+import { light, touch } from '@cadance/shared';
 
 type Props = React.ComponentProps<typeof TextInput> & {
   label: string;

@@ -15,7 +15,7 @@ import {
   formatDuration,
   light,
   touch,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { PageHeader } from '@/components/PageHeader';
 import { StatCard, Card } from '@/components/Card';

@@ -1,6 +1,6 @@
 # 💰 MONETIZATION.md
 
-# Uber's Clap
+# Cadance
 
 > Modèle économique et stratégie commerciale
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-Uber's Clap est pensé comme un SaaS professionnel destiné aux chauffeurs VTC indépendants.
+Cadance est pensé comme un SaaS professionnel destiné aux chauffeurs VTC indépendants.
 
 Le modèle économique repose principalement sur un abonnement mensuel permettant aux chauffeurs d'accéder à des fonctionnalités avancées.
 
@@ -31,13 +31,13 @@ Créer un modèle :
 
 # 💡 Positionnement
 
-Uber's Clap n'est pas :
+Cadance n'est pas :
 
 ❌ Un simple agenda
 ❌ Une application de notes
 ❌ Un outil de facturation uniquement
 
-Uber's Clap est :
+Cadance est :
 
 ✅ Un assistant métier complet pour chauffeur VTC.
 
@@ -492,6 +492,6 @@ L'application doit être perçue comme :
 
 # Conclusion
 
-Uber's Clap doit évoluer d'une application mobile vers un véritable SaaS métier pour les professionnels du transport.
+Cadance doit évoluer d'une application mobile vers un véritable SaaS métier pour les professionnels du transport.
 
 Le modèle abonnement permet une croissance durable tout en restant accessible aux chauffeurs indépendants.

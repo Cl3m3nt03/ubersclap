@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, eq, ilike, isNull, or, desc, sql } from 'drizzle-orm';
 import { v7 as uuidv7 } from 'uuid';
-import type { CreateClientInput, PassengerInput } from '@ubersclap/shared';
+import type { CreateClientInput, PassengerInput } from '@cadance/shared';
 
 import { DATABASE } from '../database/database.module';
 import type { Database } from '../database/client';

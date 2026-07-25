@@ -19,7 +19,7 @@ import {
   touch,
   type Me,
   type VatRegime,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';

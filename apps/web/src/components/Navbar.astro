@@ -1,0 +1,370 @@
+---
+/**
+ * Navbar — web-only (DESIGN_CONTEXT.md §5 glassmorphism 1/3, §8 bloc 1).
+ *
+ * Barre sticky : fond bg à 72 % + backdrop blur 20px saturate 180 %,
+ * bordure basse 1px — l'un des trois usages autorisés du glassmorphism.
+ * Fallback opaque via @supports. Logo texte (BRAND_NAME, jamais en dur) ·
+ * liens · ThemeToggle · Connexion (ghost) · CTA primaire 44px.
+ * Menu mobile plein écran : focus piégé, fermeture Escape, scroll du body
+ * verrouillé. Condensation après 40px de scroll (§10) : classe is-condensed,
+ * padding réduit en 220ms — transform/opacity seuls interdits ici car le
+ * padding ne s'anime qu'une fois, hors boucle.
+ */
+import { BRAND_NAME } from '@cadance/shared';
+import ThemeToggle from './ThemeToggle.astro';
+
+interface Props {
+  links?: Array<{ label: string; href: string }>;
+  ctaLabel?: string;
+}
+
+const {
+  links = [
+    { label: 'Fonctionnalités', href: '#fonctionnalites' },
+    { label: 'Tarifs', href: '#tarifs' },
+    { label: 'FAQ', href: '#faq' },
+  ],
+  ctaLabel = 'Essayer gratuitement',
+} = Astro.props;
+---
+
+<nav class="navbar" aria-label="Navigation principale">
+  <div class="navbar-inner">
+    <a class="navbar-logo" href="/">{BRAND_NAME}</a>
+
+    <ul class="navbar-links">
+      {links.map((link) => (
+        <li><a class="navbar-link" href={link.href}>{link.label}</a></li>
+      ))}
+    </ul>
+
+    <div class="navbar-actions">
+      <ThemeToggle />
+      <a class="navbar-login" href="#connexion">Connexion</a>
+      <a class="navbar-cta" href="#essai">{ctaLabel}</a>
+    </div>
+
+    <button class="navbar-burger" type="button" data-nav-open aria-expanded="false" aria-controls="menu-mobile" aria-label="Ouvrir le menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg>
+    </button>
+  </div>
+
+  <div class="navbar-mobile" id="menu-mobile" hidden>
+    <div class="navbar-mobile-head">
+      <span class="navbar-logo">{BRAND_NAME}</span>
+      <button class="navbar-burger" type="button" data-nav-close aria-label="Fermer le menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <ul class="navbar-mobile-links">
+      {links.map((link) => (
+        <li><a class="navbar-mobile-link" href={link.href}>{link.label}</a></li>
+      ))}
+      <li><a class="navbar-mobile-link" href="#connexion">Connexion</a></li>
+    </ul>
+    <a class="navbar-cta is-full" href="#essai">{ctaLabel}</a>
+  </div>
+</nav>
+
+<script>
+  const nav = document.querySelector('.navbar');
+  const menuEl = nav?.querySelector('.navbar-mobile');
+  const openEl = nav?.querySelector('[data-nav-open]');
+  const closeEl = nav?.querySelector('[data-nav-close]');
+
+  if (
+    nav &&
+    menuEl instanceof HTMLElement &&
+    openEl instanceof HTMLElement &&
+    closeEl instanceof HTMLElement
+  ) {
+    const menu = menuEl;
+    const openButton = openEl;
+    const closeButton = closeEl;
+    const focusables = () =>
+      [...menu.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')];
+
+    function open() {
+      menu.hidden = false;
+      openButton.setAttribute('aria-expanded', 'true');
+      document.body.style.overflow = 'hidden';
+      focusables()[0]?.focus();
+      document.addEventListener('keydown', onKeydown);
+    }
+
+    function close() {
+      menu.hidden = true;
+      openButton.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+      (openButton as HTMLElement).focus();
+      document.removeEventListener('keydown', onKeydown);
+    }
+
+    function onKeydown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        close();
+        return;
+      }
+      // Focus piégé dans le menu plein écran.
+      if (event.key === 'Tab') {
+        const items = focusables();
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (!first || !last) return;
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    }
+
+    openButton.addEventListener('click', open);
+    closeButton.addEventListener('click', close);
+    menu.addEventListener('click', (event) => {
+      if ((event.target as HTMLElement).closest('a')) close();
+    });
+
+    // Condensation après 40px de scroll (§10), 220ms.
+    let condensed = false;
+    const onScroll = () => {
+      const next = window.scrollY > 40;
+      if (next !== condensed) {
+        condensed = next;
+        nav.classList.toggle('is-condensed', condensed);
+      }
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+  }
+</script>
+
+<style>
+  .navbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: color-mix(in srgb, var(--bg) 72%, transparent);
+    border-bottom: 1px solid var(--border);
+    transition: background var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+  }
+
+  /* État condensé (§5) : OPAQUE COMPLET — même 6 % de transparence
+     laissent l'encre d'un type-impact 92px se lire à travers. Fond plein,
+     bordure basse 1px (déjà posée), ombre légère. Le verre ne subsiste
+     qu'en haut de page, où rien ne passe derrière. */
+  .navbar.is-condensed {
+    background: var(--bg);
+    box-shadow: var(--shadow-soft);
+  }
+
+  /* Deux pièges de minification successifs : (1) blur(20px)saturate(180%)
+     collé sans espace = valeur invalide jetée ; (2) standard + -webkit-
+     écrits à la main = fusionnés en préfixe seul. On passe par une custom
+     property (préservée telle quelle) et on ne déclare QUE la standard —
+     le minifieur génère le préfixe lui-même. */
+  @supports (backdrop-filter: blur(1px)) {
+    .navbar {
+      --glass-filter: blur(20px) saturate(180%);
+      backdrop-filter: var(--glass-filter);
+    }
+  }
+
+  @supports not (backdrop-filter: blur(1px)) {
+    .navbar {
+      background: var(--bg);
+    }
+  }
+
+  .navbar-inner {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 12px var(--pad-inline);
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    transition: padding var(--dur-base) var(--ease-out);
+  }
+
+  .navbar.is-condensed .navbar-inner { padding-block: 6px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .navbar,
+    .navbar-inner { transition: none; }
+  }
+
+  .navbar-logo {
+    font-size: var(--text-title);
+    font-weight: var(--weight-extra);
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .navbar-links {
+    list-style: none;
+    margin: 0 auto;
+    padding: 0;
+    display: flex;
+    gap: 8px;
+  }
+
+  .navbar-link {
+    display: inline-flex;
+    align-items: center;
+    height: var(--touch-secondary);
+    padding: 0 16px;
+    border-radius: var(--r-pill);
+    color: var(--ink-muted);
+    font-size: var(--text-label);
+    font-weight: var(--weight-semibold);
+    text-decoration: none;
+  }
+
+  .navbar-link:hover {
+    color: var(--ink);
+    background: color-mix(in srgb, var(--ink-muted) 8%, transparent);
+  }
+
+  .navbar-link:focus-visible,
+  .navbar-login:focus-visible,
+  .navbar-cta:focus-visible,
+  .navbar-burger:focus-visible,
+  .navbar-mobile-link:focus-visible {
+    outline: 2px solid var(--indigo);
+    outline-offset: 3px;
+  }
+
+  .navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .navbar-login {
+    display: inline-flex;
+    align-items: center;
+    height: var(--touch-secondary);
+    padding: 0 16px;
+    border-radius: var(--r-md);
+    color: var(--indigo);
+    font-size: var(--text-label);
+    font-weight: var(--weight-bold);
+    text-decoration: none;
+  }
+
+  .navbar-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--touch-secondary);
+    padding: 0 20px;
+    border-radius: var(--r-md);
+    background: var(--indigo);
+    color: white;
+    font-size: var(--text-label);
+    font-weight: var(--weight-bold);
+    text-decoration: none;
+    box-shadow: var(--shadow-cta);
+    transition: transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
+  }
+
+  .navbar-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-cta-hover);
+  }
+
+  .navbar-cta:active {
+    transform: scale(0.97);
+  }
+
+  .navbar-cta.is-full {
+    width: 100%;
+    height: var(--touch-primary);
+    font-size: var(--text-body);
+  }
+
+  .navbar-burger {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: var(--touch-secondary);
+    height: var(--touch-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  /* Menu mobile plein écran. */
+  .navbar-mobile {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: var(--bg);
+    padding: 12px var(--pad-inline) 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .navbar-mobile[hidden] {
+    display: none;
+  }
+
+  .navbar-mobile-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .navbar-mobile-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 4px;
+  }
+
+  .navbar-mobile-link {
+    display: flex;
+    align-items: center;
+    min-height: var(--touch-primary);
+    padding: 0 4px;
+    color: var(--ink);
+    font-size: var(--scale-title);
+    font-weight: var(--weight-bold);
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  @media (max-width: 767px) {
+    .navbar-links,
+    .navbar-login,
+    .navbar-inner > .navbar-cta {
+      display: none;
+    }
+    .navbar-inner .navbar-actions .navbar-login,
+    .navbar-inner .navbar-actions .navbar-cta {
+      display: none;
+    }
+    .navbar-burger {
+      display: inline-flex;
+      margin-left: auto;
+    }
+    .navbar-actions {
+      margin-left: auto;
+    }
+    .navbar-actions ~ .navbar-burger {
+      margin-left: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .navbar-cta { transition: none; }
+  }
+</style>

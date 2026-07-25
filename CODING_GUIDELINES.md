@@ -1,6 +1,6 @@
 # 👨‍💻 CODING_GUIDELINES.md
 
-# Uber's Clap
+# Cadance
 
 > Guide de développement et standards de code
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-Ce document définit les règles de développement utilisées sur Uber's Clap.
+Ce document définit les règles de développement utilisées sur Cadance.
 
 Les objectifs sont :
 
@@ -714,4 +714,4 @@ Une fonctionnalité est terminée quand :
 
 # Conclusion
 
-Ces règles permettent à Uber's Clap de conserver une base technique professionnelle capable d'évoluer rapidement tout en restant maintenable par plusieurs développeurs.
+Ces règles permettent à Cadance de conserver une base technique professionnelle capable d'évoluer rapidement tout en restant maintenable par plusieurs développeurs.

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { sumCents, type CourseWithClient } from '@ubersclap/shared';
+import { sumCents, type CourseWithClient } from '@cadance/shared';
 
 import {
   addDays,

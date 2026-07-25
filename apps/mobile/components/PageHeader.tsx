@@ -1,7 +1,7 @@
 import { View, Text, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bell } from 'lucide-react-native';
-import { light, touch } from '@ubersclap/shared';
+import { light, touch } from '@cadance/shared';
 
 type Props = {
   greeting?: string;

@@ -13,9 +13,10 @@ import type {
   AuthUser,
   LoginInput,
   RegisterInput,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { apiRequest, onSessionExpired } from './api';
+import { DEMO_MODE, demoData } from './demo';
 import {
   clearTokens,
   getRefreshToken,
@@ -52,6 +53,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     void (async () => {
+      // Mode démonstration : session ouverte d'office avec le chauffeur de
+      // démo, aucun appel réseau. Voir lib/demo.ts.
+      if (DEMO_MODE) {
+        const { profile: _profile, organization: _org, plan: _plan, phone: _phone, ...user } = demoData().driver;
+        if (!cancelled) {
+          setUser(user);
+          setStatus('authenticated');
+        }
+        return;
+      }
+
       const { refreshToken } = await loadTokens();
 
       if (!refreshToken) {

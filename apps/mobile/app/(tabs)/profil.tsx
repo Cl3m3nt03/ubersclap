@@ -1,7 +1,7 @@
 import { View, Text, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { AlertTriangle, Pencil } from 'lucide-react-native';
-import { initials, light, PLAN_LABEL, VAT_REGIME_LABEL } from '@ubersclap/shared';
+import { initials, light, PLAN_LABEL, VAT_REGIME_LABEL } from '@cadance/shared';
 
 import { PageHeader } from '@/components/PageHeader';
 import { Card } from '@/components/Card';

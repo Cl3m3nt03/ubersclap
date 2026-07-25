@@ -16,7 +16,7 @@ import {
   updateExpenseSchema,
   type CreateExpenseInput,
   type UpdateExpenseInput,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { ExpensesService } from './expenses.service';
 import { CurrentDriverId } from '../auth/current-driver.decorator';

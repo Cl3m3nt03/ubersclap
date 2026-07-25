@@ -1,0 +1,97 @@
+---
+/**
+ * FaqItem — web-only (DESIGN_CONTEXT.md §8 bloc 9, §9, §10).
+ *
+ * <details>/<summary> stylés : contenu lisible sans JS, indexable.
+ * Accordéon grid-template-rows 0fr → 1fr, chevron 180° en dur-base.
+ * Chevron Lucide SVG inline stroke 2 currentColor. Cible ≥44px.
+ */
+interface Props {
+  question: string;
+}
+
+const { question } = Astro.props;
+---
+
+<details class="faq-item">
+  <summary class="faq-question">
+    <span>{question}</span>
+    <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+  </summary>
+  <div class="faq-answer-clip">
+    <div class="faq-answer">
+      <slot />
+    </div>
+  </div>
+</details>
+
+<style>
+  .faq-item {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .faq-question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: var(--touch-secondary);
+    padding: 16px 4px;
+    font-size: var(--text-body);
+    font-weight: var(--weight-bold);
+    color: var(--ink);
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .faq-question::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq-question:focus-visible {
+    outline: 2px solid var(--indigo);
+    outline-offset: 3px;
+    border-radius: var(--r-sm);
+  }
+
+  .faq-chevron {
+    flex: none;
+    color: var(--ink-faint);
+    transition: transform var(--dur-base) var(--ease-in-out);
+  }
+
+  .faq-item[open] .faq-chevron {
+    transform: rotate(180deg);
+  }
+
+  /* Accordéon 0fr → 1fr (§10). <details> ne s'anime pas nativement :
+     la grille anime la révélation à l'ouverture. */
+  .faq-answer-clip {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows var(--dur-base) var(--ease-in-out);
+  }
+
+  .faq-item[open] .faq-answer-clip {
+    grid-template-rows: 1fr;
+  }
+
+  .faq-answer {
+    overflow: hidden;
+    color: var(--ink-muted);
+    font-size: var(--text-body);
+    line-height: 1.6;
+  }
+
+  .faq-answer > :global(p) {
+    margin: 0 0 16px;
+    max-width: 62ch;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .faq-chevron,
+    .faq-answer-clip {
+      transition: none;
+    }
+  }
+</style>

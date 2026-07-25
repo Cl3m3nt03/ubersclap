@@ -11,7 +11,7 @@ import {
   type CourseStatus,
   type CreateCourseInput,
   type UpdateCourseInput,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { DATABASE } from '../database/database.module';
 import type { Database } from '../database/client';
@@ -171,7 +171,7 @@ export class CoursesService {
   /**
    * Change le statut d'une course.
    *
-   * La transition est validee par la machine a etats de @ubersclap/shared, la
+   * La transition est validee par la machine a etats de @cadance/shared, la
    * meme que celle utilisee par le mobile. Le serveur refuse ce que l'UI
    * n'aurait jamais du proposer : on ne fait pas confiance au client pour
    * l'integrite du cycle de vie.

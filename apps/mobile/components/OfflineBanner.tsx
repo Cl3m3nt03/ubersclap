@@ -3,7 +3,7 @@ import { View, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { onlineManager, useMutationState } from '@tanstack/react-query';
 import { CloudOff, RefreshCw } from 'lucide-react-native';
-import { light } from '@ubersclap/shared';
+import { light } from '@cadance/shared';
 
 /**
  * Bandeau d'etat reseau (ADR-011, regle 4).

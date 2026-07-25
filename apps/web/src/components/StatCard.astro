@@ -1,0 +1,117 @@
+---
+/**
+ * StatCard — dérivée du StatCard de apps/mobile/components/Card.tsx.
+ *
+ * Reprend : fond gradient teal/coral/purple (l'argent, le volume, le temps),
+ * valeur 800 blanche tabular-nums. Composition §4/§9 : tout le texte dans
+ * les 60 % supérieurs-gauche, côté sombre du 135° ; la fin claire reste vide.
+ *
+ * La règle dépend de l'EMPLACEMENT (§9) :
+ *  - placement="mockup" : dans un cadre de téléphone. Label 12px 800
+ *    uppercase, fidèle à l'app — c'est une reproduction, le contenu est
+ *    aria-hidden, WCAG ne s'applique pas.
+ *  - placement="orbit" : fragment hors du cadre. PAS de label, valeur seule
+ *    en 800 à 28px minimum — vrai contenu de page, WCAG 3:1 grand texte tenu
+ *    grâce au recadrage : un fragment est un CROP du composant réel, il
+ *    montre la moitié sombre du 135° (background-size 220 %, position 0 0,
+ *    couleurs inchangées). Ratios mesurés aux positions réelles du texte,
+ *    voir scripts/check-gradient-contrast.mjs --live.
+ */
+interface Props {
+  tone: 'teal' | 'coral' | 'purple';
+  /** Valeur affichée — omise si un slot `value` est fourni (compteur animé). */
+  value?: string;
+  /** Requis en mockup, interdit en orbite. */
+  label?: string;
+  placement: 'mockup' | 'orbit';
+}
+
+const { tone, value, label, placement } = Astro.props;
+const hasValueSlot = Astro.slots.has('value');
+---
+
+{placement === 'mockup' ? (
+  <div class={`statcard statcard-${tone} in-mockup`} aria-hidden="true">
+    <div class="statcard-text">
+      <p class="statcard-label">{label}</p>
+      <p class="statcard-value">{hasValueSlot ? <slot name="value" /> : value}</p>
+    </div>
+  </div>
+) : (
+  <div class={`statcard statcard-${tone} in-orbit`}>
+    <div class="statcard-text">
+      <p class="statcard-value">{hasValueSlot ? <slot name="value" /> : value}</p>
+    </div>
+  </div>
+)}
+
+<style>
+  .statcard {
+    border-radius: var(--r-lg);
+    color: white;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .statcard-teal { background: var(--gradient-teal); }
+  .statcard-coral { background: var(--gradient-coral); }
+  .statcard-purple { background: var(--gradient-purple); }
+
+  /* Composition : le texte vit dans les 60 % supérieurs-gauche. */
+  .statcard-text {
+    max-width: 60%;
+    display: grid;
+    gap: 6px;
+    justify-items: start;
+    text-align: left;
+  }
+
+  .statcard-value {
+    margin: 0;
+    font-weight: var(--weight-extra);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    /* La taille s'ajuste, jamais le texte qui se scinde. */
+    white-space: nowrap;
+  }
+
+  /* --- Dans un cadre de téléphone : reproduction fidèle de l'app. --- */
+  .in-mockup {
+    padding: var(--space-card);
+    min-height: 120px;
+    /* Containment pour le cqw de la valeur — uniquement en mockup : en
+       orbite la carte doit se dimensionner sur son contenu. */
+    container-type: inline-size;
+  }
+
+  .in-mockup .statcard-label {
+    margin: 0;
+    font-size: var(--text-micro);
+    font-weight: var(--weight-extra);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    /* Blanc à 80 % comme dans l'app (reproduction fidèle). */
+    opacity: 0.8;
+  }
+
+  .in-mockup .statcard-value {
+    /* S'ajuste à la largeur de la carte : « 106 h 58 » tient sur une ligne
+       même dans une demi-carte de mockup. */
+    font-size: min(var(--text-display), 14cqw);
+  }
+
+  /* --- Fragment d'orbite : valeur seule, grand texte WCAG. --- */
+  .in-orbit {
+    padding: var(--card-pad);
+    min-height: 96px;
+    display: grid;
+    align-items: start;
+    /* Recadrage : le fragment montre la moitié sombre du gradient, comme un
+       crop du composant réel. Couleurs et angle inchangés. */
+    background-size: 220% 220%;
+    background-position: 0 0;
+  }
+
+  .in-orbit .statcard-value {
+    font-size: max(28px, var(--text-display));
+  }
+</style>

@@ -1,6 +1,6 @@
 import { View, Text, ActivityIndicator } from 'react-native';
 import { CloudOff, TriangleAlert } from 'lucide-react-native';
-import { light } from '@ubersclap/shared';
+import { light } from '@cadance/shared';
 
 import { Button } from './Button';
 import { isOfflineError } from '@/lib/api';

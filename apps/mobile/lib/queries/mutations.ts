@@ -7,7 +7,7 @@ import type {
   CreateCourseInput,
   CreateExpenseInput,
   Expense,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { apiRequest } from '../api';
 import { mutationKeys, queryKeys } from './keys';

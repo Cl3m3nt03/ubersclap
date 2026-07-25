@@ -1,6 +1,6 @@
 # 🛠️ STACK.md
 
-# Uber's Clap
+# Cadance
 
 > Documentation technique - Choix de la stack
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-Uber's Clap est une application mobile SaaS destinée aux chauffeurs VTC.
+Cadance est une application mobile SaaS destinée aux chauffeurs VTC.
 
 Le choix technique doit répondre à plusieurs objectifs :
 

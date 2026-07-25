@@ -1,6 +1,6 @@
 # 📋 PRODUCT_REQUIREMENTS_DOCUMENT.md
 
-# Uber's Clap
+# Cadance
 
 > Product Requirements Document (PRD)
 
@@ -10,7 +10,7 @@ Version : 0.1.0
 
 # 📖 Introduction
 
-Uber's Clap est une application mobile professionnelle destinée aux chauffeurs VTC indépendants.
+Cadance est une application mobile professionnelle destinée aux chauffeurs VTC indépendants.
 
 L'objectif est de centraliser toute la gestion quotidienne d'un chauffeur dans une seule application :
 
@@ -35,7 +35,7 @@ Aujourd'hui, beaucoup de chauffeurs utilisent plusieurs outils :
 - notes personnelles
 - applications de facturation
 
-Uber's Clap regroupe tout dans une seule plateforme.
+Cadance regroupe tout dans une seule plateforme.
 
 ---
 
@@ -558,6 +558,6 @@ Un chauffeur ne doit pas avoir besoin d'une formation.
 
 # Conclusion
 
-Uber's Clap doit devenir l'outil central de gestion quotidienne des chauffeurs VTC.
+Cadance doit devenir l'outil central de gestion quotidienne des chauffeurs VTC.
 
 La réussite du produit dépendra de sa capacité à faire gagner du temps et améliorer la rentabilité des professionnels.

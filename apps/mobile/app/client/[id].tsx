@@ -8,7 +8,7 @@ import {
   initials,
   light,
   touch,
-} from '@ubersclap/shared';
+} from '@cadance/shared';
 
 import { Card } from '@/components/Card';
 import { CourseRow } from '@/components/CourseRow';
